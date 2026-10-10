@@ -1,32 +1,82 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-*/build
-Captures
-.externalNativeBuild
-.cxx
-local.properties
+# ==============================================================================
+# Android & Gradle Build Artifacts
+# ==============================================================================
+.gradle/
+build/
+*/build/
+app/build/
+bin/
+gen/
+out/
+.externalNativeBuild/
+.cxx/
+Captures/
+.kotlin/
+.navigation/
+
+# ==============================================================================
+# Application Packages & Binaries
+# ==============================================================================
+# Ignore all built/standalone APKs and AABs everywhere by default...
 *.apk
 *.aab
-.kotlin
-.navigation
+*.ap_
+*.dex
 
-# Node & Python scratch
+# ...EXCEPT official releases tracked in the files/ directory
+!files/*.apk
+!files/**/*.apk
+
+# ==============================================================================
+# Local Environment & SDK Configuration
+# ==============================================================================
+local.properties
+
+# ==============================================================================
+# IDE & Editor Files
+# ==============================================================================
+# Android Studio / IntelliJ IDEA
+*.iml
+.idea/
+*.ipr
+*.iws
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# ==============================================================================
+# Operating System Files
+# ==============================================================================
+# Windows (equivalent to macOS .DS_Store)
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# ==============================================================================
+# Scratch, Node & Python Utilities
+# ==============================================================================
 scratch/
 node_modules/
 *.pyc
 __pycache__/
+*.log
 
-# IDE files
-*.code-workspace
-
-# Other
+# ==============================================================================
+# Heavy Graphic Design Source Files (raw working files)
+# ==============================================================================
 *.psd
