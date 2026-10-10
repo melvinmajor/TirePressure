@@ -1,0 +1,32 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+*/build
+Captures
+.externalNativeBuild
+.cxx
+local.properties
+*.apk
+*.aab
+.kotlin
+.navigation
+
+# Node & Python scratch
+scratch/
+node_modules/
+*.pyc
+__pycache__/
+
+# IDE files
+*.code-workspace
+
+# Other
+*.psd

@@ -1,0 +1,28 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer tire ring -->
+    <path
+        android:strokeColor="#E05638"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M 54, 20 A 34,34 0 1,1 53.9, 20" />
+    <!-- Inner rim ring -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:pathData="M 54, 30 A 24,24 0 1,1 53.9, 30" />
+    <!-- Pressure gauge needle -->
+    <path
+        android:strokeColor="#E05638"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M 54, 54 L 68, 40" />
+    <!-- Center hub -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 54, 50 A 4,4 0 1,1 53.9, 50" />
+</vector>
+

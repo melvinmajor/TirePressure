@@ -1,0 +1,280 @@
+<resources>
+    <string name="app_name">TirePressure</string>
+    <string name="app_tagline">Calculateur haute précision pour Route, Gravel &amp; VTT</string>
+    
+    <!-- Navigation -->
+    <string name="nav_bikes">Mes Vélos</string>
+    <string name="nav_settings">Paramètres</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Bienvenue sur TirePressure</string>
+    <string name="onboarding_welcome_desc">Optimisez le rendement, l\'adhérence et le confort de votre vélo grâce aux lois physiques éprouvées de fléchissement et d\'impédance.</string>
+    <string name="onboarding_weight_prompt">Pour débuter, quel est votre poids habituel en tenue de cycliste ?</string>
+    <string name="onboarding_weight_desc">Ce poids sera utilisé comme référence pour calculer automatiquement les pressions de tous vos vélos et roues. Vous pourrez le modifier à tout moment dans les paramètres.</string>
+    <string name="onboarding_continue">Continuer</string>
+    <string name="onboarding_step1_title">Gérez plusieurs configurations</string>
+    <string name="onboarding_step1_desc">Chaque vélo peut posséder plusieurs configurations de roues et pneus (pneus été, hiver, chemins boueux...).</string>
+    <string name="onboarding_step2_title">Pressions pour toutes surfaces</string>
+    <string name="onboarding_step2_desc">Visualisez instantanément vos pressions recommandées pour chaque condition : route sèche, sol mouillé ou conditions glissantes/neige.</string>
+    <string name="onboarding_step3_title">Sécurité &amp; Normes ETRTO</string>
+    <string name="onboarding_step3_desc">L\'application vous alerte immédiatement si une pression dépasse la limite de sécurité pour les jantes Hookless sans crochets (max 5.0 bar).</string>
+    <string name="onboarding_get_started">Commencer</string>
+    
+    <!-- Vue Overview (Accueil) -->
+    <string name="overview_title">Mes Vélos &amp; Réglages</string>
+    <string name="overview_add_bike">Ajouter un vélo</string>
+    <string name="overview_add_config">Ajouter une configuration</string>
+    <string name="overview_no_bikes">Aucun vélo pour le moment</string>
+    <string name="overview_no_bikes_desc">Ajoutez votre premier vélo pour générer instantanément vos pressions optimales selon la météo.</string>
+    <string name="overview_dry">Sec</string>
+    <string name="overview_wet">Mouillé</string>
+    <string name="overview_snow">Glissant / Neige</string>
+    
+    <!-- Vélo & Config -->
+    <string name="bike_name_label">Nom du vélo</string>
+    <string name="bike_discipline">Discipline</string>
+    <string name="bike_weight">Poids du vélo</string>
+    <string name="config_name_label">Nom de la configuration</string>
+    <string name="config_default_name">Paire de roues principale</string>
+    <string name="luggage_weight">Bagages / Équipement habituel</string>
+    <string name="wheel_front">Roue Avant</string>
+    <string name="wheel_rear">Roue Arrière</string>
+    <string name="tire_width">Largeur du pneu</string>
+    <string name="inner_rim_width">Largeur interne de jante</string>
+    <string name="rim_type">Type de jante</string>
+    <string name="tire_casing">Carcasse du pneu</string>
+    <string name="wheel_diameter">Diamètre de roue</string>
+    <string name="mullet_mode">Configuration Mullet / MX</string>
+    <string name="mullet_mode_same">Identique (Av &amp; Ar)</string>
+    <string name="mullet_mode_mixed">Mullet (Av ≠ Ar)</string>
+    <string name="mullet_front_diameter">Diamètre Roue Avant</string>
+    <string name="mullet_rear_diameter">Diamètre Roue Arrière</string>
+    <string name="mullet_badge">Mullet actif : Roue avant plus grande (franchissement) et roue arrière maniable</string>
+    <string name="copy_front_to_rear">Copier réglages Avant vers Arrière</string>
+    
+    <!-- Actions -->
+    <string name="action_save">Enregistrer</string>
+    <string name="action_edit">Modifier</string>
+    <string name="action_delete">Supprimer</string>
+    <string name="action_duplicate">Dupliquer</string>
+    <string name="action_create">Créer</string>
+    <string name="action_cancel">Annuler</string>
+    <string name="action_confirm">Confirmer</string>
+    <string name="action_copy_pressures">Copier les pressions</string>
+    <string name="action_copied">Pressions copiées !</string>
+
+    <!-- Dialogue d'ajout de configuration -->
+    <string name="add_setup_dialog_title">Nouvelle configuration</string>
+    <string name="add_setup_name_label">Nom de la configuration</string>
+    <string name="setup_default_prefix">Configuration</string>
+    <string name="add_setup_template_title">Modèle de départ</string>
+    <string name="add_setup_template_default">Par défaut pour ce vélo (%1$s)</string>
+    <string name="add_setup_template_default_desc">Charge le poids de ce vélo (%1$s kg) et sa discipline avec des roues standard.</string>
+    <string name="add_setup_template_existing">Partir d\'une configuration existante comme template</string>
+    <string name="add_setup_template_existing_desc">Copie les dimensions des roues, largeurs et carcasses d\'une configuration existante de ce vélo.</string>
+    <string name="add_setup_select_existing">Sélectionner la configuration à copier :</string>
+
+    <!-- Pratiques -->
+    <string name="style_road">Route</string>
+    <string name="style_gravel">Gravel</string>
+    <string name="style_cross">Cyclocross</string>
+    <string name="style_xc_mtb">VTT Cross-Country</string>
+    <string name="style_trail_mtb">VTT Trail</string>
+    <string name="style_enduro_mtb">VTT Enduro</string>
+    <string name="style_dh_mtb">VTT Descente</string>
+    <string name="style_fat">Fat Bike</string>
+    <string name="style_commute">Vélotaf / Urbain</string>
+
+    <!-- Catégories de vélos -->
+    <string name="bike_category_label">Catégorie du vélo</string>
+    <string name="bike_category_desc">Route, Gravel, VTT ou Vélotaf</string>
+    <string name="category_road">Route</string>
+    <string name="category_gravel">Gravel</string>
+    <string name="category_mtb">VTT</string>
+    <string name="category_commute">Vélotaf</string>
+
+    <!-- Types de jantes -->
+    <string name="rim_tubeless_straight">Tubeless Hookless (Sans crochets)</string>
+    <string name="rim_tubeless_crochet">Tubeless avec crochets</string>
+    <string name="rim_tubes">Chambre à air (Clincher)</string>
+    <string name="rim_tubular">Boyau (Tubular)</string>
+    <string name="rim_zipp_303_xplr">Jante Wide Aero sans crochets (32mm+)</string>
+
+    <!-- Carcasses -->
+    <string name="casing_standard">Standard</string>
+    <string name="casing_thin">Fine / Légère (Thin)</string>
+    <string name="casing_reinforced">Renforcée (EXO, Grid, etc.)</string>
+    <string name="casing_double">Double carcasse (DH, DoubleDown)</string>
+
+    <!-- Paramètres -->
+    <string name="settings_title">Paramètres</string>
+    <string name="settings_rider_profile">Profil cycliste</string>
+    <string name="settings_rider_weight">Poids du cycliste</string>
+    <string name="settings_appearance">Apparence</string>
+    <string name="settings_theme_system">Système</string>
+    <string name="settings_theme_light">Clair</string>
+    <string name="settings_theme_dark">Sombre</string>
+    <string name="settings_language">Langue de l\'application</string>
+    <string name="settings_lang_system">Langue du système</string>
+    <string name="settings_lang_fr">Français</string>
+    <string name="settings_lang_en">English</string>
+    <string name="settings_units">Unités de mesure</string>
+    <string name="settings_mass_unit">Unité de poids</string>
+    <string name="settings_pressure_unit">Unité de pression</string>
+    <string name="settings_backup">Sauvegarde &amp; Restauration</string>
+    <string name="settings_export">Exporter les données (JSON)</string>
+    <string name="settings_import">Importer les données (JSON)</string>
+    <string name="settings_reset">Réinitialiser l\'application</string>
+    <string name="settings_about">À propos &amp; Confidentialité</string>
+    <string name="settings_privacy_badge">100% Hors-ligne • Aucune donnée partagée</string>
+    <string name="settings_reset_confirm_title">Réinitialiser toutes les données ?</string>
+    <string name="settings_reset_confirm_msg">Tous vos vélos et vos réglages enregistrés seront effacés.</string>
+
+    <!-- Widgets -->
+    <string name="widget_single_bike_name">Vélo &amp; Profils</string>
+    <string name="widget_single_bike_desc">Affiche les pressions optimales pour le vélo sélectionné et ses configurations.</string>
+    <string name="widget_all_bikes_name">Tous les vélos &amp; Profils</string>
+    <string name="widget_all_bikes_desc">Aperçu de l\'ensemble de vos vélos et profils dans une liste défilante.</string>
+    <string name="widget_config_title">Configuration du widget</string>
+    <string name="widget_config_choose_bike">Sélectionnez le vélo</string>
+    <string name="widget_config_theme">Apparence du widget</string>
+    <string name="widget_theme_system">Système (Automatique)</string>
+    <string name="widget_theme_light">Thème clair</string>
+    <string name="widget_theme_dark">Thème sombre</string>
+    <string name="widget_config_apply">Appliquer le widget</string>
+    <string name="widget_front_abbr">AV</string>
+    <string name="widget_rear_abbr">AR</string>
+    <string name="widget_front_full">Avant</string>
+    <string name="widget_rear_full">Arrière</string>
+    <string name="widget_no_bikes">Aucun vélo enregistré</string>
+    <string name="widget_no_bikes_desc">Ouvrez TirePressure pour enregistrer votre premier vélo.</string>
+    <string name="widget_tap_to_open">Touchez pour ouvrir l\'app</string>
+    <string name="settings_widget_section">Widgets d\'écran d\'accueil</string>
+    <string name="settings_widget_desc">Consultez vos pressions optimales en un coup d\'œil sur votre écran d\'accueil Android.</string>
+
+    <!-- Métadonnées Vélo & Unités -->
+    <string name="bike_brand_label">Marque</string>
+    <string name="bike_model_label">Modèle</string>
+    <string name="bike_year_label">Année</string>
+    <string name="bike_name_placeholder">Ex : Mon Gravel, VTT All-Mountain</string>
+    <string name="bike_brand_placeholder">Ex : Trek</string>
+    <string name="bike_model_placeholder">Ex : Supercaliber</string>
+    <string name="bike_year_placeholder">Ex : 2024</string>
+    <string name="bike_size_label">Taille du cadre</string>
+    <string name="bike_size_placeholder">Ex : M, L, 54 cm, 17.5\"</string>
+    <string name="edit_bike_dialog_title">Modifier les informations du vélo</string>
+    <string name="edit_bike_dialog_desc">Mettez à jour les caractéristiques de ce vélo. Modifier son poids recalculera instantanément toutes ses configurations.</string>
+    <string name="unit_mm">mm</string>
+    <string name="unit_inch">po (in)</string>
+    <string name="unit_kg">Kilogrammes (kg)</string>
+    <string name="unit_lb">Livres (lb)</string>
+    <string name="unit_bar">Bar (bar)</string>
+    <string name="unit_psi">PSI (psi)</string>
+    <string name="unit_kpa">Kilopascals (kPa)</string>
+    <string name="tire_width_unit">Unité de largeur</string>
+
+    <!-- Affichage des conditions météo / surfaces -->
+    <string name="settings_surfaces_title">Conditions de surface calculées</string>
+    <string name="settings_surfaces_desc">Choisissez les conditions météo à calculer et afficher. Le sec est toujours inclus.</string>
+    <string name="setup_surfaces_title">Conditions de surface calculées</string>
+    <string name="setup_surfaces_desc">Choisissez les conditions météo à afficher pour ce profil (à minima le sec).</string>
+    <string name="surface_dry_mandatory">Sec (Obligatoire)</string>
+    <string name="surface_wet_label">Mouillé</string>
+    <string name="surface_snow_label">Neige / Glissant</string>
+    <string name="surfaces_count_3">3 conditions : Sec, Mouillé et Neige</string>
+    <string name="surfaces_count_2_wet">2 conditions : Sec et Mouillé</string>
+    <string name="surfaces_count_2_snow">2 conditions : Sec et Neige</string>
+    <string name="surfaces_count_1">1 condition : Sec uniquement</string>
+
+    <!-- Confirmations de suppression -->
+    <string name="delete_bike_dialog_title">Supprimer ce vélo ?</string>
+    <string name="delete_bike_dialog_msg">Êtes-vous sûr de vouloir supprimer « %1$s » ? Tous les profils et configurations de ce vélo seront définitivement effacés.</string>
+    <string name="delete_bike_button">Supprimer le vélo</string>
+    <string name="delete_bike_danger_zone">Zone de danger</string>
+    <string name="delete_bike_danger_desc">Supprimer définitivement ce vélo et l\'ensemble de ses configurations de roues de votre garage.</string>
+    <string name="delete_setup_dialog_title">Supprimer cette configuration ?</string>
+    <string name="delete_setup_dialog_msg">Êtes-vous sûr de vouloir supprimer le profil « %1$s » ?</string>
+    <string name="delete_setup_button">Supprimer la configuration</string>
+
+    <!-- Chaînes supplémentaires Overview -->
+    <string name="overview_rider_label">Cycliste :</string>
+    <string name="overview_pressures_display_in">Afficher les pressions en :</string>
+    <string name="overview_bike_weight">Poids vélo : %1$s kg</string>
+    <string name="overview_config_count_one">1 config</string>
+    <string name="overview_config_count_many">%1$d configs</string>
+    <string name="overview_edit_bike_info">Modifier les informations du vélo</string>
+    <string name="overview_configure_wheels">Configurer roues &amp; profils</string>
+    <string name="overview_duplicate_bike">Dupliquer le vélo</string>
+    <string name="overview_edit_setup">Modifier la configuration</string>
+    <string name="overview_duplicate_setup">Dupliquer cette config</string>
+    <string name="overview_collapse_bike">Réduire le vélo</string>
+    <string name="overview_expand_bike">Développer le vélo</string>
+    <string name="overview_badge_default">Vélo par défaut</string>
+    <string name="overview_frame_size">Taille %1$s</string>
+    <string name="overview_toast_copied">Pressions copiées !</string>
+    <string name="overview_toast_setup_created">Configuration « %1$s » créée !</string>
+    <string name="overview_toast_bike_updated">Vélo mis à jour !</string>
+    <string name="overview_subtitle">Berto 15% Drop • Multi-Surfaces</string>
+    <string name="rim_tubes_short">Chambre à air</string>
+    <string name="rim_tubeless_badge">Tubeless</string>
+
+    <!-- Édition vélo & sections réductibles -->
+    <string name="bike_edit_title_new">Nouveau Vélo</string>
+    <string name="bike_edit_title_edit">Modifier le Vélo</string>
+    <string name="bike_general_info_section">Informations Générales</string>
+    <string name="bike_general_info_readonly_notice">Ces informations sont partagées par tous les profils de ce vélo. Pour les modifier, utilisez l\'option « Modifier les informations du vélo » sur l\'accueil.</string>
+    <string name="bike_is_default_checkbox">Définir comme vélo par défaut</string>
+    <string name="bike_setups_section_title">Configurations de Roues &amp; Pneus (%1$d)</string>
+    <string name="bike_setups_section_desc">Un vélo peut posséder plusieurs configurations de roues selon vos sorties.</string>
+    <string name="bike_setup_name_label">Nom de cette configuration</string>
+    <string name="bike_setup_style_label">Discipline / Pratique de ce profil :</string>
+    <string name="bike_setup_style_default">Par défaut (%1$s : %2$s)</string>
+    <string name="bike_setup_style_custom">Pratique spécifique : %1$s</string>
+    <string name="bike_name_required_error">Veuillez donner un nom à votre vélo</string>
+    <string name="bike_expand_section">Développer la section</string>
+    <string name="bike_collapse_section">Réduire la section</string>
+
+    <!-- Sections regroupées Paramètres & Traductions -->
+    <string name="settings_units_surfaces_title">Unités &amp; Calculs</string>
+    <string name="settings_units_surfaces_desc">Unités de mesure et conditions météo calculées</string>
+    <string name="settings_display_language_title">Affichage &amp; Langue</string>
+    <string name="settings_display_language_desc">Thème visuel et langue de l\'application</string>
+    <string name="settings_language_desc">Basculez entre le Français et l\'Anglais, ou suivez la langue de votre système Android.</string>
+    <string name="settings_backup_desc">Sauvegardez vos vélos dans un fichier JSON externe ou restaurez vos profils.</string>
+    <string name="settings_export_btn">Exporter</string>
+    <string name="settings_import_btn">Importer</string>
+    <string name="settings_reset_all_data">Réinitialiser toutes les données</string>
+    <string name="settings_reset_dialog_title">Réinitialiser les données ?</string>
+    <string name="settings_reset_dialog_msg">Toutes vos configurations de vélos et préférences seront effacées définitivement.</string>
+    <string name="settings_import_dialog_title">Restaurer la sauvegarde</string>
+    <string name="settings_import_dialog_msg">Le fichier contient %1$d vélo(s) sauvegardé(s) le %2$s.\n\nSouhaitez-vous remplacer l\'ensemble de vos vélos actuels ou fusionner avec vos données existantes ?</string>
+    <string name="settings_import_merge">Fusionner</string>
+    <string name="settings_import_replace">Remplacer tout</string>
+
+    <!-- À propos & Confidentialité -->
+    <string name="about_privacy_title">À propos &amp; Confidentialité</string>
+    <string name="about_offline_title">🔒 100% Hors-ligne &amp; Respect de la vie privée</string>
+    <string name="about_offline_desc">Cette application ne requiert aucune connexion réseau, aucun compte, ne transmet aucune donnée et ne contient aucun tracker publicitaire.</string>
+    <string name="about_physics_title">⚙️ Science du pneu &amp; Modèle Open Source</string>
+    <string name="about_physics_desc" formatted="false">Algorithme open source fondé sur les recherches de Frank Berto (fléchissement optimal à 15%), la modélisation de l\'impédance de roulement et les normes de sécurité ETRTO / ISO. Recommandations fiables calculées 100% hors-ligne.</string>
+    <string name="about_version_license">Version %1$s • Open Source (MIT License)</string>
+    <string name="overview_front">AV</string>
+    <string name="overview_rear">AR</string>
+
+    <!-- Écran Infos Application -->
+    <string name="app_info_title">Infos Application</string>
+    <string name="app_info_github_title">Code source sur GitHub</string>
+    <string name="app_info_github_url">melvinmajor/TirePressure</string>
+
+    <!-- Chaînes supplémentaires Dialogue Ajout Configuration -->
+    <string name="add_setup_discipline_title">Discipline / Pratique pour ce profil :</string>
+    <string name="add_setup_summary_title">Caractéristiques du profil créé :</string>
+    <string name="add_setup_summary_rider">Poids cycliste de référence : %1$s kg</string>
+    <string name="add_setup_summary_bike">Poids vélo : %1$s kg</string>
+    <string name="add_setup_summary_luggage">Poids bagages : %1$s kg</string>
+    <string name="add_setup_summary_front_wheel">Jante avant : %1$s mm (%2$s)</string>
+    <string name="add_setup_summary_front_tire">Pneu avant : %1$s mm (%2$s)</string>
+    <string name="add_setup_summary_rear_wheel">Jante arrière : %1$s mm (%2$s)</string>
+    <string name="add_setup_summary_rear_tire">Pneu arrière : %1$s mm (%2$s)</string>
+</resources>
+

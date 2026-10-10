@@ -1,0 +1,279 @@
+<resources>
+    <string name="app_name">TirePressure</string>
+    <string name="app_tagline">Precision tire pressure calculator for Road, Gravel &amp; MTB</string>
+    
+    <!-- Navigation -->
+    <string name="nav_bikes">My Bikes</string>
+    <string name="nav_settings">Settings</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Welcome to TirePressure</string>
+    <string name="onboarding_welcome_desc">Optimize your rolling resistance, traction and comfort with open-source scientific tire drop calculations.</string>
+    <string name="onboarding_weight_prompt">To get started, what is your regular riding weight?</string>
+    <string name="onboarding_weight_desc">This weight serves as the benchmark to calculate ideal tire pressures for all your bikes and wheelsets. You can edit it anytime in Settings.</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_step1_title">Multiple Wheelset Setups</string>
+    <string name="onboarding_step1_desc">Each bike can store multiple wheel &amp; tire configurations (summer slicks, winter training, mud tires...).</string>
+    <string name="onboarding_step2_title">Instant Multi-Surface Pressures</string>
+    <string name="onboarding_step2_desc">Check recommended pressures for any riding condition at a glance: dry roads, wet asphalt, or snow/sand.</string>
+    <string name="onboarding_step3_title">Safety &amp; ETRTO Standards</string>
+    <string name="onboarding_step3_desc">Get immediate safety warnings if recommended pressure exceeds Hookless straight-side limits (max 5.0 bar / 72.5 psi).</string>
+    <string name="onboarding_get_started">Get Started</string>
+    
+    <!-- Overview Screen (Home) -->
+    <string name="overview_title">My Bikes &amp; Pressures</string>
+    <string name="overview_add_bike">Add Bike</string>
+    <string name="overview_add_config">Add Setup</string>
+    <string name="overview_no_bikes">No bikes registered yet</string>
+    <string name="overview_no_bikes_desc">Add your first bike to view instant optimal pressures for every weather condition.</string>
+    <string name="overview_dry">Dry</string>
+    <string name="overview_wet">Wet</string>
+    <string name="overview_snow">Slippery / Snow</string>
+    
+    <!-- Bike & Config -->
+    <string name="bike_name_label">Bike Name</string>
+    <string name="bike_discipline">Discipline</string>
+    <string name="bike_weight">Bike Weight</string>
+    <string name="config_name_label">Setup Name</string>
+    <string name="config_default_name">Primary Wheelset</string>
+    <string name="luggage_weight">Luggage / Gear Weight</string>
+    <string name="wheel_front">Front Wheel</string>
+    <string name="wheel_rear">Rear Wheel</string>
+    <string name="tire_width">Tire Width</string>
+    <string name="inner_rim_width">Inner Rim Width</string>
+    <string name="rim_type">Rim Type</string>
+    <string name="tire_casing">Tire Casing</string>
+    <string name="wheel_diameter">Wheel Diameter</string>
+    <string name="mullet_mode">Mullet / MX Setup</string>
+    <string name="mullet_mode_same">Same (F &amp; R)</string>
+    <string name="mullet_mode_mixed">Mullet (F ≠ R)</string>
+    <string name="mullet_front_diameter">Front Wheel Diameter</string>
+    <string name="mullet_rear_diameter">Rear Wheel Diameter</string>
+    <string name="mullet_badge">Mullet Active: Larger front wheel for rollover &amp; agile rear wheel</string>
+    <string name="copy_front_to_rear">Copy Front to Rear</string>
+    
+    <!-- Actions -->
+    <string name="action_save">Save</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_duplicate">Duplicate</string>
+    <string name="action_create">Create</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_confirm">Confirm</string>
+    <string name="action_copy_pressures">Copy Pressures</string>
+    <string name="action_copied">Pressures copied to clipboard!</string>
+
+    <!-- Add Setup Dialog -->
+    <string name="add_setup_dialog_title">New Wheelset Setup</string>
+    <string name="add_setup_name_label">Setup Name</string>
+    <string name="setup_default_prefix">Setup</string>
+    <string name="add_setup_template_title">Starting Template</string>
+    <string name="add_setup_template_default">Default for this bike (%1$s)</string>
+    <string name="add_setup_template_default_desc">Loads this bike\'s specific weight (%1$s kg) and discipline with standard wheels.</string>
+    <string name="add_setup_template_existing">Use an existing setup as template</string>
+    <string name="add_setup_template_existing_desc">Copy wheel dimensions, tire widths, and casing from an existing setup on this bike.</string>
+    <string name="add_setup_select_existing">Select setup to copy:</string>
+
+    <!-- Disciplines -->
+    <string name="style_road">Road</string>
+    <string name="style_gravel">Gravel</string>
+    <string name="style_cross">Cyclocross</string>
+    <string name="style_xc_mtb">XC MTB</string>
+    <string name="style_trail_mtb">Trail MTB</string>
+    <string name="style_enduro_mtb">Enduro MTB</string>
+    <string name="style_dh_mtb">Downhill MTB</string>
+    <string name="style_fat">Fat Bike</string>
+    <string name="style_commute">Commute / Urban</string>
+
+    <!-- Bike Categories -->
+    <string name="bike_category_label">Bike Category</string>
+    <string name="bike_category_desc">Road, Gravel, MTB, or Commute</string>
+    <string name="category_road">Road</string>
+    <string name="category_gravel">Gravel</string>
+    <string name="category_mtb">MTB</string>
+    <string name="category_commute">Commute</string>
+
+    <!-- Rim types -->
+    <string name="rim_tubeless_straight">Tubeless Hookless (Straight Side)</string>
+    <string name="rim_tubeless_crochet">Tubeless Crocheted</string>
+    <string name="rim_tubes">Clincher (Tubes)</string>
+    <string name="rim_tubular">Tubular</string>
+    <string name="rim_zipp_303_xplr">Wide Aero Hookless (32mm+)</string>
+
+    <!-- Casings -->
+    <string name="casing_standard">Standard</string>
+    <string name="casing_thin">Thin / Supple</string>
+    <string name="casing_reinforced">Reinforced (EXO, Grid, etc.)</string>
+    <string name="casing_double">Double Casing (DH, DoubleDown)</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_rider_profile">Rider Profile</string>
+    <string name="settings_rider_weight">Rider Weight</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_language">App Language</string>
+    <string name="settings_lang_system">System Default</string>
+    <string name="settings_lang_fr">Français</string>
+    <string name="settings_lang_en">English</string>
+    <string name="settings_units">Units of Measure</string>
+    <string name="settings_mass_unit">Weight Unit</string>
+    <string name="settings_pressure_unit">Pressure Unit</string>
+    <string name="settings_backup">Backup &amp; Restore</string>
+    <string name="settings_export">Export Data (JSON)</string>
+    <string name="settings_import">Import Data (JSON)</string>
+    <string name="settings_reset">Reset Application</string>
+    <string name="settings_about">About &amp; Privacy</string>
+    <string name="settings_privacy_badge">100% Offline • Zero Tracking</string>
+    <string name="settings_reset_confirm_title">Reset all data?</string>
+    <string name="settings_reset_confirm_msg">All stored bikes and custom setups will be deleted.</string>
+
+    <!-- Widgets -->
+    <string name="widget_single_bike_name">Bike &amp; Profiles</string>
+    <string name="widget_single_bike_desc">Displays optimal tire pressures for a selected bike and its setups.</string>
+    <string name="widget_all_bikes_name">All Bikes &amp; Profiles</string>
+    <string name="widget_all_bikes_desc">Overview of all your bikes and wheelset profiles in a scrollable list.</string>
+    <string name="widget_config_title">Configure Widget</string>
+    <string name="widget_config_choose_bike">Select Bike</string>
+    <string name="widget_config_theme">Widget Appearance</string>
+    <string name="widget_theme_system">System (Auto)</string>
+    <string name="widget_theme_light">Light Mode</string>
+    <string name="widget_theme_dark">Dark Mode</string>
+    <string name="widget_config_apply">Apply Widget</string>
+    <string name="widget_front_abbr">F</string>
+    <string name="widget_rear_abbr">R</string>
+    <string name="widget_front_full">Front</string>
+    <string name="widget_rear_full">Rear</string>
+    <string name="widget_no_bikes">No bikes registered</string>
+    <string name="widget_no_bikes_desc">Open TirePressure to add your first bike.</string>
+    <string name="widget_tap_to_open">Tap to open app</string>
+    <string name="settings_widget_section">Home Screen Widgets</string>
+    <string name="settings_widget_desc">Check recommended tire pressures at a glance on your Android home screen.</string>
+
+    <!-- Bike Metadata & Units -->
+    <string name="bike_brand_label">Brand</string>
+    <string name="bike_model_label">Model</string>
+    <string name="bike_year_label">Year</string>
+    <string name="bike_name_placeholder">e.g. My Gravel, Trail MTB</string>
+    <string name="bike_brand_placeholder">e.g. Trek</string>
+    <string name="bike_model_placeholder">e.g. Supercaliber</string>
+    <string name="bike_year_placeholder">e.g. 2024</string>
+    <string name="bike_size_label">Frame Size</string>
+    <string name="bike_size_placeholder">e.g. M, L, 54 cm, 17.5\"</string>
+    <string name="edit_bike_dialog_title">Edit Bike Details</string>
+    <string name="edit_bike_dialog_desc">Update bike metadata and weight. Changing weight will recalculate all setups.</string>
+    <string name="unit_mm">mm</string>
+    <string name="unit_inch">in</string>
+    <string name="unit_kg">Kilograms (kg)</string>
+    <string name="unit_lb">Pounds (lb)</string>
+    <string name="unit_bar">Bar (bar)</string>
+    <string name="unit_psi">PSI (psi)</string>
+    <string name="unit_kpa">Kilopascals (kPa)</string>
+    <string name="tire_width_unit">Tire Width Unit</string>
+
+    <!-- Weather Surfaces Display -->
+    <string name="settings_surfaces_title">Calculated Surface Conditions</string>
+    <string name="settings_surfaces_desc">Select which weather conditions to calculate and display. Dry is always included.</string>
+    <string name="setup_surfaces_title">Calculated Surface Conditions</string>
+    <string name="setup_surfaces_desc">Choose which weather conditions to display for this profile (Dry is always required).</string>
+    <string name="surface_dry_mandatory">Dry (Required)</string>
+    <string name="surface_wet_label">Wet</string>
+    <string name="surface_snow_label">Snow / Slippery</string>
+    <string name="surfaces_count_3">3 conditions: Dry, Wet &amp; Snow</string>
+    <string name="surfaces_count_2_wet">2 conditions: Dry &amp; Wet</string>
+    <string name="surfaces_count_2_snow">2 conditions: Dry &amp; Snow</string>
+    <string name="surfaces_count_1">1 condition: Dry only</string>
+
+    <!-- Deletion Confirmations -->
+    <string name="delete_bike_dialog_title">Delete Bike?</string>
+    <string name="delete_bike_dialog_msg">Are you sure you want to delete \"%1$s\"? All profiles and wheelset setups for this bike will be permanently deleted.</string>
+    <string name="delete_bike_button">Delete Bike</string>
+    <string name="delete_bike_danger_zone">Danger Zone</string>
+    <string name="delete_bike_danger_desc">Permanently remove this bike and all its wheelset profiles from your garage.</string>
+    <string name="delete_setup_dialog_title">Delete Setup Profile?</string>
+    <string name="delete_setup_dialog_msg">Are you sure you want to delete profile \"%1$s\"?</string>
+    <string name="delete_setup_button">Delete Profile</string>
+
+    <!-- Overview Extra Strings -->
+    <string name="overview_rider_label">Rider:</string>
+    <string name="overview_pressures_display_in">Display pressures in:</string>
+    <string name="overview_bike_weight">Bike weight: %1$s kg</string>
+    <string name="overview_config_count_one">1 setup</string>
+    <string name="overview_config_count_many">%1$d setups</string>
+    <string name="overview_edit_bike_info">Edit bike details</string>
+    <string name="overview_configure_wheels">Configure wheels &amp; setups</string>
+    <string name="overview_duplicate_bike">Duplicate bike</string>
+    <string name="overview_edit_setup">Edit setup</string>
+    <string name="overview_duplicate_setup">Duplicate this setup</string>
+    <string name="overview_collapse_bike">Collapse bike</string>
+    <string name="overview_expand_bike">Expand bike</string>
+    <string name="overview_badge_default">Default bike</string>
+    <string name="overview_frame_size">Size %1$s</string>
+    <string name="overview_toast_copied">Pressures copied!</string>
+    <string name="overview_toast_setup_created">Setup \"%1$s\" created!</string>
+    <string name="overview_toast_bike_updated">Bike updated!</string>
+    <string name="overview_subtitle">Berto 15% Drop • Multi-Surfaces</string>
+    <string name="rim_tubes_short">Clincher</string>
+    <string name="rim_tubeless_badge">Tubeless</string>
+
+    <!-- Bike Edit & Collapsible Sections -->
+    <string name="bike_edit_title_new">New Bike</string>
+    <string name="bike_edit_title_edit">Edit Bike</string>
+    <string name="bike_general_info_section">General Information</string>
+    <string name="bike_general_info_readonly_notice">These details are shared across all profiles for this bike. To edit them, use \"Edit bike details\" on the home screen.</string>
+    <string name="bike_is_default_checkbox">Set as default bike</string>
+    <string name="bike_setups_section_title">Wheel &amp; Tire Setups (%1$d)</string>
+    <string name="bike_setups_section_desc">A bike can have multiple wheelset configurations for different rides.</string>
+    <string name="bike_setup_name_label">Setup Name</string>
+    <string name="bike_setup_style_label">Discipline / Riding style for this profile:</string>
+    <string name="bike_setup_style_default">Default (%1$s: %2$s)</string>
+    <string name="bike_setup_style_custom">Specific discipline: %1$s</string>
+    <string name="bike_name_required_error">Please enter a name for your bike</string>
+    <string name="bike_expand_section">Expand section</string>
+    <string name="bike_collapse_section">Collapse section</string>
+
+    <!-- Settings Grouped Sections & Localization -->
+    <string name="settings_units_surfaces_title">Units &amp; Calculations</string>
+    <string name="settings_units_surfaces_desc">Measurement units and calculated weather conditions</string>
+    <string name="settings_display_language_title">Display &amp; Language</string>
+    <string name="settings_display_language_desc">Visual theme and application language</string>
+    <string name="settings_language_desc">Switch between French and English, or match your Android system language.</string>
+    <string name="settings_backup_desc">Backup your bikes to an external JSON file or restore your profiles.</string>
+    <string name="settings_export_btn">Export</string>
+    <string name="settings_import_btn">Import</string>
+    <string name="settings_reset_all_data">Reset all data</string>
+    <string name="settings_reset_dialog_title">Reset all data?</string>
+    <string name="settings_reset_dialog_msg">All your bike configurations and preferences will be permanently erased.</string>
+    <string name="settings_import_dialog_title">Restore backup</string>
+    <string name="settings_import_dialog_msg">The file contains %1$d bike(s) backed up on %2$s.\n\nDo you want to replace all current bikes or merge with existing data?</string>
+    <string name="settings_import_merge">Merge</string>
+    <string name="settings_import_replace">Replace all</string>
+
+    <!-- About & Privacy -->
+    <string name="about_privacy_title">About &amp; Privacy</string>
+    <string name="about_offline_title">🔒 100% Offline • Zero Tracking</string>
+    <string name="about_offline_desc">This application requires no internet connection, no account, transmits zero data, and contains no ads or trackers.</string>
+    <string name="about_physics_title">⚙️ Tire Physics &amp; Open Source Model</string>
+    <string name="about_physics_desc" formatted="false">Open source algorithm based on Frank Berto\'s research (15% optimal tire drop deflection), rolling impedance modeling, and ETRTO / ISO safety standards. Reliable recommendations calculated 100% offline.</string>
+    <string name="about_version_license">Version %1$s • Open Source (MIT License)</string>
+    <string name="overview_front">Front</string>
+    <string name="overview_rear">Rear</string>
+
+    <!-- App Info Screen -->
+    <string name="app_info_title">App Info</string>
+    <string name="app_info_github_title">Source code on GitHub</string>
+    <string name="app_info_github_url">melvinmajor/TirePressure</string>
+
+    <!-- Add Setup Dialog Extra Strings -->
+    <string name="add_setup_discipline_title">Discipline / Practice for this profile:</string>
+    <string name="add_setup_summary_title">Setup characteristics:</string>
+    <string name="add_setup_summary_rider">Reference rider weight: %1$s kg</string>
+    <string name="add_setup_summary_bike">Bike weight: %1$s kg</string>
+    <string name="add_setup_summary_luggage">Luggage weight: %1$s kg</string>
+    <string name="add_setup_summary_front_wheel">Front rim: %1$s mm (%2$s)</string>
+    <string name="add_setup_summary_front_tire">Front tire: %1$s mm (%2$s)</string>
+    <string name="add_setup_summary_rear_wheel">Rear rim: %1$s mm (%2$s)</string>
+    <string name="add_setup_summary_rear_tire">Rear tire: %1$s mm (%2$s)</string>
+</resources>
