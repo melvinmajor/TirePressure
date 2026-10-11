@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
 enum class PressureUnit(val symbol: String, val displayName: String, @StringRes val labelRes: Int, val decimals: Int) {
     BAR("bar", "Bar", R.string.unit_bar, 2),
     PSI("psi", "PSI", R.string.unit_psi, 1),
-    KPA("kPa", "Kilopascal", R.string.unit_kpa, 1);
+    KPA("kPa", "kPa", R.string.unit_kpa, 1);
 
     fun format(pressureInMbar: Double): String {
         val converted = UnitConverter.fromMbar(pressureInMbar, this)
@@ -34,14 +34,14 @@ enum class MassUnit(val symbol: String, val displayName: String, @StringRes val 
 
 @Serializable
 enum class AppTheme(val displayName: String, @StringRes val labelRes: Int) {
-    SYSTEM("Système / System", R.string.settings_theme_system),
+    SYSTEM("Système (automatique)", R.string.settings_theme_system),
     LIGHT("Clair / Light", R.string.settings_theme_light),
     DARK("Sombre / Dark", R.string.settings_theme_dark)
 }
 
 @Serializable
 enum class AppLanguage(val code: String, val displayName: String, @StringRes val labelRes: Int) {
-    SYSTEM("", "Langue système (System Default)", R.string.settings_lang_system),
+    SYSTEM("", "Système (automatique)", R.string.settings_lang_system),
     FRENCH("fr", "Français", R.string.settings_lang_fr),
     ENGLISH("en", "English", R.string.settings_lang_en)
 }

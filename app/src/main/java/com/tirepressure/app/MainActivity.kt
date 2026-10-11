@@ -6,10 +6,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
@@ -59,7 +64,7 @@ class MainActivity : ComponentActivity() {
             )
 
             val settingsState by settingsViewModel.uiState.collectAsState()
-            val isOnboardingCompleted by app.preferencesRepository.isOnboardingCompletedFlow.collectAsState(initial = false)
+            val isOnboardingCompleted by app.preferencesRepository.isOnboardingCompletedFlow.collectAsState(initial = null)
 
             // Résolution dynamique de la locale pour le support bilingue (EN / FR)
             val currentLocale = remember(settingsState.language) {
@@ -91,15 +96,24 @@ class MainActivity : ComponentActivity() {
                 LocalContext provides localizedContext
             ) {
                 TirePressureTheme(appTheme = settingsState.theme) {
-                    val navController = rememberNavController()
-                    AppNavigation(
-                        navController = navController,
-                        overviewViewModel = overviewViewModel,
-                        settingsViewModel = settingsViewModel,
-                        bikeRepository = app.bikeRepository,
-                        preferencesRepository = app.preferencesRepository,
-                        isOnboardingCompleted = isOnboardingCompleted
-                    )
+                    val completed = isOnboardingCompleted
+                    if (completed != null) {
+                        val navController = rememberNavController()
+                        AppNavigation(
+                            navController = navController,
+                            overviewViewModel = overviewViewModel,
+                            settingsViewModel = settingsViewModel,
+                            bikeRepository = app.bikeRepository,
+                            preferencesRepository = app.preferencesRepository,
+                            isOnboardingCompleted = completed
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.background)
+                        )
+                    }
                 }
             }
         }

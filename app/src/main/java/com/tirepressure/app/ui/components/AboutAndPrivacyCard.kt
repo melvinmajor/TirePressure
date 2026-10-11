@@ -46,7 +46,7 @@ fun AboutAndPrivacyCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = stringResource(id = R.string.about_version_license, "1.0.0"),
+                text = stringResource(id = R.string.about_version_license, "1.1.0-beta"),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.SemiBold

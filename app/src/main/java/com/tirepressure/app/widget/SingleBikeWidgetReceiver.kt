@@ -95,7 +95,6 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
                 remoteViews.setTextViewText(R.id.widget_bike_name, context.getString(R.string.app_name))
                 remoteViews.setTextViewText(R.id.widget_discipline_badge, "")
                 remoteViews.setTextViewText(R.id.widget_bike_weight, "")
-                remoteViews.setTextViewText(R.id.widget_rider_info, "")
                 appWidgetManager.updateAppWidget(appWidgetId, remoteViews)
                 return
             }
@@ -108,10 +107,6 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
             remoteViews.setTextViewText(
                 R.id.widget_bike_weight,
                 String.format(Locale.getDefault(), "• %.1f kg", selectedBike.bikeWeightKg)
-            )
-            remoteViews.setTextViewText(
-                R.id.widget_rider_info,
-                String.format(Locale.getDefault(), "👤 %.1f kg", riderWeight)
             )
 
             // Populate Setups

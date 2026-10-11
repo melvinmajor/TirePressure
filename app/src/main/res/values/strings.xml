@@ -26,9 +26,10 @@
     <string name="overview_add_config">Add Setup</string>
     <string name="overview_no_bikes">No bikes registered yet</string>
     <string name="overview_no_bikes_desc">Add your first bike to view instant optimal pressures for every weather condition.</string>
+    <string name="onboarding_weight_error">Please enter a valid weight (30 to 200 kg)</string>
     <string name="overview_dry">Dry</string>
-    <string name="overview_wet">Wet</string>
-    <string name="overview_snow">Slippery / Snow</string>
+    <string name="overview_wet">Rain</string>
+    <string name="overview_snow">Snow</string>
     
     <!-- Bike & Config -->
     <string name="bike_name_label">Bike Name</string>
@@ -53,6 +54,7 @@
     <string name="copy_front_to_rear">Copy Front to Rear</string>
     
     <!-- Actions -->
+    <string name="action_add">Add</string>
     <string name="action_save">Save</string>
     <string name="action_edit">Edit</string>
     <string name="action_delete">Delete</string>
@@ -111,11 +113,11 @@
     <string name="settings_rider_profile">Rider Profile</string>
     <string name="settings_rider_weight">Rider Weight</string>
     <string name="settings_appearance">Appearance</string>
-    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_system">System (auto)</string>
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_language">App Language</string>
-    <string name="settings_lang_system">System Default</string>
+    <string name="settings_lang_system">System (auto)</string>
     <string name="settings_lang_fr">Français</string>
     <string name="settings_lang_en">English</string>
     <string name="settings_units">Units of Measure</string>
@@ -139,8 +141,8 @@
     <string name="widget_config_choose_bike">Select Bike</string>
     <string name="widget_config_theme">Widget Appearance</string>
     <string name="widget_theme_system">System (Auto)</string>
-    <string name="widget_theme_light">Light Mode</string>
-    <string name="widget_theme_dark">Dark Mode</string>
+    <string name="widget_theme_light">Light</string>
+    <string name="widget_theme_dark">Dark</string>
     <string name="widget_config_apply">Apply Widget</string>
     <string name="widget_front_abbr">F</string>
     <string name="widget_rear_abbr">R</string>
@@ -149,7 +151,7 @@
     <string name="widget_no_bikes">No bikes registered</string>
     <string name="widget_no_bikes_desc">Open TirePressure to add your first bike.</string>
     <string name="widget_tap_to_open">Tap to open app</string>
-    <string name="settings_widget_section">Home Screen Widgets</string>
+    <string name="settings_widget_section">Widgets</string>
     <string name="settings_widget_desc">Check recommended tire pressures at a glance on your Android home screen.</string>
 
     <!-- Bike Metadata & Units -->
@@ -162,15 +164,15 @@
     <string name="bike_year_placeholder">e.g. 2024</string>
     <string name="bike_size_label">Frame Size</string>
     <string name="bike_size_placeholder">e.g. M, L, 54 cm, 17.5\"</string>
-    <string name="edit_bike_dialog_title">Edit Bike Details</string>
-    <string name="edit_bike_dialog_desc">Update bike metadata and weight. Changing weight will recalculate all setups.</string>
+    <string name="edit_bike_dialog_title">Edit Bike</string>
+    <string name="edit_bike_dialog_desc">Changing weight will recalculate all setups.</string>
     <string name="unit_mm">mm</string>
     <string name="unit_inch">in</string>
     <string name="unit_kg">Kilograms (kg)</string>
     <string name="unit_lb">Pounds (lb)</string>
-    <string name="unit_bar">Bar (bar)</string>
-    <string name="unit_psi">PSI (psi)</string>
-    <string name="unit_kpa">Kilopascals (kPa)</string>
+    <string name="unit_bar">Bar</string>
+    <string name="unit_psi">PSI</string>
+    <string name="unit_kpa">kPa</string>
     <string name="tire_width_unit">Tire Width Unit</string>
 
     <!-- Weather Surfaces Display -->
@@ -179,10 +181,10 @@
     <string name="setup_surfaces_title">Calculated Surface Conditions</string>
     <string name="setup_surfaces_desc">Choose which weather conditions to display for this profile (Dry is always required).</string>
     <string name="surface_dry_mandatory">Dry (Required)</string>
-    <string name="surface_wet_label">Wet</string>
-    <string name="surface_snow_label">Snow / Slippery</string>
-    <string name="surfaces_count_3">3 conditions: Dry, Wet &amp; Snow</string>
-    <string name="surfaces_count_2_wet">2 conditions: Dry &amp; Wet</string>
+    <string name="surface_wet_label">Rain</string>
+    <string name="surface_snow_label">Snow</string>
+    <string name="surfaces_count_3">3 conditions: Dry, Rain &amp; Snow</string>
+    <string name="surfaces_count_2_wet">2 conditions: Dry &amp; Rain</string>
     <string name="surfaces_count_2_snow">2 conditions: Dry &amp; Snow</string>
     <string name="surfaces_count_1">1 condition: Dry only</string>
 
@@ -215,12 +217,14 @@
     <string name="overview_toast_setup_created">Setup \"%1$s\" created!</string>
     <string name="overview_toast_bike_updated">Bike updated!</string>
     <string name="overview_subtitle">Berto 15% Drop • Multi-Surfaces</string>
+    <string name="overview_view_simplified">Simplified view</string>
+    <string name="overview_view_detailed">Detailed view</string>
     <string name="rim_tubes_short">Clincher</string>
     <string name="rim_tubeless_badge">Tubeless</string>
 
     <!-- Bike Edit & Collapsible Sections -->
     <string name="bike_edit_title_new">New Bike</string>
-    <string name="bike_edit_title_edit">Edit Bike</string>
+    <string name="bike_edit_title_edit">Edit Setup</string>
     <string name="bike_general_info_section">General Information</string>
     <string name="bike_general_info_readonly_notice">These details are shared across all profiles for this bike. To edit them, use \"Edit bike details\" on the home screen.</string>
     <string name="bike_is_default_checkbox">Set as default bike</string>

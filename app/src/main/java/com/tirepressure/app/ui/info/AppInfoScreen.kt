@@ -75,7 +75,7 @@ fun AppInfoScreen(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "v1.0.0",
+                    text = "v1.1.0-beta",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

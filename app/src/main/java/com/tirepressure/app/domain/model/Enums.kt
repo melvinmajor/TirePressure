@@ -64,8 +64,8 @@ enum class TireCasing(val displayName: String, @StringRes val labelRes: Int) {
 @Serializable
 enum class SurfaceCondition(val displayName: String, @StringRes val labelRes: Int) {
     DRY("Sec (Dry)", R.string.overview_dry),
-    WET("Mouillé / Humide (Wet)", R.string.overview_wet),
-    SNOW("Glissant / Neige (Snow/Sand)", R.string.overview_snow);
+    WET("Pluie (Rain)", R.string.overview_wet),
+    SNOW("Neige (Snow)", R.string.overview_snow);
 }
 
 @Serializable

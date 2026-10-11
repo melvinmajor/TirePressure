@@ -10,22 +10,27 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tirepressure.app.R
@@ -50,6 +55,11 @@ fun OverviewScreen(
     val context = LocalContext.current
     var bikeForNewSetup by remember { mutableStateOf<BikeProfile?>(null) }
     var bikeToEditInfo by remember { mutableStateOf<BikeProfile?>(null) }
+    var isSimplifiedView by rememberSaveable { mutableStateOf(false) }
+
+    val configuration = LocalConfiguration.current
+    val isTabletOrUnfolded = configuration.smallestScreenWidthDp >= 600
+    val columnsCount = if (isTabletOrUnfolded) 2 else 1
 
     Scaffold(
         topBar = {
@@ -82,6 +92,16 @@ fun OverviewScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { isSimplifiedView = !isSimplifiedView }) {
+                        Icon(
+                            imageVector = if (isSimplifiedView) Icons.Default.ViewAgenda else Icons.Default.TableRows,
+                            contentDescription = if (isSimplifiedView) {
+                                stringResource(id = R.string.overview_view_detailed)
+                            } else {
+                                stringResource(id = R.string.overview_view_simplified)
+                            }
+                        )
+                    }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
                             imageVector = Icons.Default.Settings,
@@ -91,30 +111,20 @@ fun OverviewScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
-        },
-        floatingActionButton = {
-            if (state.bikesWithPressures.isNotEmpty()) {
-                FloatingActionButton(
-                    onClick = onNavigateToAddBike,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(id = R.string.overview_add_bike))
-                }
-            }
         }
     ) { paddingValues ->
-        LazyColumn(
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(columnsCount),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(top = 8.dp, bottom = 88.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp)
         ) {
             // Bandeau de réglages rapides : Poids cycliste & Bascule d'unité de pression
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -128,30 +138,20 @@ fun OverviewScreen(
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "${stringResource(id = R.string.overview_rider_label)} ${state.massUnit.format(state.riderWeightKg)} ${state.massUnit.symbol}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-
-                            TextButton(
-                                onClick = onNavigateToSettings,
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                            ) {
-                                Text(stringResource(id = R.string.action_edit), style = MaterialTheme.typography.labelSmall)
-                            }
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "${stringResource(id = R.string.overview_rider_label)} ${state.massUnit.format(state.riderWeightKg)} ${state.massUnit.symbol}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
 
                         // Sélecteur d'unité de pression instantané
@@ -180,7 +180,7 @@ fun OverviewScreen(
 
             // Si aucun vélo enregistré
             if (state.bikesWithPressures.isEmpty()) {
-                item {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -221,43 +221,81 @@ fun OverviewScreen(
                 }
             } else {
                 items(state.bikesWithPressures, key = { it.bike.id }) { bikeOverview ->
-                    BikeOverviewCard(
-                        bikeOverview = bikeOverview,
-                        pressureUnit = state.pressureUnit,
-                        showWetSurface = state.showWetSurface,
-                        showSnowSurface = state.showSnowSurface,
-                        onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
-                        onEditBikeInfo = { bikeToEditInfo = bikeOverview.bike },
-                        onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike) },
-                        onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
-                        onAddSetup = { bikeForNewSetup = bikeOverview.bike },
-                        onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup) },
-                        onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
-                        onCopyPressures = { setupResult ->
-                            val dryLabel = context.getString(R.string.overview_dry)
-                            val wetLabel = context.getString(R.string.overview_wet)
-                            val snowLabel = context.getString(R.string.overview_snow)
-                            val frontAbbr = context.getString(R.string.widget_front_abbr)
-                            val rearAbbr = context.getString(R.string.widget_rear_abbr)
+                    val copyPressuresAction: (SetupMultiSurfaceResult) -> Unit = { setupResult ->
+                        val dryLabel = context.getString(R.string.overview_dry)
+                        val wetLabel = context.getString(R.string.overview_wet)
+                        val snowLabel = context.getString(R.string.overview_snow)
+                        val frontAbbr = context.getString(R.string.widget_front_abbr)
+                        val rearAbbr = context.getString(R.string.widget_rear_abbr)
 
-                            val textToCopy = buildString {
-                                val effStyle = setupResult.setup.getEffectiveRideStyle(bikeOverview.bike.category)
-                                val catName = context.getString(bikeOverview.bike.category.labelRes)
-                                val styleName = context.getString(effStyle.labelRes)
-                                appendLine("🚴‍♂️ ${bikeOverview.bike.name} ($catName) - ${setupResult.setup.name} [$styleName]")
-                                appendLine("☀️ $dryLabel : $frontAbbr ${state.pressureUnit.format(setupResult.dryResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.dryResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
-                                if (state.showWetSurface) {
-                                    appendLine("🌧️ $wetLabel : $frontAbbr ${state.pressureUnit.format(setupResult.wetResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.wetResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
-                                }
-                                if (state.showSnowSurface) {
-                                    appendLine("❄️ $snowLabel : $frontAbbr ${state.pressureUnit.format(setupResult.snowResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.snowResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
-                                }
+                        val textToCopy = buildString {
+                            val effStyle = setupResult.setup.getEffectiveRideStyle(bikeOverview.bike.category)
+                            val catName = context.getString(bikeOverview.bike.category.labelRes)
+                            val styleName = context.getString(effStyle.labelRes)
+                            appendLine("🚴‍♂️ ${bikeOverview.bike.name} ($catName) - ${setupResult.setup.name} [$styleName]")
+                            appendLine("☀️ $dryLabel : $frontAbbr ${state.pressureUnit.format(setupResult.dryResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.dryResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
+                            if (state.showWetSurface) {
+                                appendLine("🌧️ $wetLabel : $frontAbbr ${state.pressureUnit.format(setupResult.wetResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.wetResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
                             }
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            clipboard.setPrimaryClip(ClipData.newPlainText("Pressions", textToCopy.trimEnd()))
-                            Toast.makeText(context, context.getString(R.string.overview_toast_copied), Toast.LENGTH_SHORT).show()
+                            if (state.showSnowSurface) {
+                                appendLine("❄️ $snowLabel : $frontAbbr ${state.pressureUnit.format(setupResult.snowResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.snowResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
+                            }
                         }
-                    )
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        clipboard.setPrimaryClip(ClipData.newPlainText("Pressions", textToCopy.trimEnd()))
+                        Toast.makeText(context, context.getString(R.string.overview_toast_copied), Toast.LENGTH_SHORT).show()
+                    }
+
+                    if (isSimplifiedView) {
+                        BikeOverviewCardSimplified(
+                            bikeOverview = bikeOverview,
+                            pressureUnit = state.pressureUnit,
+                            showWetSurface = state.showWetSurface,
+                            showSnowSurface = state.showSnowSurface,
+                            onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
+                            onEditBikeInfo = { bikeToEditInfo = bikeOverview.bike },
+                            onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike) },
+                            onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
+                            onAddSetup = { bikeForNewSetup = bikeOverview.bike },
+                            onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup) },
+                            onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
+                            onCopyPressures = copyPressuresAction
+                        )
+                    } else {
+                        BikeOverviewCard(
+                            bikeOverview = bikeOverview,
+                            pressureUnit = state.pressureUnit,
+                            showWetSurface = state.showWetSurface,
+                            showSnowSurface = state.showSnowSurface,
+                            onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
+                            onEditBikeInfo = { bikeToEditInfo = bikeOverview.bike },
+                            onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike) },
+                            onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
+                            onAddSetup = { bikeForNewSetup = bikeOverview.bike },
+                            onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup) },
+                            onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
+                            onCopyPressures = copyPressuresAction
+                        )
+                    }
+                }
+
+                // Bouton visible après la liste des vélos pour ajouter un vélo
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Button(
+                        onClick = onNavigateToAddBike,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(id = R.string.overview_add_bike),
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                 }
             }
         }
@@ -347,10 +385,6 @@ fun OverviewScreen(
                     viewModel.updateBike(updatedBike)
                     bikeToEditInfo = null
                     Toast.makeText(context, context.getString(R.string.overview_toast_bike_updated), Toast.LENGTH_SHORT).show()
-                },
-                onDelete = {
-                    bikeToEditInfo = null
-                    viewModel.requestDeleteBike(bike)
                 }
             )
         }
@@ -400,13 +434,16 @@ private fun BikeOverviewCard(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .weight(1f, fill = false)
+                        .weight(1f)
                         .clickable { isExpanded = !isExpanded }
                 ) {
                     Text(
                         text = bike.name,
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                     if (bike.isDefault) {
                         Spacer(modifier = Modifier.width(6.dp))
@@ -420,15 +457,6 @@ private fun BikeOverviewCard(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onEditBikeInfo) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = stringResource(id = R.string.overview_edit_bike_info),
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
                     Box {
                         IconButton(onClick = { bikeMenuExpanded = true }) {
                             Icon(Icons.Default.MoreVert, contentDescription = "Options")
@@ -627,51 +655,50 @@ private fun BikeOverviewCard(
                                     }
                                 }
 
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box {
                                     IconButton(
-                                        onClick = { onCopyPressures(setupResult) },
+                                        onClick = { setupMenuExpanded = true },
                                         modifier = Modifier.size(32.dp)
                                     ) {
-                                        Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.action_copy_pressures), modifier = Modifier.size(16.dp))
+                                        Icon(Icons.Default.MoreHoriz, contentDescription = "Options", modifier = Modifier.size(18.dp))
                                     }
-
-                                    Box {
-                                        IconButton(
-                                            onClick = { setupMenuExpanded = true },
-                                            modifier = Modifier.size(32.dp)
-                                        ) {
-                                            Icon(Icons.Default.MoreHoriz, contentDescription = "Options", modifier = Modifier.size(18.dp))
-                                        }
-                                        DropdownMenu(
-                                            expanded = setupMenuExpanded,
-                                            onDismissRequest = { setupMenuExpanded = false }
-                                        ) {
-                                            DropdownMenuItem(
-                                                text = { Text(stringResource(id = R.string.overview_edit_setup)) },
-                                                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                                                onClick = {
-                                                    setupMenuExpanded = false
-                                                    onEditBike()
-                                                }
-                                            )
-                                            DropdownMenuItem(
-                                                text = { Text(stringResource(id = R.string.overview_duplicate_setup)) },
-                                                leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
-                                                onClick = {
-                                                    setupMenuExpanded = false
-                                                    onDuplicateSetup(setup)
-                                                }
-                                            )
-                                            if (bikeOverview.setupsWithPressures.size > 1) {
-                                                DropdownMenuItem(
-                                                    text = { Text(stringResource(R.string.delete_setup_button), color = MaterialTheme.colorScheme.error) },
-                                                    leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                                                    onClick = {
-                                                        setupMenuExpanded = false
-                                                        onDeleteSetup(setup)
-                                                    }
-                                                )
+                                    DropdownMenu(
+                                        expanded = setupMenuExpanded,
+                                        onDismissRequest = { setupMenuExpanded = false }
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(id = R.string.overview_edit_setup)) },
+                                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                            onClick = {
+                                                setupMenuExpanded = false
+                                                onEditBike()
                                             }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(id = R.string.action_copy_pressures)) },
+                                            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                                            onClick = {
+                                                setupMenuExpanded = false
+                                                onCopyPressures(setupResult)
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(id = R.string.overview_duplicate_setup)) },
+                                            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                                            onClick = {
+                                                setupMenuExpanded = false
+                                                onDuplicateSetup(setup)
+                                            }
+                                        )
+                                        if (bikeOverview.setupsWithPressures.size > 1) {
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.delete_setup_button), color = MaterialTheme.colorScheme.error) },
+                                                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                                                onClick = {
+                                                    setupMenuExpanded = false
+                                                    onDeleteSetup(setup)
+                                                }
+                                            )
                                         }
                                     }
                                 }
@@ -795,6 +822,9 @@ private fun SurfacePressureBadge(
 
             Spacer(modifier = Modifier.height(6.dp))
 
+            val frontAbbr = stringResource(R.string.widget_front_abbr)
+            val rearAbbr = stringResource(R.string.widget_rear_abbr)
+
             // AVANT
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -802,7 +832,7 @@ private fun SurfacePressureBadge(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "AV",
+                    text = frontAbbr,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
@@ -823,7 +853,7 @@ private fun SurfacePressureBadge(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "AR",
+                    text = rearAbbr,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
@@ -840,6 +870,360 @@ private fun SurfacePressureBadge(
                 Text(
                     text = "⚠️ Max Hookless",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BikeOverviewCardSimplified(
+    bikeOverview: BikeOverviewData,
+    pressureUnit: PressureUnit,
+    showWetSurface: Boolean,
+    showSnowSurface: Boolean,
+    onEditBike: () -> Unit,
+    onEditBikeInfo: () -> Unit,
+    onDuplicateBike: () -> Unit,
+    onDeleteBike: () -> Unit,
+    onAddSetup: () -> Unit,
+    onDuplicateSetup: (WheelSetup) -> Unit,
+    onDeleteSetup: (WheelSetup) -> Unit,
+    onCopyPressures: (SetupMultiSurfaceResult) -> Unit
+) {
+    val bike = bikeOverview.bike
+    var bikeMenuExpanded by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(
+            width = if (bike.isDefault) 1.5.dp else 1.dp,
+            color = if (bike.isDefault) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // En-tête compact du vélo
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = bike.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (bike.isDefault) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = stringResource(id = R.string.overview_badge_default),
+                            tint = Color(0xFFFFB800),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                        Text(
+                            text = stringResource(id = bike.category.labelRes),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "• ${String.format(java.util.Locale.US, "%.1f", bike.bikeWeightKg)} kg",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Box {
+                    IconButton(
+                        onClick = { bikeMenuExpanded = true },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Options",
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = bikeMenuExpanded,
+                        onDismissRequest = { bikeMenuExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(id = R.string.overview_edit_bike_info)) },
+                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                            onClick = {
+                                bikeMenuExpanded = false
+                                onEditBikeInfo()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(id = R.string.overview_configure_wheels)) },
+                            leadingIcon = { Icon(Icons.Default.Tune, contentDescription = null) },
+                            onClick = {
+                                bikeMenuExpanded = false
+                                onEditBike()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(id = R.string.overview_add_config)) },
+                            leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) },
+                            onClick = {
+                                bikeMenuExpanded = false
+                                onAddSetup()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(id = R.string.overview_duplicate_bike)) },
+                            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                            onClick = {
+                                bikeMenuExpanded = false
+                                onDuplicateBike()
+                            }
+                        )
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.delete_bike_button), color = MaterialTheme.colorScheme.error) },
+                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                            onClick = {
+                                bikeMenuExpanded = false
+                                onDeleteBike()
+                            }
+                        )
+                    }
+                }
+            }
+
+            // Liste compacte des configurations et calculs de pression météo
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                bikeOverview.setupsWithPressures.forEach { setupResult ->
+                    val setup = setupResult.setup
+                    var setupMenuExpanded by remember { mutableStateOf(false) }
+
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onCopyPressures(setupResult) },
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            // En-tête profil : nom, discipline, options
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.DonutLarge,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(5.dp))
+                                    Text(
+                                        text = setup.name,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f, fill = false)
+                                    )
+                                    val effStyle = setup.getEffectiveRideStyle(bike.category)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(4.dp),
+                                        color = MaterialTheme.colorScheme.secondaryContainer
+                                    ) {
+                                        Text(
+                                            text = stringResource(id = effStyle.labelRes),
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+
+                                Box {
+                                    IconButton(
+                                        onClick = { setupMenuExpanded = true },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.MoreHoriz,
+                                            contentDescription = "Options",
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                    DropdownMenu(
+                                        expanded = setupMenuExpanded,
+                                        onDismissRequest = { setupMenuExpanded = false }
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(id = R.string.overview_edit_setup)) },
+                                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                            onClick = {
+                                                setupMenuExpanded = false
+                                                onEditBike()
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(id = R.string.action_copy_pressures)) },
+                                            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                                            onClick = {
+                                                setupMenuExpanded = false
+                                                onCopyPressures(setupResult)
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(id = R.string.overview_duplicate_setup)) },
+                                            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                                            onClick = {
+                                                setupMenuExpanded = false
+                                                onDuplicateSetup(setup)
+                                            }
+                                        )
+                                        if (bikeOverview.setupsWithPressures.size > 1) {
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.delete_setup_button), color = MaterialTheme.colorScheme.error) },
+                                                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                                                onClick = {
+                                                    setupMenuExpanded = false
+                                                    onDeleteSetup(setup)
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Pressions calculées selon les conditions de surface choisies dans les paramètres
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                SimplifiedPressureBadge(
+                                    surfaceLabel = "☀️ " + stringResource(R.string.overview_dry),
+                                    frontPressure = pressureUnit.format(setupResult.dryResult.front.pressureMbar),
+                                    rearPressure = pressureUnit.format(setupResult.dryResult.rear.pressureMbar),
+                                    unitSymbol = pressureUnit.symbol,
+                                    isWarning = setupResult.dryResult.hasHooklessWarning,
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                                if (showWetSurface) {
+                                    SimplifiedPressureBadge(
+                                        surfaceLabel = "🌧️ " + stringResource(R.string.overview_wet),
+                                        frontPressure = pressureUnit.format(setupResult.wetResult.front.pressureMbar),
+                                        rearPressure = pressureUnit.format(setupResult.wetResult.rear.pressureMbar),
+                                        unitSymbol = pressureUnit.symbol,
+                                        isWarning = setupResult.wetResult.hasHooklessWarning,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+
+                                if (showSnowSurface) {
+                                    SimplifiedPressureBadge(
+                                        surfaceLabel = "❄️ " + stringResource(R.string.overview_snow),
+                                        frontPressure = pressureUnit.format(setupResult.snowResult.front.pressureMbar),
+                                        rearPressure = pressureUnit.format(setupResult.snowResult.rear.pressureMbar),
+                                        unitSymbol = pressureUnit.symbol,
+                                        isWarning = setupResult.snowResult.hasHooklessWarning,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SimplifiedPressureBadge(
+    surfaceLabel: String,
+    frontPressure: String,
+    rearPressure: String,
+    unitSymbol: String,
+    isWarning: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val frontAbbr = stringResource(R.string.widget_front_abbr)
+    val rearAbbr = stringResource(R.string.widget_rear_abbr)
+
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(
+            width = if (isWarning) 1.5.dp else 1.dp,
+            color = if (isWarning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = surfaceLabel,
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = "$frontAbbr $frontPressure / $rearAbbr $rearPressure $unitSymbol",
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (isWarning) {
+                Text(
+                    text = "⚠️ Hookless",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
                     color = MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.Bold
                 )

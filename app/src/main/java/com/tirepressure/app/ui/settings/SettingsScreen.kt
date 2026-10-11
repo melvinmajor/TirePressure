@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.tirepressure.app.R
 import com.tirepressure.app.core.model.AppLanguage
@@ -41,7 +42,7 @@ fun SettingsScreen(
 
     // États de réduction des sections
     var isUnitsExpanded by remember { mutableStateOf(true) }
-    var isDisplayExpanded by remember { mutableStateOf(true) }
+    var isDisplayExpanded by remember { mutableStateOf(false) }
     var isWidgetsExpanded by remember { mutableStateOf(false) }
     var isBackupExpanded by remember { mutableStateOf(false) }
 
@@ -187,31 +188,51 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     FilterChip(
                         selected = true,
                         onClick = { /* Toujours obligatoire */ },
-                        label = { Text("☀️ " + stringResource(R.string.overview_dry)) },
-                        leadingIcon = { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                        label = {
+                            Text(
+                                text = "☀️ " + stringResource(R.string.overview_dry),
+                                maxLines = 1,
+                                style = MaterialTheme.typography.labelMedium,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center
+                            )
+                        },
+                        modifier = Modifier.weight(1f)
                     )
 
                     FilterChip(
                         selected = state.showWetSurface,
                         onClick = { viewModel.setShowWetSurface(!state.showWetSurface) },
-                        label = { Text("🌧️ " + stringResource(R.string.overview_wet)) },
-                        leadingIcon = if (state.showWetSurface) {
-                            { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                        } else null
+                        label = {
+                            Text(
+                                text = "🌧️ " + stringResource(R.string.overview_wet),
+                                maxLines = 1,
+                                style = MaterialTheme.typography.labelMedium,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center
+                            )
+                        },
+                        modifier = Modifier.weight(1f)
                     )
 
                     FilterChip(
                         selected = state.showSnowSurface,
                         onClick = { viewModel.setShowSnowSurface(!state.showSnowSurface) },
-                        label = { Text("❄️ " + stringResource(R.string.overview_snow)) },
-                        leadingIcon = if (state.showSnowSurface) {
-                            { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                        } else null
+                        label = {
+                            Text(
+                                text = "❄️ " + stringResource(R.string.overview_snow),
+                                maxLines = 1,
+                                style = MaterialTheme.typography.labelMedium,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center
+                            )
+                        },
+                        modifier = Modifier.weight(1f)
                     )
                 }
 

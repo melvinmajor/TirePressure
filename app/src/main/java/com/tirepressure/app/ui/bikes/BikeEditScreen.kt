@@ -77,7 +77,7 @@ fun BikeEditScreen(
     var nameError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(bikeId) {
-        if (bikeId != "new") {
+        if (!isLoaded && bikeId != "new") {
             val existing = bikeRepository.getBikeById(bikeId)
             if (existing != null) {
                 currentId = existing.id
@@ -497,22 +497,28 @@ fun BikeEditScreen(
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        TextButton(onClick = { showAddSetupDialog = true }) {
+                        OutlinedButton(
+                            onClick = { showAddSetupDialog = true },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
                             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(id = R.string.overview_add_config))
+                            Text(stringResource(id = R.string.action_add), maxLines = 1)
                         }
 
                         if (setups.size > 1) {
-                            TextButton(
+                            OutlinedButton(
                                 onClick = { setupToDeleteConfirmation = activeSetup },
-                                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                             ) {
-                                Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(stringResource(id = R.string.delete_setup_button))
+                                Text(stringResource(id = R.string.action_delete), color = MaterialTheme.colorScheme.error, maxLines = 1)
                             }
                         }
                     }

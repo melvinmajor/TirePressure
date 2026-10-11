@@ -26,9 +26,10 @@
     <string name="overview_add_config">Ajouter une configuration</string>
     <string name="overview_no_bikes">Aucun vélo pour le moment</string>
     <string name="overview_no_bikes_desc">Ajoutez votre premier vélo pour générer instantanément vos pressions optimales selon la météo.</string>
+    <string name="onboarding_weight_error">Veuillez entrer un poids valide (30 à 200 kg)</string>
     <string name="overview_dry">Sec</string>
-    <string name="overview_wet">Mouillé</string>
-    <string name="overview_snow">Glissant / Neige</string>
+    <string name="overview_wet">Pluie</string>
+    <string name="overview_snow">Neige</string>
     
     <!-- Vélo & Config -->
     <string name="bike_name_label">Nom du vélo</string>
@@ -53,6 +54,7 @@
     <string name="copy_front_to_rear">Copier réglages Avant vers Arrière</string>
     
     <!-- Actions -->
+    <string name="action_add">Ajouter</string>
     <string name="action_save">Enregistrer</string>
     <string name="action_edit">Modifier</string>
     <string name="action_delete">Supprimer</string>
@@ -111,11 +113,11 @@
     <string name="settings_rider_profile">Profil cycliste</string>
     <string name="settings_rider_weight">Poids du cycliste</string>
     <string name="settings_appearance">Apparence</string>
-    <string name="settings_theme_system">Système</string>
+    <string name="settings_theme_system">Système (automatique)</string>
     <string name="settings_theme_light">Clair</string>
     <string name="settings_theme_dark">Sombre</string>
     <string name="settings_language">Langue de l\'application</string>
-    <string name="settings_lang_system">Langue du système</string>
+    <string name="settings_lang_system">Système (automatique)</string>
     <string name="settings_lang_fr">Français</string>
     <string name="settings_lang_en">English</string>
     <string name="settings_units">Unités de mesure</string>
@@ -139,8 +141,8 @@
     <string name="widget_config_choose_bike">Sélectionnez le vélo</string>
     <string name="widget_config_theme">Apparence du widget</string>
     <string name="widget_theme_system">Système (Automatique)</string>
-    <string name="widget_theme_light">Thème clair</string>
-    <string name="widget_theme_dark">Thème sombre</string>
+    <string name="widget_theme_light">Clair</string>
+    <string name="widget_theme_dark">Sombre</string>
     <string name="widget_config_apply">Appliquer le widget</string>
     <string name="widget_front_abbr">AV</string>
     <string name="widget_rear_abbr">AR</string>
@@ -149,7 +151,7 @@
     <string name="widget_no_bikes">Aucun vélo enregistré</string>
     <string name="widget_no_bikes_desc">Ouvrez TirePressure pour enregistrer votre premier vélo.</string>
     <string name="widget_tap_to_open">Touchez pour ouvrir l\'app</string>
-    <string name="settings_widget_section">Widgets d\'écran d\'accueil</string>
+    <string name="settings_widget_section">Widgets</string>
     <string name="settings_widget_desc">Consultez vos pressions optimales en un coup d\'œil sur votre écran d\'accueil Android.</string>
 
     <!-- Métadonnées Vélo & Unités -->
@@ -162,15 +164,15 @@
     <string name="bike_year_placeholder">Ex : 2024</string>
     <string name="bike_size_label">Taille du cadre</string>
     <string name="bike_size_placeholder">Ex : M, L, 54 cm, 17.5\"</string>
-    <string name="edit_bike_dialog_title">Modifier les informations du vélo</string>
-    <string name="edit_bike_dialog_desc">Mettez à jour les caractéristiques de ce vélo. Modifier son poids recalculera instantanément toutes ses configurations.</string>
+    <string name="edit_bike_dialog_title">Modifier le vélo</string>
+    <string name="edit_bike_dialog_desc">Modifier son poids recalculera instantanément toutes ses configurations.</string>
     <string name="unit_mm">mm</string>
     <string name="unit_inch">po (in)</string>
     <string name="unit_kg">Kilogrammes (kg)</string>
     <string name="unit_lb">Livres (lb)</string>
-    <string name="unit_bar">Bar (bar)</string>
-    <string name="unit_psi">PSI (psi)</string>
-    <string name="unit_kpa">Kilopascals (kPa)</string>
+    <string name="unit_bar">Bar</string>
+    <string name="unit_psi">PSI</string>
+    <string name="unit_kpa">kPa</string>
     <string name="tire_width_unit">Unité de largeur</string>
 
     <!-- Affichage des conditions météo / surfaces -->
@@ -179,10 +181,10 @@
     <string name="setup_surfaces_title">Conditions de surface calculées</string>
     <string name="setup_surfaces_desc">Choisissez les conditions météo à afficher pour ce profil (à minima le sec).</string>
     <string name="surface_dry_mandatory">Sec (Obligatoire)</string>
-    <string name="surface_wet_label">Mouillé</string>
-    <string name="surface_snow_label">Neige / Glissant</string>
-    <string name="surfaces_count_3">3 conditions : Sec, Mouillé et Neige</string>
-    <string name="surfaces_count_2_wet">2 conditions : Sec et Mouillé</string>
+    <string name="surface_wet_label">Pluie</string>
+    <string name="surface_snow_label">Neige</string>
+    <string name="surfaces_count_3">3 conditions : Sec, Pluie et Neige</string>
+    <string name="surfaces_count_2_wet">2 conditions : Sec et Pluie</string>
     <string name="surfaces_count_2_snow">2 conditions : Sec et Neige</string>
     <string name="surfaces_count_1">1 condition : Sec uniquement</string>
 
@@ -215,12 +217,14 @@
     <string name="overview_toast_setup_created">Configuration « %1$s » créée !</string>
     <string name="overview_toast_bike_updated">Vélo mis à jour !</string>
     <string name="overview_subtitle">Berto 15% Drop • Multi-Surfaces</string>
+    <string name="overview_view_simplified">Vue simplifiée</string>
+    <string name="overview_view_detailed">Vue détaillée</string>
     <string name="rim_tubes_short">Chambre à air</string>
     <string name="rim_tubeless_badge">Tubeless</string>
 
     <!-- Édition vélo & sections réductibles -->
     <string name="bike_edit_title_new">Nouveau Vélo</string>
-    <string name="bike_edit_title_edit">Modifier le Vélo</string>
+    <string name="bike_edit_title_edit">Modifier la configuration</string>
     <string name="bike_general_info_section">Informations Générales</string>
     <string name="bike_general_info_readonly_notice">Ces informations sont partagées par tous les profils de ce vélo. Pour les modifier, utilisez l\'option « Modifier les informations du vélo » sur l\'accueil.</string>
     <string name="bike_is_default_checkbox">Définir comme vélo par défaut</string>

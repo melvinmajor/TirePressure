@@ -6,8 +6,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -36,12 +38,14 @@ fun OnboardingScreen(
     preferencesRepository: PreferencesRepository,
     onOnboardingFinished: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var currentStep by remember { mutableStateOf(1) } // Step 1: Weight, Step 2: Tutorial
 
     var weightInput by remember { mutableStateOf("75.0") }
     var selectedUnit by remember { mutableStateOf(MassUnit.KG) }
     var weightError by remember { mutableStateOf<String?>(null) }
+    val scrollState = rememberScrollState()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -52,9 +56,10 @@ fun OnboardingScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .imePadding()
+                    .verticalScroll(scrollState)
                     .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -135,12 +140,15 @@ fun OnboardingScreen(
                     }
                 }
 
+                Spacer(modifier = Modifier.weight(1f, fill = false))
+                Spacer(modifier = Modifier.height(24.dp))
+
                 Button(
                     onClick = {
                         val num = weightInput.toDoubleOrNull()
                         val kg = if (num != null) UnitConverter.toKg(num, selectedUnit) else null
                         if (kg == null || kg < 30.0 || kg > 200.0) {
-                            weightError = "Veuillez entrer un poids valide (30 à 200 kg)"
+                            weightError = context.getString(R.string.onboarding_weight_error)
                             return@Button
                         }
                         coroutineScope.launch {

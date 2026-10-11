@@ -26,8 +26,7 @@ import com.tirepressure.app.domain.model.BikeProfile
 fun EditBikeDialog(
     bike: BikeProfile,
     onDismiss: () -> Unit,
-    onConfirm: (BikeProfile) -> Unit,
-    onDelete: (() -> Unit)? = null
+    onConfirm: (BikeProfile) -> Unit
 ) {
     var name by remember { mutableStateOf(bike.name) }
     var brand by remember { mutableStateOf(bike.brand) }
@@ -254,27 +253,8 @@ fun EditBikeDialog(
             }
         },
         dismissButton = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (onDelete != null) {
-                    TextButton(
-                        onClick = onDelete,
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(id = R.string.action_delete))
-                    }
-                }
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(id = R.string.action_cancel))
-                }
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(id = R.string.action_cancel))
             }
         }
     )

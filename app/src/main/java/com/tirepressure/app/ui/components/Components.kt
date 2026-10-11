@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tirepressure.app.ui.theme.WarningAmber
 import com.tirepressure.app.ui.theme.WarningAmberBg
@@ -188,14 +189,17 @@ fun <T> PillSelector(
                         else Color.Transparent
                     )
                     .clickable { onItemSelected(item) }
-                    .padding(vertical = 10.dp, horizontal = 6.dp)
+                    .padding(vertical = 8.dp, horizontal = 4.dp)
             ) {
                 Text(
                     text = labelProvider(item),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                     color = if (isSelected) MaterialTheme.colorScheme.onPrimary
-                    else MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
