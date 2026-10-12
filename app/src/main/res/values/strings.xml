@@ -134,9 +134,9 @@
 
     <!-- Widgets -->
     <string name="widget_single_bike_name">Bike &amp; Profiles</string>
-    <string name="widget_single_bike_desc">Displays optimal tire pressures for a selected bike and its setups.</string>
+    <string name="widget_single_bike_desc">Optimal tire pressures for a selected bike.</string>
     <string name="widget_all_bikes_name">All Bikes &amp; Profiles</string>
-    <string name="widget_all_bikes_desc">Overview of all your bikes and wheelset profiles in a scrollable list.</string>
+    <string name="widget_all_bikes_desc">Scrollable overview of all bikes &amp; setups.</string>
     <string name="widget_config_title">Configure Widget</string>
     <string name="widget_config_choose_bike">Select Bike</string>
     <string name="widget_config_theme">Widget Appearance</string>
@@ -269,6 +269,20 @@
     <string name="app_info_title">App Info</string>
     <string name="app_info_github_title">Source code on GitHub</string>
     <string name="app_info_github_url">melvinmajor/TirePressure</string>
+    <string name="app_info_algorithm_title">📐 Frank Berto Algorithm Adaptations</string>
+    <string name="app_info_algorithm_desc">Frank Berto\'s classical formula was designed for static trainer equilibrium. TirePressure enhances it with dynamic compliance, rolling impedance break-points, internal rim width influence, and ETRTO hookless safety boundaries.\n\nTo ensure realistic pressures across diverse modern disciplines (Road, Gravel, Enduro, Downhill), our model is calibrated against real-world industry reference benchmarks (such as SRAM AXS App reference points) while maintaining its own 100% clean-room, open-source mathematical physics implementation computed fully offline.</string>
+
+    <!-- Default Overview Layout Setting -->
+    <string name="settings_default_overview_title">Default Overview Layout</string>
+    <string name="settings_default_overview_desc">Choose whether TirePressure opens in Detailed or Compact view.</string>
+    <string name="overview_mode_detailed">Detailed</string>
+    <string name="overview_mode_compact">Compact</string>
+
+    <!-- Same Wheels Synchronization -->
+    <string name="bike_same_wheels_label">Identical front &amp; rear wheels</string>
+    <string name="bike_same_wheels_desc">Automatically synchronizes wheel and tire specs from the front wheel.</string>
+    <string name="bike_same_wheels_badge">Identical to front wheel (synchronized)</string>
+    <string name="bike_year_picker_title">Select Year</string>
 
     <!-- Add Setup Dialog Extra Strings -->
     <string name="add_setup_discipline_title">Discipline / Practice for this profile:</string>
@@ -280,4 +294,14 @@
     <string name="add_setup_summary_front_tire">Front tire: %1$s mm (%2$s)</string>
     <string name="add_setup_summary_rear_wheel">Rear rim: %1$s mm (%2$s)</string>
     <string name="add_setup_summary_rear_tire">Rear tire: %1$s mm (%2$s)</string>
+
+    <!-- Missing Localized Keys -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="unit_inch_abbr">in</string>
+    <string name="overview_duplicate_suffix">(copy)</string>
+    <string name="settings_reset_success">All data has been reset.</string>
+    <string name="settings_backup_export_success">Backup exported successfully!</string>
+    <string name="settings_backup_export_error">Error during export: %1$s</string>
+    <string name="settings_backup_import_read_error">Unable to read file: %1$s</string>
+    <string name="settings_backup_import_success">%1$d bike(s) restored successfully!</string>
 </resources>

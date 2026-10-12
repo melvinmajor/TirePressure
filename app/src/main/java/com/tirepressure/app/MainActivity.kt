@@ -9,7 +9,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,6 +34,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+            window.isStatusBarContrastEnforced = false
+        }
         enableEdgeToEdge()
 
         val app = application as TirePressureApp
@@ -78,9 +84,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            val configuration = Configuration(LocalConfiguration.current).apply {
-                setLocale(currentLocale)
-                setLayoutDirection(currentLocale)
+            val localConfig = LocalConfiguration.current
+            val configuration = remember(currentLocale, localConfig) {
+                Configuration(localConfig).apply {
+                    setLocale(currentLocale)
+                    setLayoutDirection(currentLocale)
+                }
             }
 
             val context = LocalContext.current
@@ -97,22 +106,27 @@ class MainActivity : ComponentActivity() {
             ) {
                 TirePressureTheme(appTheme = settingsState.theme) {
                     val completed = isOnboardingCompleted
-                    if (completed != null) {
-                        val navController = rememberNavController()
-                        AppNavigation(
-                            navController = navController,
-                            overviewViewModel = overviewViewModel,
-                            settingsViewModel = settingsViewModel,
-                            bikeRepository = app.bikeRepository,
-                            preferencesRepository = app.preferencesRepository,
-                            isOnboardingCompleted = completed
-                        )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.background)
-                        )
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        if (completed != null) {
+                            val navController = rememberNavController()
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .safeDrawingPadding()
+                            ) {
+                                AppNavigation(
+                                    navController = navController,
+                                    overviewViewModel = overviewViewModel,
+                                    settingsViewModel = settingsViewModel,
+                                    bikeRepository = app.bikeRepository,
+                                    preferencesRepository = app.preferencesRepository,
+                                    isOnboardingCompleted = completed
+                                )
+                            }
+                        }
                     }
                 }
             }

@@ -17,12 +17,17 @@
         android:supportsRtl="true"
         android:localeConfig="@xml/locales_config"
         android:hardwareAccelerated="true"
+        android:resizeableActivity="true"
         android:theme="@style/Theme.TirePressure">
+
+        <meta-data
+            android:name="android.allow_multiple_resumed_activities"
+            android:value="true" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:icon="@drawable/app_logo"
-            android:roundIcon="@drawable/app_logo"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
             android:theme="@style/Theme.TirePressure"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|uiMode|density"
             android:resizeableActivity="true"
@@ -37,8 +42,8 @@
         <receiver
             android:name=".widget.SingleBikeWidgetReceiver"
             android:exported="true"
-            android:icon="@drawable/app_logo"
-            android:roundIcon="@drawable/app_logo"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
             android:label="@string/widget_single_bike_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -51,8 +56,8 @@
         <activity
             android:name=".widget.SingleBikeWidgetConfigureActivity"
             android:exported="true"
-            android:icon="@drawable/app_logo"
-            android:roundIcon="@drawable/app_logo"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|uiMode|density"
             android:resizeableActivity="true"
             android:theme="@style/Theme.TirePressure">
@@ -65,8 +70,8 @@
         <receiver
             android:name=".widget.AllBikesWidgetReceiver"
             android:exported="true"
-            android:icon="@drawable/app_logo"
-            android:roundIcon="@drawable/app_logo"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
             android:label="@string/widget_all_bikes_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -79,8 +84,8 @@
         <activity
             android:name=".widget.AllBikesWidgetConfigureActivity"
             android:exported="true"
-            android:icon="@drawable/app_logo"
-            android:roundIcon="@drawable/app_logo"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|uiMode|density"
             android:resizeableActivity="true"
             android:theme="@style/Theme.TirePressure">

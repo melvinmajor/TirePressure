@@ -27,6 +27,7 @@ class PreferencesRepositoryImpl(
         val KEY_SELECTED_BIKE_ID = stringPreferencesKey("selected_bike_id")
         val KEY_SHOW_WET_SURFACE = booleanPreferencesKey("show_wet_surface")
         val KEY_SHOW_SNOW_SURFACE = booleanPreferencesKey("show_snow_surface")
+        val KEY_DEFAULT_OVERVIEW_COMPACT = booleanPreferencesKey("default_overview_compact")
     }
 
     override val themeFlow: Flow<AppTheme> = context.dataStore.data.map { prefs ->
@@ -67,6 +68,10 @@ class PreferencesRepositoryImpl(
 
     override val showSnowSurfaceFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
         prefs[KEY_SHOW_SNOW_SURFACE] ?: true
+    }
+
+    override val defaultOverviewCompactFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[KEY_DEFAULT_OVERVIEW_COMPACT] ?: false
     }
 
     override suspend fun setTheme(theme: AppTheme) {
@@ -129,6 +134,12 @@ class PreferencesRepositoryImpl(
             prefs[KEY_SHOW_SNOW_SURFACE] = show
         }
         com.tirepressure.app.widget.WidgetUpdateHelper.updateAllWidgets(context)
+    }
+
+    override suspend fun setDefaultOverviewCompact(compact: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_DEFAULT_OVERVIEW_COMPACT] = compact
+        }
     }
 
     override suspend fun clear() {

@@ -15,7 +15,8 @@ import com.tirepressure.app.R
 
 @Composable
 fun AboutAndPrivacyCard(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showVersion: Boolean = true
 ) {
     SectionCard(
         title = stringResource(id = R.string.about_privacy_title),
@@ -45,12 +46,14 @@ fun AboutAndPrivacyCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text(
-                text = stringResource(id = R.string.about_version_license, "1.1.0-beta"),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.SemiBold
-            )
+            if (showVersion) {
+                Text(
+                    text = stringResource(id = R.string.about_version_license, "1.1.0"),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }

@@ -75,7 +75,7 @@ fun AppInfoScreen(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "v1.1.0-beta",
+                    text = "v1.1.0",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -133,8 +133,34 @@ fun AppInfoScreen(
                 }
             }
 
-            // Section À propos & Confidentialité (identique à celle des paramètres)
-            AboutAndPrivacyCard(modifier = Modifier.fillMaxWidth())
+            // Carte Adaptations Algorithme Frank Berto
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.app_info_algorithm_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(id = R.string.app_info_algorithm_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Section À propos & Confidentialité (identique à celle des paramètres, sans doublon de version)
+            AboutAndPrivacyCard(modifier = Modifier.fillMaxWidth(), showVersion = false)
 
             Spacer(modifier = Modifier.height(24.dp))
         }

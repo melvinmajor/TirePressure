@@ -113,11 +113,11 @@
     <string name="settings_rider_profile">Profil cycliste</string>
     <string name="settings_rider_weight">Poids du cycliste</string>
     <string name="settings_appearance">Apparence</string>
-    <string name="settings_theme_system">Système (automatique)</string>
+    <string name="settings_theme_system">Système (auto)</string>
     <string name="settings_theme_light">Clair</string>
     <string name="settings_theme_dark">Sombre</string>
     <string name="settings_language">Langue de l\'application</string>
-    <string name="settings_lang_system">Système (automatique)</string>
+    <string name="settings_lang_system">Système (auto)</string>
     <string name="settings_lang_fr">Français</string>
     <string name="settings_lang_en">English</string>
     <string name="settings_units">Unités de mesure</string>
@@ -134,13 +134,13 @@
 
     <!-- Widgets -->
     <string name="widget_single_bike_name">Vélo &amp; Profils</string>
-    <string name="widget_single_bike_desc">Affiche les pressions optimales pour le vélo sélectionné et ses configurations.</string>
+    <string name="widget_single_bike_desc">Pressions d\'un vélo et de ses profils.</string>
     <string name="widget_all_bikes_name">Tous les vélos &amp; Profils</string>
-    <string name="widget_all_bikes_desc">Aperçu de l\'ensemble de vos vélos et profils dans une liste défilante.</string>
+    <string name="widget_all_bikes_desc">Aperçu défilant de tous vos vélos et profils.</string>
     <string name="widget_config_title">Configuration du widget</string>
     <string name="widget_config_choose_bike">Sélectionnez le vélo</string>
     <string name="widget_config_theme">Apparence du widget</string>
-    <string name="widget_theme_system">Système (Automatique)</string>
+    <string name="widget_theme_system">Système (auto)</string>
     <string name="widget_theme_light">Clair</string>
     <string name="widget_theme_dark">Sombre</string>
     <string name="widget_config_apply">Appliquer le widget</string>
@@ -269,6 +269,20 @@
     <string name="app_info_title">Infos Application</string>
     <string name="app_info_github_title">Code source sur GitHub</string>
     <string name="app_info_github_url">melvinmajor/TirePressure</string>
+    <string name="app_info_algorithm_title">📐 Adaptations de l\'algorithme de Frank Berto</string>
+    <string name="app_info_algorithm_desc">La formule classique de Frank Berto a été conçue pour un équilibre statique. TirePressure l\'enrichit avec la souplesse dynamique, les seuils d\'impédance de roulement, l\'influence de la largeur interne de jante et les limites de sécurité ETRTO sans crochet (hookless).\n\nPour garantir des pressions réalistes et adaptées aux pratiques modernes (Route, Gravel, Enduro, Descente), notre modèle est étalonné à partir de jeux de données de référence de l\'industrie (notamment l\'application SRAM AXS) tout en conservant une modélisation physique open source indépendante, propre (« clean-room ») et calculée 100% hors-ligne.</string>
+
+    <!-- Disposition par défaut de l'écran Aperçu -->
+    <string name="settings_default_overview_title">Vue par défaut de l\'écran Aperçu</string>
+    <string name="settings_default_overview_desc">Choisissez si TirePressure s\'ouvre en vue Détaillée ou Compacte.</string>
+    <string name="overview_mode_detailed">Détaillée</string>
+    <string name="overview_mode_compact">Compacte</string>
+
+    <!-- Synchronisation Roues Identiques -->
+    <string name="bike_same_wheels_label">Roue arrière identique à l\'avant</string>
+    <string name="bike_same_wheels_desc">Synchronise automatiquement les caractéristiques de la jante et du pneu depuis la roue avant.</string>
+    <string name="bike_same_wheels_badge">Identique à la roue avant (synchronisée)</string>
+    <string name="bike_year_picker_title">Sélectionner l\'année</string>
 
     <!-- Chaînes supplémentaires Dialogue Ajout Configuration -->
     <string name="add_setup_discipline_title">Discipline / Pratique pour ce profil :</string>
@@ -280,5 +294,15 @@
     <string name="add_setup_summary_front_tire">Pneu avant : %1$s mm (%2$s)</string>
     <string name="add_setup_summary_rear_wheel">Jante arrière : %1$s mm (%2$s)</string>
     <string name="add_setup_summary_rear_tire">Pneu arrière : %1$s mm (%2$s)</string>
+
+    <!-- Clés localisées manquantes -->
+    <string name="onboarding_skip">Passer</string>
+    <string name="unit_inch_abbr">po</string>
+    <string name="overview_duplicate_suffix">(copie)</string>
+    <string name="settings_reset_success">Toutes les données ont été réinitialisées.</string>
+    <string name="settings_backup_export_success">Sauvegarde exportée avec succès !</string>
+    <string name="settings_backup_export_error">Erreur lors de l\'exportation : %1$s</string>
+    <string name="settings_backup_import_read_error">Impossible de lire le fichier : %1$s</string>
+    <string name="settings_backup_import_success">%1$d vélo(s) restauré(s) avec succès !</string>
 </resources>
 

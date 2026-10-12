@@ -126,6 +126,7 @@ class BackupManagerTest {
         override val selectedBikeIdFlow = MutableStateFlow<String?>(null)
         override val showWetSurfaceFlow = MutableStateFlow(true)
         override val showSnowSurfaceFlow = MutableStateFlow(true)
+        override val defaultOverviewCompactFlow = MutableStateFlow(false)
 
         override suspend fun setTheme(theme: AppTheme) { themeFlow.value = theme }
         override suspend fun setAppLanguage(language: com.tirepressure.app.core.model.AppLanguage) { appLanguageFlow.value = language }
@@ -136,6 +137,7 @@ class BackupManagerTest {
         override suspend fun setSelectedBikeId(id: String?) { selectedBikeIdFlow.value = id }
         override suspend fun setShowWetSurface(show: Boolean) { showWetSurfaceFlow.value = show }
         override suspend fun setShowSnowSurface(show: Boolean) { showSnowSurfaceFlow.value = show }
+        override suspend fun setDefaultOverviewCompact(compact: Boolean) { defaultOverviewCompactFlow.value = compact }
         override suspend fun clear() {}
     }
 }

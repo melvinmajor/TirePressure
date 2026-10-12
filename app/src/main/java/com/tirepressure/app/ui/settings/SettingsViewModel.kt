@@ -14,8 +14,23 @@ import com.tirepressure.app.domain.repository.BikeRepository
 import com.tirepressure.app.domain.repository.PreferencesRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import com.tirepressure.app.R
 import java.io.InputStream
 import java.io.OutputStream
+
+data class UiText(
+    val resId: Int? = null,
+    val formatArgs: List<Any> = emptyList(),
+    val rawText: String? = null
+) {
+    fun asString(context: android.content.Context): String {
+        return if (resId != null) {
+            context.getString(resId, *formatArgs.toTypedArray())
+        } else {
+            rawText.orEmpty()
+        }
+    }
+}
 
 data class SettingsUiState(
     val theme: AppTheme = AppTheme.SYSTEM,
@@ -25,10 +40,11 @@ data class SettingsUiState(
     val pressureUnit: PressureUnit = PressureUnit.BAR,
     val showWetSurface: Boolean = true,
     val showSnowSurface: Boolean = true,
+    val defaultOverviewCompact: Boolean = false,
     val showResetConfirmation: Boolean = false,
     val pendingImportPayload: BackupPayload? = null,
-    val statusMessage: String? = null,
-    val errorMessage: String? = null
+    val statusMessage: UiText? = null,
+    val errorMessage: UiText? = null
 )
 
 class SettingsViewModel(
@@ -49,7 +65,8 @@ class SettingsViewModel(
                 preferencesRepository.massUnitFlow,
                 preferencesRepository.pressureUnitFlow,
                 preferencesRepository.showWetSurfaceFlow,
-                preferencesRepository.showSnowSurfaceFlow
+                preferencesRepository.showSnowSurfaceFlow,
+                preferencesRepository.defaultOverviewCompactFlow
             ) { flows ->
                 @Suppress("UNCHECKED_CAST")
                 val theme = flows[0] as AppTheme
@@ -59,6 +76,7 @@ class SettingsViewModel(
                 val pressureUnit = flows[4] as PressureUnit
                 val showWet = flows[5] as Boolean
                 val showSnow = flows[6] as Boolean
+                val defaultCompact = flows[7] as Boolean
                 _uiState.update { current ->
                     current.copy(
                         theme = theme,
@@ -67,7 +85,8 @@ class SettingsViewModel(
                         massUnit = massUnit,
                         pressureUnit = pressureUnit,
                         showWetSurface = showWet,
-                        showSnowSurface = showSnow
+                        showSnowSurface = showSnow,
+                        defaultOverviewCompact = defaultCompact
                     )
                 }
             }.collect()
@@ -116,6 +135,12 @@ class SettingsViewModel(
         }
     }
 
+    fun setDefaultOverviewCompact(compact: Boolean) {
+        viewModelScope.launch {
+            preferencesRepository.setDefaultOverviewCompact(compact)
+        }
+    }
+
     fun requestReset() {
         _uiState.update { it.copy(showResetConfirmation = true) }
     }
@@ -131,7 +156,7 @@ class SettingsViewModel(
             _uiState.update {
                 it.copy(
                     showResetConfirmation = false,
-                    statusMessage = "Toutes les données ont été réinitialisées."
+                    statusMessage = UiText(resId = R.string.settings_reset_success)
                 )
             }
         }
@@ -146,9 +171,9 @@ class SettingsViewModel(
             try {
                 val jsonString = backupManager.exportToJson()
                 outputStream.bufferedWriter().use { it.write(jsonString) }
-                _uiState.update { it.copy(statusMessage = "Sauvegarde exportée avec succès !") }
+                _uiState.update { it.copy(statusMessage = UiText(resId = R.string.settings_backup_export_success)) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = "Erreur lors de l'exportation : ${e.localizedMessage}") }
+                _uiState.update { it.copy(errorMessage = UiText(resId = R.string.settings_backup_export_error, formatArgs = listOf(e.localizedMessage ?: ""))) }
             }
         }
     }
@@ -162,11 +187,11 @@ class SettingsViewModel(
                         _uiState.update { it.copy(pendingImportPayload = result.data) }
                     }
                     is BackupResult.Error -> {
-                        _uiState.update { it.copy(errorMessage = result.message) }
+                        _uiState.update { it.copy(errorMessage = UiText(rawText = result.message)) }
                     }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = "Impossible de lire le fichier : ${e.localizedMessage}") }
+                _uiState.update { it.copy(errorMessage = UiText(resId = R.string.settings_backup_import_read_error, formatArgs = listOf(e.localizedMessage ?: ""))) }
             }
         }
     }
@@ -183,7 +208,7 @@ class SettingsViewModel(
                     _uiState.update {
                         it.copy(
                             pendingImportPayload = null,
-                            statusMessage = "${result.data} vélo(s) restauré(s) avec succès !"
+                            statusMessage = UiText(resId = R.string.settings_backup_import_success, formatArgs = listOf(result.data))
                         )
                     }
                 }
@@ -191,7 +216,7 @@ class SettingsViewModel(
                     _uiState.update {
                         it.copy(
                             pendingImportPayload = null,
-                            errorMessage = result.message
+                            errorMessage = UiText(rawText = result.message)
                         )
                     }
                 }

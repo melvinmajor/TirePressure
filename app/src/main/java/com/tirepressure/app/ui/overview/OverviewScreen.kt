@@ -5,6 +5,10 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.draw.rotate
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -55,11 +59,8 @@ fun OverviewScreen(
     val context = LocalContext.current
     var bikeForNewSetup by remember { mutableStateOf<BikeProfile?>(null) }
     var bikeToEditInfo by remember { mutableStateOf<BikeProfile?>(null) }
-    var isSimplifiedView by rememberSaveable { mutableStateOf(false) }
-
-    val configuration = LocalConfiguration.current
-    val isTabletOrUnfolded = configuration.smallestScreenWidthDp >= 600
-    val columnsCount = if (isTabletOrUnfolded) 2 else 1
+    var userSelectedSimplified by rememberSaveable { mutableStateOf<Boolean?>(null) }
+    val isSimplifiedView = userSelectedSimplified ?: state.defaultOverviewCompact
 
     Scaffold(
         topBar = {
@@ -77,22 +78,16 @@ fun OverviewScreen(
                                 .clip(RoundedCornerShape(8.dp))
                         )
                         Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = stringResource(id = R.string.app_name),
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = stringResource(id = R.string.overview_subtitle),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        Text(
+                            text = stringResource(id = R.string.app_name),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 },
                 actions = {
-                    IconButton(onClick = { isSimplifiedView = !isSimplifiedView }) {
+                    IconButton(onClick = { userSelectedSimplified = !isSimplifiedView }) {
                         Icon(
                             imageVector = if (isSimplifiedView) Icons.Default.ViewAgenda else Icons.Default.TableRows,
                             contentDescription = if (isSimplifiedView) {
@@ -113,16 +108,19 @@ fun OverviewScreen(
             )
         }
     ) { paddingValues ->
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(columnsCount),
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp)
         ) {
+            val columnsCount = if (maxWidth >= 600.dp) 2 else 1
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(columnsCount),
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp, start = 16.dp, end = 16.dp)
+            ) {
             // Bandeau de réglages rapides : Poids cycliste & Bascule d'unité de pression
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Card(
@@ -246,36 +244,63 @@ fun OverviewScreen(
                         Toast.makeText(context, context.getString(R.string.overview_toast_copied), Toast.LENGTH_SHORT).show()
                     }
 
-                    if (isSimplifiedView) {
-                        BikeOverviewCardSimplified(
-                            bikeOverview = bikeOverview,
-                            pressureUnit = state.pressureUnit,
-                            showWetSurface = state.showWetSurface,
-                            showSnowSurface = state.showSnowSurface,
-                            onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
-                            onEditBikeInfo = { bikeToEditInfo = bikeOverview.bike },
-                            onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike) },
-                            onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
-                            onAddSetup = { bikeForNewSetup = bikeOverview.bike },
-                            onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup) },
-                            onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
-                            onCopyPressures = copyPressuresAction
-                        )
-                    } else {
-                        BikeOverviewCard(
-                            bikeOverview = bikeOverview,
-                            pressureUnit = state.pressureUnit,
-                            showWetSurface = state.showWetSurface,
-                            showSnowSurface = state.showSnowSurface,
-                            onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
-                            onEditBikeInfo = { bikeToEditInfo = bikeOverview.bike },
-                            onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike) },
-                            onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
-                            onAddSetup = { bikeForNewSetup = bikeOverview.bike },
-                            onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup) },
-                            onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
-                            onCopyPressures = copyPressuresAction
-                        )
+                    val copySuffix = stringResource(id = R.string.overview_duplicate_suffix)
+                    AnimatedContent(
+                        targetState = isSimplifiedView,
+                        transitionSpec = {
+                            if (targetState) {
+                                slideInHorizontally(
+                                    initialOffsetX = { fullWidth -> fullWidth },
+                                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                                ) + fadeIn(tween(250)) togetherWith
+                                slideOutOfContainer(
+                                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                                ) + fadeOut(tween(200))
+                            } else {
+                                slideIntoContainer(
+                                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                                ) + fadeIn(tween(250)) togetherWith
+                                slideOutOfContainer(
+                                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                                ) + fadeOut(tween(200))
+                            }
+                        },
+                        label = "ViewModeCardTransition"
+                    ) { simplified ->
+                        if (simplified) {
+                            BikeOverviewCardSimplified(
+                                bikeOverview = bikeOverview,
+                                pressureUnit = state.pressureUnit,
+                                showWetSurface = state.showWetSurface,
+                                showSnowSurface = state.showSnowSurface,
+                                onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
+                                onEditBikeInfo = { bikeToEditInfo = bikeOverview.bike },
+                                onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike, copySuffix) },
+                                onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
+                                onAddSetup = { bikeForNewSetup = bikeOverview.bike },
+                                onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup, copySuffix) },
+                                onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
+                                onCopyPressures = copyPressuresAction
+                            )
+                        } else {
+                            BikeOverviewCard(
+                                bikeOverview = bikeOverview,
+                                pressureUnit = state.pressureUnit,
+                                showWetSurface = state.showWetSurface,
+                                showSnowSurface = state.showSnowSurface,
+                                onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
+                                onEditBikeInfo = { bikeToEditInfo = bikeOverview.bike },
+                                onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike, copySuffix) },
+                                onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
+                                onAddSetup = { bikeForNewSetup = bikeOverview.bike },
+                                onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup, copySuffix) },
+                                onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
+                                onCopyPressures = copyPressuresAction
+                            )
+                        }
                     }
                 }
 
@@ -298,6 +323,7 @@ fun OverviewScreen(
                     }
                 }
             }
+        }
         }
 
         // Dialogue confirmation suppression vélo avec message d'avertissement
@@ -369,7 +395,8 @@ fun OverviewScreen(
                 existingSetups = bike.setups,
                 onDismiss = { bikeForNewSetup = null },
                 onConfirm = { setupName, templateSetup, overrideRideStyle ->
-                    viewModel.addSetupToBike(bike, setupName, templateSetup, overrideRideStyle)
+                    val defaultSetupPrefix = context.getString(R.string.setup_default_prefix)
+                    viewModel.addSetupToBike(bike, setupName, templateSetup, overrideRideStyle, defaultSetupPrefix)
                     bikeForNewSetup = null
                     Toast.makeText(context, context.getString(R.string.overview_toast_setup_created, setupName), Toast.LENGTH_SHORT).show()
                 }
@@ -411,7 +438,9 @@ private fun BikeOverviewCard(
     var isExpanded by remember(bike.id, bike.isDefault) { mutableStateOf(bike.isDefault) }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = tween(300, easing = FastOutSlowInEasing)),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(
@@ -509,12 +538,19 @@ private fun BikeOverviewCard(
                         }
                     }
 
+                    val arrowRotation by animateFloatAsState(
+                        targetValue = if (isExpanded) 180f else 0f,
+                        animationSpec = tween(300, easing = FastOutSlowInEasing),
+                        label = "OverviewBikeChevronRotation"
+                    )
                     IconButton(onClick = { isExpanded = !isExpanded }) {
                         Icon(
-                            imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            imageVector = Icons.Default.KeyboardArrowDown,
                             contentDescription = if (isExpanded) stringResource(R.string.overview_collapse_bike) else stringResource(R.string.overview_expand_bike),
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier
+                                .size(24.dp)
+                                .rotate(arrowRotation)
                         )
                     }
                 }
@@ -897,7 +933,9 @@ private fun BikeOverviewCardSimplified(
     var bikeMenuExpanded by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = tween(300, easing = FastOutSlowInEasing)),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(
@@ -1187,48 +1225,13 @@ private fun SimplifiedPressureBadge(
     isWarning: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val frontAbbr = stringResource(R.string.widget_front_abbr)
-    val rearAbbr = stringResource(R.string.widget_rear_abbr)
-
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(
-            width = if (isWarning) 1.5.dp else 1.dp,
-            color = if (isWarning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = surfaceLabel,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = "$frontAbbr $frontPressure / $rearAbbr $rearPressure $unitSymbol",
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            if (isWarning) {
-                Text(
-                    text = "⚠️ Hookless",
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
-                    color = MaterialTheme.colorScheme.error,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
+    SurfacePressureBadge(
+        surfaceName = surfaceLabel,
+        frontPressure = frontPressure,
+        rearPressure = rearPressure,
+        unitSymbol = unitSymbol,
+        isWarning = isWarning,
+        modifier = modifier
+    )
 }
 

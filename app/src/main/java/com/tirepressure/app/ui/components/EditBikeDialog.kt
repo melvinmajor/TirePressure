@@ -1,13 +1,10 @@
 package com.tirepressure.app.ui.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
@@ -28,6 +25,7 @@ fun EditBikeDialog(
     onDismiss: () -> Unit,
     onConfirm: (BikeProfile) -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var name by remember { mutableStateOf(bike.name) }
     var brand by remember { mutableStateOf(bike.brand) }
     var model by remember { mutableStateOf(bike.model) }
@@ -38,8 +36,6 @@ fun EditBikeDialog(
     var isDefault by remember { mutableStateOf(bike.isDefault) }
 
     var nameError by remember { mutableStateOf<String?>(null) }
-    var categoryMenuExpanded by remember { mutableStateOf(false) }
-
     val scrollState = rememberScrollState()
 
     AlertDialog(
@@ -50,13 +46,13 @@ fun EditBikeDialog(
                     imageVector = Icons.Default.DirectionsBike,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(26.dp)
+                    modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     Text(
                         text = stringResource(id = R.string.edit_bike_dialog_title),
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
@@ -72,7 +68,7 @@ fun EditBikeDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(scrollState),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // 1. Nom du vélo (Obligatoire)
                 OutlinedTextField(
@@ -82,7 +78,7 @@ fun EditBikeDialog(
                         nameError = null
                     },
                     label = { Text(stringResource(id = R.string.bike_name_label)) },
-                    placeholder = { Text("Ex : Mon VTT XC, Route Aéro") },
+                    placeholder = { Text(stringResource(id = R.string.bike_name_placeholder)) },
                     isError = nameError != null,
                     supportingText = { nameError?.let { Text(it, color = MaterialTheme.colorScheme.error) } },
                     singleLine = true,
@@ -90,7 +86,7 @@ fun EditBikeDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // 2. Marque & Modèle
+                // 2. Marque & Modèle (50% / 50%)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -99,7 +95,7 @@ fun EditBikeDialog(
                         value = brand,
                         onValueChange = { brand = it },
                         label = { Text(stringResource(id = R.string.bike_brand_label)) },
-                        placeholder = { Text("Ex : Trek") },
+                        placeholder = { Text(stringResource(id = R.string.bike_brand_placeholder)) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.weight(1f)
@@ -108,25 +104,21 @@ fun EditBikeDialog(
                         value = model,
                         onValueChange = { model = it },
                         label = { Text(stringResource(id = R.string.bike_model_label)) },
-                        placeholder = { Text("Ex : Supercaliber") },
+                        placeholder = { Text(stringResource(id = R.string.bike_model_placeholder)) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.weight(1f)
                     )
                 }
 
-                // 3. Année & Taille du cadre
+                // 3. Année & Taille du cadre (50% / 50% avec YearInputField)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(
+                    YearInputField(
                         value = yearInput,
-                        onValueChange = { yearInput = it.filter { char -> char.isDigit() }.take(4) },
-                        label = { Text(stringResource(id = R.string.bike_year_label)) },
-                        placeholder = { Text("Ex : 2024") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
+                        onValueChange = { yearInput = it },
                         modifier = Modifier.weight(1f)
                     )
                     OutlinedTextField(
@@ -136,68 +128,30 @@ fun EditBikeDialog(
                         placeholder = { Text(stringResource(id = R.string.bike_size_placeholder)) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1.2f)
+                        modifier = Modifier.weight(1f)
                     )
                 }
 
-                // 4. Poids du vélo
+                // 4. Catégorie principale du vélo (PillSelector rapide)
+                Text(
+                    text = stringResource(id = R.string.bike_category_label),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                PillSelector(
+                    items = BikeCategory.entries,
+                    selectedItem = selectedCategory,
+                    onItemSelected = { selectedCategory = it },
+                    labelProvider = { context.getString(it.labelRes) }
+                )
+
+                // 5. Poids du vélo
                 NumberInputField(
                     value = weightInput,
                     onValueChange = { weightInput = it },
                     label = stringResource(id = R.string.bike_weight),
                     suffix = "kg"
                 )
-
-                // 5. Catégorie principale du vélo
-                Column {
-                    Text(
-                        text = stringResource(id = R.string.bike_category_label),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    OutlinedCard(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { categoryMenuExpanded = true },
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = stringResource(id = selectedCategory.labelRes),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-                        }
-                    }
-
-                    DropdownMenu(
-                        expanded = categoryMenuExpanded,
-                        onDismissRequest = { categoryMenuExpanded = false }
-                    ) {
-                        BikeCategory.entries.forEach { cat ->
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = stringResource(id = cat.labelRes),
-                                        fontWeight = if (cat == selectedCategory) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                },
-                                onClick = {
-                                    selectedCategory = cat
-                                    categoryMenuExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
 
                 // 6. Vélo par défaut
                 Row(

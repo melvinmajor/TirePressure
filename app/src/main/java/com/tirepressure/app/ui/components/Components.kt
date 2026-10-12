@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,8 +24,20 @@ import com.tirepressure.app.ui.theme.WarningAmber
 import com.tirepressure.app.ui.theme.WarningAmberBg
 import com.tirepressure.app.ui.theme.WarningAmberBgDark
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.ui.draw.rotate
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 
 @Composable
 fun SectionCard(
@@ -38,6 +51,12 @@ fun SectionCard(
     collapsedSummary: @Composable (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val arrowRotation by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        animationSpec = tween(300, easing = FastOutSlowInEasing),
+        label = "SectionCardChevronRotation"
+    )
+
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -90,28 +109,65 @@ fun SectionCard(
                         modifier = Modifier.size(28.dp)
                     ) {
                         Icon(
-                            imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            imageVector = Icons.Default.KeyboardArrowDown,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.rotate(arrowRotation)
                         )
                     }
                 }
             }
 
-            if (!isCollapsible || isExpanded) {
-                if (subtitle != null) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+            AnimatedVisibility(
+                visible = !isCollapsible || isExpanded,
+                enter = expandVertically(
+                    animationSpec = tween(280, easing = FastOutSlowInEasing),
+                    expandFrom = Alignment.Top
+                ) + fadeIn(
+                    animationSpec = tween(250, easing = LinearOutSlowInEasing)
+                ),
+                exit = shrinkVertically(
+                    animationSpec = tween(220, easing = FastOutSlowInEasing),
+                    shrinkTowards = Alignment.Top
+                ) + fadeOut(
+                    animationSpec = tween(180, easing = FastOutLinearInEasing)
+                )
+            ) {
+                Column {
+                    if (subtitle != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(14.dp))
+                    content()
                 }
-                Spacer(modifier = Modifier.height(14.dp))
-                content()
-            } else if (collapsedSummary != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                collapsedSummary()
+            }
+
+            if (isCollapsible && !isExpanded && collapsedSummary != null) {
+                AnimatedVisibility(
+                    visible = !isExpanded,
+                    enter = expandVertically(
+                        animationSpec = tween(220, easing = FastOutSlowInEasing),
+                        expandFrom = Alignment.Top
+                    ) + fadeIn(
+                        animationSpec = tween(200, easing = LinearOutSlowInEasing)
+                    ),
+                    exit = shrinkVertically(
+                        animationSpec = tween(180, easing = FastOutSlowInEasing),
+                        shrinkTowards = Alignment.Top
+                    ) + fadeOut(
+                        animationSpec = tween(150, easing = FastOutLinearInEasing)
+                    )
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        collapsedSummary()
+                    }
+                }
             }
         }
     }
@@ -179,15 +235,22 @@ fun <T> PillSelector(
     ) {
         items.forEach { item ->
             val isSelected = item == selectedItem
+            val bgColor by animateColorAsState(
+                targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                animationSpec = tween(200),
+                label = "PillBgColor"
+            )
+            val textColor by animateColorAsState(
+                targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                animationSpec = tween(200),
+                label = "PillTextColor"
+            )
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(
-                        if (isSelected) MaterialTheme.colorScheme.primary
-                        else Color.Transparent
-                    )
+                    .background(bgColor)
                     .clickable { onItemSelected(item) }
                     .padding(vertical = 8.dp, horizontal = 4.dp)
             ) {
@@ -195,8 +258,7 @@ fun <T> PillSelector(
                     text = labelProvider(item),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = textColor,
                     maxLines = 1,
                     softWrap = false,
                     overflow = TextOverflow.Ellipsis

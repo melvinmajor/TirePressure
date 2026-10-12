@@ -157,6 +157,12 @@ $$P_{final} = P_{base} \cdot K_{discipline} \cdot K_{rim} \cdot K_{casing} \cdot
 - **Surface Grip Adjustment ($K_{surface}$):** Dry (1.00), Wet / Slippery (0.90), Snow / Deep Mud (0.55).
 - **ETRTO Hookless Safety Cap:** Strictly enforced at **5.0 bar (72.5 psi)** maximum for tires $\le 29\text{ mm}$ mounted on hookless rims.
 
+### 7. Empirical Calibration & Clean-Room Legal Notice
+To ensure real-world reliability across diverse disciplines, TirePressure's mathematical parameters are calibrated and validated against empirical industry reference datasets (including real-world benchmark curves from the SRAM AXS App calculator).
+
+> [!NOTE]
+> **Independent Clean-Room Implementation:** TirePressure is a 100% offline, independent open-source project. It does not use, copy, or interface with any proprietary third-party code or APIs. All pressure curves are solved locally on-device through our own physics equations, bridging Frank Berto's static tire deflection formula with modern dynamic impedance, rim widths, and ISO/ETRTO safety standards. References to industry benchmarks are provided strictly for comparative validation.
+
 ## 🛠️ Tech Stack & Architecture
 
 TirePressure is engineered with cutting-edge Android development best practices:

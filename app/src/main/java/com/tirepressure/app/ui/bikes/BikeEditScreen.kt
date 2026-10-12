@@ -1,5 +1,8 @@
 package com.tirepressure.app.ui.bikes
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,6 +28,7 @@ import com.tirepressure.app.ui.components.AddSetupDialog
 import com.tirepressure.app.ui.components.NumberInputField
 import com.tirepressure.app.ui.components.PillSelector
 import com.tirepressure.app.ui.components.SectionCard
+import com.tirepressure.app.ui.components.YearInputField
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -49,12 +54,12 @@ fun BikeEditScreen(
     var bikeWeightInput by remember { mutableStateOf("8.0") }
     var isDefault by remember { mutableStateOf(false) }
 
-    // Sections réductibles
-    var isGeneralInfoExpanded by remember(bikeId) { mutableStateOf(bikeId == "new") }
-    var isSetupsExpanded by remember { mutableStateOf(true) }
-    var isDiameterExpanded by remember { mutableStateOf(true) }
-    var isFrontWheelExpanded by remember { mutableStateOf(true) }
-    var isRearWheelExpanded by remember { mutableStateOf(true) }
+    // Sections réductibles persistantes
+    var isGeneralInfoExpanded by rememberSaveable(bikeId) { mutableStateOf(bikeId == "new") }
+    var isSetupsExpanded by rememberSaveable { mutableStateOf(true) }
+    var isDiameterExpanded by rememberSaveable { mutableStateOf(true) }
+    var isFrontWheelExpanded by rememberSaveable { mutableStateOf(true) }
+    var isRearWheelExpanded by rememberSaveable { mutableStateOf(true) }
 
     // Liste des configurations du vélo
     val defaultSetupName = stringResource(id = R.string.config_default_name)
@@ -167,6 +172,15 @@ fun BikeEditScreen(
         }
 
         val activeSetup = setups.getOrNull(selectedSetupIndex) ?: setups.first()
+        var isSameWheels by remember(selectedSetupIndex, activeSetup.id) {
+            mutableStateOf(
+                activeSetup.frontWheel.diameter == activeSetup.rearWheel.diameter &&
+                activeSetup.frontWheel.innerRimWidthMm == activeSetup.rearWheel.innerRimWidthMm &&
+                activeSetup.frontWheel.rimType == activeSetup.rearWheel.rimType &&
+                activeSetup.frontTire.widthMm == activeSetup.rearTire.widthMm &&
+                activeSetup.frontTire.casing == activeSetup.rearTire.casing
+            )
+        }
 
         LazyColumn(
             modifier = Modifier
@@ -279,7 +293,7 @@ fun BikeEditScreen(
                                 enabled = false,
                                 label = { Text(stringResource(id = R.string.bike_size_label)) },
                                 shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.weight(1.2f)
+                                modifier = Modifier.weight(1f)
                             )
                         }
 
@@ -397,13 +411,9 @@ fun BikeEditScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            OutlinedTextField(
+                            YearInputField(
                                 value = yearInput,
-                                onValueChange = { yearInput = it.filter { c -> c.isDigit() }.take(4) },
-                                label = { Text(stringResource(id = R.string.bike_year_label)) },
-                                placeholder = { Text(stringResource(id = R.string.bike_year_placeholder)) },
-                                singleLine = true,
-                                shape = RoundedCornerShape(12.dp),
+                                onValueChange = { yearInput = it },
                                 modifier = Modifier.weight(1f)
                             )
                             OutlinedTextField(
@@ -413,7 +423,7 @@ fun BikeEditScreen(
                                 placeholder = { Text(stringResource(id = R.string.bike_size_placeholder)) },
                                 singleLine = true,
                                 shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.weight(1.2f)
+                                modifier = Modifier.weight(1f)
                             )
                         }
 
@@ -667,111 +677,126 @@ fun BikeEditScreen(
                     else
                         availableDiameters.first()
 
+                    val isMulletAllowed = (bikeCategory == BikeCategory.MTB || bikeCategory == BikeCategory.COMMUTE) && !isSameWheels
+
                     var isMulletMode by remember(selectedSetupIndex, activeSetup.frontWheel.diameter, activeSetup.rearWheel.diameter) {
-                        mutableStateOf(activeSetup.frontWheel.diameter != activeSetup.rearWheel.diameter)
+                        mutableStateOf(isMulletAllowed && activeSetup.frontWheel.diameter != activeSetup.rearWheel.diameter)
                     }
 
-                    // Bascule Même taille vs Mullet / MX
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FilterChip(
-                            selected = !isMulletMode,
-                            onClick = {
-                                isMulletMode = false
-                                setups = setups.mapIndexed { idx, s ->
-                                    if (idx == selectedSetupIndex) {
-                                        s.copy(rearWheel = s.rearWheel.copy(diameter = s.frontWheel.diameter))
-                                    } else s
-                                }
-                            },
-                            label = { Text(stringResource(id = R.string.mullet_mode_same)) }
-                        )
-                        FilterChip(
-                            selected = isMulletMode,
-                            onClick = {
-                                isMulletMode = true
-                                if (frontDiameter == rearDiameter && availableDiameters.size > 1) {
-                                    val secondDiam = availableDiameters.getOrNull(1) ?: rearDiameter
+                    if (isMulletAllowed) {
+                        // Bascule Même taille vs Mullet / MX
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            FilterChip(
+                                selected = !isMulletMode,
+                                onClick = {
+                                    isMulletMode = false
                                     setups = setups.mapIndexed { idx, s ->
                                         if (idx == selectedSetupIndex) {
-                                            s.copy(rearWheel = s.rearWheel.copy(diameter = secondDiam))
+                                            s.copy(rearWheel = s.rearWheel.copy(diameter = s.frontWheel.diameter))
                                         } else s
                                     }
-                                }
-                            },
-                            label = { Text(stringResource(id = R.string.mullet_mode_mixed)) }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    if (!isMulletMode) {
-                        PillSelector(
-                            items = availableDiameters,
-                            selectedItem = frontDiameter,
-                            onItemSelected = { newDiam ->
-                                setups = setups.mapIndexed { idx, s ->
-                                    if (idx == selectedSetupIndex) {
-                                        s.copy(
-                                            frontWheel = s.frontWheel.copy(diameter = newDiam),
-                                            rearWheel = s.rearWheel.copy(diameter = newDiam)
-                                        )
-                                    } else s
-                                }
-                            },
-                            labelProvider = { it.getLabelForStyle(currentSetupStyle) }
-                        )
-                    } else {
-                        Text(
-                            text = stringResource(id = R.string.mullet_front_diameter),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        PillSelector(
-                            items = availableDiameters,
-                            selectedItem = frontDiameter,
-                            onItemSelected = { newDiam ->
-                                setups = setups.mapIndexed { idx, s ->
-                                    if (idx == selectedSetupIndex) {
-                                        s.copy(frontWheel = s.frontWheel.copy(diameter = newDiam))
-                                    } else s
-                                }
-                            },
-                            labelProvider = { it.getLabelForStyle(currentSetupStyle) }
-                        )
+                                },
+                                label = { Text(stringResource(id = R.string.mullet_mode_same)) }
+                            )
+                            FilterChip(
+                                selected = isMulletMode,
+                                onClick = {
+                                    isMulletMode = true
+                                    if (frontDiameter == rearDiameter && availableDiameters.size > 1) {
+                                        val secondDiam = availableDiameters.getOrNull(1) ?: rearDiameter
+                                        setups = setups.mapIndexed { idx, s ->
+                                            if (idx == selectedSetupIndex) {
+                                                s.copy(rearWheel = s.rearWheel.copy(diameter = secondDiam))
+                                            } else s
+                                        }
+                                    }
+                                },
+                                label = { Text(stringResource(id = R.string.mullet_mode_mixed)) }
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(12.dp))
+                    }
 
-                        Text(
-                            text = stringResource(id = R.string.mullet_rear_diameter),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        PillSelector(
-                            items = availableDiameters,
-                            selectedItem = rearDiameter,
-                            onItemSelected = { newDiam ->
-                                setups = setups.mapIndexed { idx, s ->
-                                    if (idx == selectedSetupIndex) {
-                                        s.copy(rearWheel = s.rearWheel.copy(diameter = newDiam))
-                                    } else s
-                                }
-                            },
-                            labelProvider = { it.getLabelForStyle(currentSetupStyle) }
-                        )
+                    AnimatedContent(
+                        targetState = isMulletMode && isMulletAllowed,
+                        transitionSpec = {
+                            expandVertically(animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeIn(tween(250)) togetherWith
+                            shrinkVertically(animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeOut(tween(200))
+                        },
+                        label = "MulletDiameterTransition"
+                    ) { mulletActive ->
+                        if (!mulletActive) {
+                            PillSelector(
+                                items = availableDiameters,
+                                selectedItem = frontDiameter,
+                                onItemSelected = { newDiam ->
+                                    setups = setups.mapIndexed { idx, s ->
+                                        if (idx == selectedSetupIndex) {
+                                            s.copy(
+                                                frontWheel = s.frontWheel.copy(diameter = newDiam),
+                                                rearWheel = s.rearWheel.copy(diameter = newDiam)
+                                            )
+                                        } else s
+                                    }
+                                },
+                                labelProvider = { it.getLabelForStyle(currentSetupStyle) }
+                            )
+                        } else {
+                            Column {
+                                Text(
+                                    text = stringResource(id = R.string.mullet_front_diameter),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                PillSelector(
+                                    items = availableDiameters,
+                                    selectedItem = frontDiameter,
+                                    onItemSelected = { newDiam ->
+                                        setups = setups.mapIndexed { idx, s ->
+                                            if (idx == selectedSetupIndex) {
+                                                s.copy(frontWheel = s.frontWheel.copy(diameter = newDiam))
+                                            } else s
+                                        }
+                                    },
+                                    labelProvider = { it.getLabelForStyle(currentSetupStyle) }
+                                )
 
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(id = R.string.mullet_badge),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                Text(
+                                    text = stringResource(id = R.string.mullet_rear_diameter),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                PillSelector(
+                                    items = availableDiameters,
+                                    selectedItem = rearDiameter,
+                                    onItemSelected = { newDiam ->
+                                        setups = setups.mapIndexed { idx, s ->
+                                            if (idx == selectedSetupIndex) {
+                                                s.copy(rearWheel = s.rearWheel.copy(diameter = newDiam))
+                                            } else s
+                                        }
+                                    },
+                                    labelProvider = { it.getLabelForStyle(currentSetupStyle) }
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = stringResource(id = R.string.mullet_badge),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -798,99 +823,211 @@ fun BikeEditScreen(
                         tireWidthMm = activeSetup.frontTire.widthMm,
                         onTireWidthChangeMm = { w ->
                             setups = setups.mapIndexed { idx, s ->
-                                if (idx == selectedSetupIndex) s.copy(frontTire = s.frontTire.copy(widthMm = w)) else s
+                                if (idx == selectedSetupIndex) {
+                                    s.copy(
+                                        frontTire = s.frontTire.copy(widthMm = w),
+                                        rearTire = if (isSameWheels) s.rearTire.copy(widthMm = w) else s.rearTire
+                                    )
+                                } else s
                             }
                         },
                         innerRimWidth = activeSetup.frontWheel.innerRimWidthMm.toString(),
                         onInnerRimWidthChange = { rStr ->
                             val r = rStr.toDoubleOrNull() ?: activeSetup.frontWheel.innerRimWidthMm
                             setups = setups.mapIndexed { idx, s ->
-                                if (idx == selectedSetupIndex) s.copy(frontWheel = s.frontWheel.copy(innerRimWidthMm = r)) else s
+                                if (idx == selectedSetupIndex) {
+                                    s.copy(
+                                        frontWheel = s.frontWheel.copy(innerRimWidthMm = r),
+                                        rearWheel = if (isSameWheels) s.rearWheel.copy(innerRimWidthMm = r) else s.rearWheel
+                                    )
+                                } else s
                             }
                         },
                         rimType = activeSetup.frontWheel.rimType,
                         onRimTypeChange = { rt ->
                             setups = setups.mapIndexed { idx, s ->
-                                if (idx == selectedSetupIndex) s.copy(frontWheel = s.frontWheel.copy(rimType = rt)) else s
+                                if (idx == selectedSetupIndex) {
+                                    s.copy(
+                                        frontWheel = s.frontWheel.copy(rimType = rt),
+                                        rearWheel = if (isSameWheels) s.rearWheel.copy(rimType = rt) else s.rearWheel
+                                    )
+                                } else s
                             }
                         },
                         casing = activeSetup.frontTire.casing,
                         onCasingChange = { c ->
                             setups = setups.mapIndexed { idx, s ->
-                                if (idx == selectedSetupIndex) s.copy(frontTire = s.frontTire.copy(casing = c)) else s
+                                if (idx == selectedSetupIndex) {
+                                    s.copy(
+                                        frontTire = s.frontTire.copy(casing = c),
+                                        rearTire = if (isSameWheels) s.rearTire.copy(casing = c) else s.rearTire
+                                    )
+                                } else s
                             }
                         }
                     )
                 }
             }
 
-            // Bouton copier avant vers arrière
+            // Bascule Roue arrière identique à l'avant
             item {
-                OutlinedButton(
-                    onClick = {
-                        setups = setups.mapIndexed { idx, s ->
-                            if (idx == selectedSetupIndex) {
-                                s.copy(
-                                    rearTire = s.frontTire,
-                                    rearWheel = s.frontWheel
-                                )
-                            } else s
-                        }
-                    },
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    )
                 ) {
-                    Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(id = R.string.copy_front_to_rear))
-                }
-            }
-
-            // 5. Roue Arrière (Réductible)
-            item {
-                SectionCard(
-                    title = stringResource(id = R.string.wheel_rear),
-                    icon = Icons.Default.DonutLarge,
-                    isCollapsible = true,
-                    isExpanded = isRearWheelExpanded,
-                    onToggleExpand = { isRearWheelExpanded = !isRearWheelExpanded },
-                    collapsedSummary = {
-                        val cStr = stringResource(id = activeSetup.rearTire.casing.labelRes)
-                        val rStr = stringResource(id = activeSetup.rearWheel.rimType.labelRes)
-                        Text(
-                            text = "${activeSetup.rearTire.widthMm.toInt()}mm • $rStr • $cStr",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(id = R.string.bike_same_wheels_label),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = stringResource(id = R.string.bike_same_wheels_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Switch(
+                            checked = isSameWheels,
+                            onCheckedChange = { checked ->
+                                isSameWheels = checked
+                                if (checked) {
+                                    setups = setups.mapIndexed { idx, s ->
+                                        if (idx == selectedSetupIndex) {
+                                            s.copy(
+                                                rearTire = s.frontTire,
+                                                rearWheel = s.frontWheel
+                                            )
+                                        } else s
+                                    }
+                                }
+                            }
                         )
                     }
+                }
+            }
+
+            // 5. Roue Arrière (Réductible si indépendante, ou badge synchronisé)
+            item {
+                AnimatedVisibility(
+                    visible = !isSameWheels,
+                    enter = expandVertically(tween(300, easing = FastOutSlowInEasing)) + fadeIn(tween(250)),
+                    exit = shrinkVertically(tween(300, easing = FastOutSlowInEasing)) + fadeOut(tween(200))
                 ) {
-                    WheelTireFormBlock(
-                        tireWidthMm = activeSetup.rearTire.widthMm,
-                        onTireWidthChangeMm = { w ->
-                            setups = setups.mapIndexed { idx, s ->
-                                if (idx == selectedSetupIndex) s.copy(rearTire = s.rearTire.copy(widthMm = w)) else s
-                            }
-                        },
-                        innerRimWidth = activeSetup.rearWheel.innerRimWidthMm.toString(),
-                        onInnerRimWidthChange = { rStr ->
-                            val r = rStr.toDoubleOrNull() ?: activeSetup.rearWheel.innerRimWidthMm
-                            setups = setups.mapIndexed { idx, s ->
-                                if (idx == selectedSetupIndex) s.copy(rearWheel = s.rearWheel.copy(innerRimWidthMm = r)) else s
-                            }
-                        },
-                        rimType = activeSetup.rearWheel.rimType,
-                        onRimTypeChange = { rt ->
-                            setups = setups.mapIndexed { idx, s ->
-                                if (idx == selectedSetupIndex) s.copy(rearWheel = s.rearWheel.copy(rimType = rt)) else s
-                            }
-                        },
-                        casing = activeSetup.rearTire.casing,
-                        onCasingChange = { c ->
-                            setups = setups.mapIndexed { idx, s ->
-                                if (idx == selectedSetupIndex) s.copy(rearTire = s.rearTire.copy(casing = c)) else s
-                            }
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                setups = setups.mapIndexed { idx, s ->
+                                    if (idx == selectedSetupIndex) {
+                                        s.copy(
+                                            rearTire = s.frontTire,
+                                            rearWheel = s.frontWheel
+                                        )
+                                    } else s
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(stringResource(id = R.string.copy_front_to_rear))
                         }
-                    )
+
+                        SectionCard(
+                            title = stringResource(id = R.string.wheel_rear),
+                            icon = Icons.Default.DonutLarge,
+                            isCollapsible = true,
+                            isExpanded = isRearWheelExpanded,
+                            onToggleExpand = { isRearWheelExpanded = !isRearWheelExpanded },
+                            collapsedSummary = {
+                                val cStr = stringResource(id = activeSetup.rearTire.casing.labelRes)
+                                val rStr = stringResource(id = activeSetup.rearWheel.rimType.labelRes)
+                                Text(
+                                    text = "${activeSetup.rearTire.widthMm.toInt()}mm • $rStr • $cStr",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        ) {
+                            WheelTireFormBlock(
+                                tireWidthMm = activeSetup.rearTire.widthMm,
+                                onTireWidthChangeMm = { w ->
+                                    setups = setups.mapIndexed { idx, s ->
+                                        if (idx == selectedSetupIndex) s.copy(rearTire = s.rearTire.copy(widthMm = w)) else s
+                                    }
+                                },
+                                innerRimWidth = activeSetup.rearWheel.innerRimWidthMm.toString(),
+                                onInnerRimWidthChange = { rStr ->
+                                    val r = rStr.toDoubleOrNull() ?: activeSetup.rearWheel.innerRimWidthMm
+                                    setups = setups.mapIndexed { idx, s ->
+                                        if (idx == selectedSetupIndex) s.copy(rearWheel = s.rearWheel.copy(innerRimWidthMm = r)) else s
+                                    }
+                                },
+                                rimType = activeSetup.rearWheel.rimType,
+                                onRimTypeChange = { rt ->
+                                    setups = setups.mapIndexed { idx, s ->
+                                        if (idx == selectedSetupIndex) s.copy(rearWheel = s.rearWheel.copy(rimType = rt)) else s
+                                    }
+                                },
+                                casing = activeSetup.rearTire.casing,
+                                onCasingChange = { c ->
+                                    setups = setups.mapIndexed { idx, s ->
+                                        if (idx == selectedSetupIndex) s.copy(rearTire = s.rearTire.copy(casing = c)) else s
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+
+                AnimatedVisibility(
+                    visible = isSameWheels,
+                    enter = expandVertically(tween(300, easing = FastOutSlowInEasing)) + fadeIn(tween(250)),
+                    exit = shrinkVertically(tween(300, easing = FastOutSlowInEasing)) + fadeOut(tween(200))
+                ) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = stringResource(id = R.string.bike_same_wheels_badge),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
                 }
             }
 
@@ -1130,7 +1267,7 @@ private fun WheelTireFormBlock(
                         onTireWidthChangeMm(mm)
                     }
                 },
-                label = if (isInchUnit) "${stringResource(id = R.string.tire_width)} (po)" else "${stringResource(id = R.string.tire_width)} (mm)",
+                label = if (isInchUnit) "${stringResource(id = R.string.tire_width)} (${stringResource(id = R.string.unit_inch_abbr)})" else "${stringResource(id = R.string.tire_width)} (mm)",
                 suffix = if (isInchUnit) "\"" else "mm",
                 modifier = Modifier.weight(1f)
             )

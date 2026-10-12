@@ -20,6 +20,7 @@ data class OverviewUiState(
     val pressureUnit: PressureUnit = PressureUnit.BAR,
     val showWetSurface: Boolean = true,
     val showSnowSurface: Boolean = false,
+    val defaultOverviewCompact: Boolean = false,
     val isLoading: Boolean = false,
     val bikeToDelete: BikeProfile? = null,
     val setupToDelete: Pair<BikeProfile, WheelSetup>? = null
@@ -43,10 +44,11 @@ class OverviewViewModel(
                 preferencesRepository.pressureUnitFlow,
                 combine(
                     preferencesRepository.showWetSurfaceFlow,
-                    preferencesRepository.showSnowSurfaceFlow
-                ) { wet, snow -> Pair(wet, snow) }
-            ) { bikes, riderWeight, massUnit, pressureUnit, surfaces ->
-                val (showWet, showSnow) = surfaces
+                    preferencesRepository.showSnowSurfaceFlow,
+                    preferencesRepository.defaultOverviewCompactFlow
+                ) { wet, snow, defaultCompact -> Triple(wet, snow, defaultCompact) }
+            ) { bikes, riderWeight, massUnit, pressureUnit, surfacesAndCompact ->
+                val (showWet, showSnow, defaultCompact) = surfacesAndCompact
                 val list = bikes.map { bike ->
                     val setupsWithPressures = bike.setups.map { setup ->
                         val effectiveStyle = setup.getEffectiveRideStyle(bike.category)
@@ -85,7 +87,8 @@ class OverviewViewModel(
                     massUnit = massUnit,
                     pressureUnit = pressureUnit,
                     showWetSurface = showWet,
-                    showSnowSurface = showSnow
+                    showSnowSurface = showSnow,
+                    defaultOverviewCompact = defaultCompact
                 )
             }.collect { state ->
                 _uiState.value = state
@@ -121,11 +124,11 @@ class OverviewViewModel(
         }
     }
 
-    fun duplicateBike(bike: BikeProfile) {
+    fun duplicateBike(bike: BikeProfile, copySuffix: String = " (copy)") {
         viewModelScope.launch {
             val duplicate = bike.copy(
                 id = UUID.randomUUID().toString(),
-                name = "${bike.name} (copie)",
+                name = "${bike.name} $copySuffix".trim(),
                 isDefault = false,
                 createdAt = System.currentTimeMillis(),
                 updatedAt = System.currentTimeMillis()
@@ -138,13 +141,14 @@ class OverviewViewModel(
         bike: BikeProfile,
         setupName: String,
         templateSetup: WheelSetup? = null,
-        overrideRideStyle: RideStyle? = null
+        overrideRideStyle: RideStyle? = null,
+        defaultNamePrefix: String = "Setup"
     ) {
         viewModelScope.launch {
             val newSetup = if (templateSetup != null) {
                 templateSetup.copy(
                     id = UUID.randomUUID().toString(),
-                    name = setupName.ifBlank { "Configuration ${bike.setups.size + 1}" },
+                    name = setupName.ifBlank { "$defaultNamePrefix ${bike.setups.size + 1}" },
                     rideStyle = overrideRideStyle ?: templateSetup.rideStyle ?: bike.category.defaultRideStyle,
                     isDefault = false
                 )
@@ -153,7 +157,7 @@ class OverviewViewModel(
                 val validDiameters = WheelDiameter.getOptionsForStyle(targetStyle)
                 WheelSetup(
                     id = UUID.randomUUID().toString(),
-                    name = setupName.ifBlank { "Configuration ${bike.setups.size + 1}" },
+                    name = setupName.ifBlank { "$defaultNamePrefix ${bike.setups.size + 1}" },
                     rideStyle = targetStyle,
                     frontTire = TireConfig(
                         widthMm = targetStyle.defaultTireWidthMm,
@@ -185,11 +189,11 @@ class OverviewViewModel(
         }
     }
 
-    fun duplicateSetup(bike: BikeProfile, setup: WheelSetup) {
+    fun duplicateSetup(bike: BikeProfile, setup: WheelSetup, copySuffix: String = " (copy)") {
         viewModelScope.launch {
             val dupSetup = setup.copy(
                 id = UUID.randomUUID().toString(),
-                name = "${setup.name} (copie)",
+                name = "${setup.name} $copySuffix".trim(),
                 isDefault = false
             )
             val updatedBike = bike.copy(

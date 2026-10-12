@@ -16,6 +16,7 @@ interface PreferencesRepository {
     val selectedBikeIdFlow: Flow<String?>
     val showWetSurfaceFlow: Flow<Boolean>
     val showSnowSurfaceFlow: Flow<Boolean>
+    val defaultOverviewCompactFlow: Flow<Boolean>
 
     suspend fun setTheme(theme: AppTheme)
     suspend fun setAppLanguage(language: AppLanguage)
@@ -26,5 +27,6 @@ interface PreferencesRepository {
     suspend fun setSelectedBikeId(id: String?)
     suspend fun setShowWetSurface(show: Boolean)
     suspend fun setShowSnowSurface(show: Boolean)
+    suspend fun setDefaultOverviewCompact(compact: Boolean)
     suspend fun clear()
 }

@@ -1,6 +1,13 @@
 package com.tirepressure.app.ui.onboarding
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -51,7 +58,33 @@ fun OnboardingScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        if (currentStep == 1) {
+        AnimatedContent(
+            targetState = currentStep,
+            transitionSpec = {
+                if (targetState > initialState) {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                        animationSpec = tween(350, easing = FastOutSlowInEasing)
+                    ) + fadeIn(tween(250)) togetherWith
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                        animationSpec = tween(350, easing = FastOutSlowInEasing)
+                    ) + fadeOut(tween(200))
+                } else {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.End,
+                        animationSpec = tween(350, easing = FastOutSlowInEasing)
+                    ) + fadeIn(tween(250)) togetherWith
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.End,
+                        animationSpec = tween(350, easing = FastOutSlowInEasing)
+                    ) + fadeOut(tween(200))
+                }
+            },
+            label = "OnboardingStepTransition",
+            modifier = Modifier.fillMaxSize()
+        ) { step ->
+            if (step == 1) {
             // Étape 1 : Saisie initiale du poids du cycliste
             Column(
                 modifier = Modifier
@@ -211,7 +244,7 @@ fun OnboardingScreen(
                             onOnboardingFinished()
                         }
                     }) {
-                        Text("Passer", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(id = R.string.onboarding_skip), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
@@ -318,6 +351,7 @@ fun OnboardingScreen(
             }
         }
     }
+}
 }
 
 private data class TutorialPage(

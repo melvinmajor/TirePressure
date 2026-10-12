@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -40,11 +41,11 @@ fun SettingsScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    // États de réduction des sections
-    var isUnitsExpanded by remember { mutableStateOf(true) }
-    var isDisplayExpanded by remember { mutableStateOf(false) }
-    var isWidgetsExpanded by remember { mutableStateOf(false) }
-    var isBackupExpanded by remember { mutableStateOf(false) }
+    // États de réduction des sections persistants
+    var isUnitsExpanded by rememberSaveable { mutableStateOf(true) }
+    var isDisplayExpanded by rememberSaveable { mutableStateOf(false) }
+    var isWidgetsExpanded by rememberSaveable { mutableStateOf(false) }
+    var isBackupExpanded by rememberSaveable { mutableStateOf(false) }
 
     // Gestion SAF : Export JSON
     val exportLauncher = rememberLauncherForActivityResult(
@@ -71,13 +72,13 @@ fun SettingsScreen(
     // Affichage des messages Snack/Toast
     LaunchedEffect(state.statusMessage) {
         state.statusMessage?.let {
-            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            Toast.makeText(context, it.asString(context), Toast.LENGTH_LONG).show()
             viewModel.clearMessages()
         }
     }
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
-            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            Toast.makeText(context, it.asString(context), Toast.LENGTH_LONG).show()
             viewModel.clearMessages()
         }
     }
@@ -285,16 +286,25 @@ fun SettingsScreen(
                     selectedItem = state.language,
                     onItemSelected = { lang ->
                         viewModel.setLanguage(lang)
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                            val localeManager = context.getSystemService(android.app.LocaleManager::class.java)
-                            if (lang == AppLanguage.SYSTEM) {
-                                localeManager?.applicationLocales = android.os.LocaleList.getEmptyLocaleList()
-                            } else {
-                                localeManager?.applicationLocales = android.os.LocaleList.forLanguageTags(lang.code)
-                            }
-                        }
                     },
                     labelProvider = { context.getString(it.labelRes) }
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Text(
+                    text = stringResource(id = R.string.settings_default_overview_title),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                val detailedLabel = stringResource(id = R.string.overview_mode_detailed)
+                val compactLabel = stringResource(id = R.string.overview_mode_compact)
+                PillSelector(
+                    items = listOf(false, true),
+                    selectedItem = state.defaultOverviewCompact,
+                    onItemSelected = { viewModel.setDefaultOverviewCompact(it) },
+                    labelProvider = { if (it) compactLabel else detailedLabel }
                 )
             }
 

@@ -87,9 +87,9 @@ enum class WheelDiameter(val diameterMm: Double, val defaultLabel: String) {
             }
             RideStyle.ROAD, RideStyle.GRAVEL, RideStyle.CYCLOCROSS, RideStyle.COMMUTE -> when (this) {
                 DIAMETER_559 -> "26\""
-                DIAMETER_571 -> "650c"
-                DIAMETER_584 -> "650b"
-                DIAMETER_622 -> "700c"
+                DIAMETER_571 -> "650c (26\")"
+                DIAMETER_584 -> "650b (27.5\")"
+                DIAMETER_622 -> "700c (28\")"
                 DIAMETER_686 -> "32\""
             }
             RideStyle.FAT_BIKE -> when (this) {
