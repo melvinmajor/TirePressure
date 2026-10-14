@@ -84,6 +84,8 @@ class PreferencesRepositoryImpl(
         context.dataStore.edit { prefs ->
             prefs[KEY_LANGUAGE] = language.name
         }
+        com.tirepressure.app.core.util.LocaleHelper.saveLanguage(context, language)
+        com.tirepressure.app.widget.WidgetUpdateHelper.updateAllWidgets(context)
     }
 
     override suspend fun setMassUnit(unit: MassUnit) {

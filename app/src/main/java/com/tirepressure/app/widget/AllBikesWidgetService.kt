@@ -70,15 +70,17 @@ class AllBikesRemoteViewsFactory(
         val layoutId = if (isDark) R.layout.widget_all_bikes_item_dark else R.layout.widget_all_bikes_item_light
         val views = RemoteViews(context.packageName, layoutId)
 
+        val (locContext, targetLocale) = WidgetUpdateHelper.getWidgetLocalizedContext(context)
+
         views.setTextViewText(R.id.item_bike_name, bike.name)
-        views.setTextViewText(R.id.item_bike_badge, bike.category.displayName.uppercase(Locale.getDefault()))
+        views.setTextViewText(R.id.item_bike_badge, locContext.getString(bike.category.labelRes).uppercase(targetLocale))
         views.setTextViewText(
             R.id.item_bike_weight,
-            String.format(Locale.getDefault(), "• %.1f kg", bike.bikeWeightKg)
+            String.format(targetLocale, "• %.1f kg", bike.bikeWeightKg)
         )
 
-        val frontAbbr = context.getString(R.string.widget_front_abbr)
-        val rearAbbr = context.getString(R.string.widget_rear_abbr)
+        val frontAbbr = locContext.getString(R.string.widget_front_abbr)
+        val rearAbbr = locContext.getString(R.string.widget_rear_abbr)
 
         // Setup 1 (primary or first)
         val setup1 = bike.primarySetup
@@ -156,16 +158,7 @@ class AllBikesRemoteViewsFactory(
     override fun hasStableIds(): Boolean = true
 
     private fun getDisciplineLabel(context: Context, style: RideStyle): String {
-        return when (style) {
-            RideStyle.ROAD -> context.getString(R.string.style_road)
-            RideStyle.GRAVEL -> context.getString(R.string.style_gravel)
-            RideStyle.CYCLOCROSS -> context.getString(R.string.style_cross)
-            RideStyle.XC_MTB -> context.getString(R.string.style_xc_mtb)
-            RideStyle.TRAIL_MTB -> context.getString(R.string.style_trail_mtb)
-            RideStyle.ENDURO_MTB -> context.getString(R.string.style_enduro_mtb)
-            RideStyle.DOWNHILL_MTB -> context.getString(R.string.style_dh_mtb)
-            RideStyle.FAT_BIKE -> context.getString(R.string.style_fat)
-            RideStyle.COMMUTE -> context.getString(R.string.style_commute)
-        }.uppercase(Locale.getDefault())
+        val (locContext, targetLocale) = WidgetUpdateHelper.getWidgetLocalizedContext(context)
+        return locContext.getString(style.labelRes).uppercase(targetLocale)
     }
 }

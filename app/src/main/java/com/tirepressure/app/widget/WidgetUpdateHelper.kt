@@ -34,4 +34,14 @@ object WidgetUpdateHelper {
             appWidgetManager.notifyAppWidgetViewDataChanged(allBikesIds, R.id.widget_all_bikes_list)
         }
     }
+
+    fun getWidgetLocalizedContext(context: Context): Pair<Context, java.util.Locale> {
+        val sysLocale = android.content.res.Resources.getSystem().configuration.locales[0] ?: java.util.Locale.getDefault()
+        val targetLocale = if (sysLocale.language.startsWith("fr", ignoreCase = true)) java.util.Locale.FRENCH else java.util.Locale.ENGLISH
+        val config = android.content.res.Configuration(context.resources.configuration).apply {
+            setLocale(targetLocale)
+            setLayoutDirection(targetLocale)
+        }
+        return Pair(context.createConfigurationContext(config), targetLocale)
+    }
 }

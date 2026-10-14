@@ -27,8 +27,11 @@ import com.tirepressure.app.domain.repository.PreferencesRepository
 import com.tirepressure.app.ui.components.AddSetupDialog
 import com.tirepressure.app.ui.components.NumberInputField
 import com.tirepressure.app.ui.components.PillSelector
+import androidx.compose.foundation.BorderStroke
 import com.tirepressure.app.ui.components.SectionCard
 import com.tirepressure.app.ui.components.YearInputField
+import com.tirepressure.app.ui.theme.getCategoryColor
+import com.tirepressure.app.ui.theme.getRideStyleColor
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -574,11 +577,23 @@ fun BikeEditScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
-                                    Text(
-                                        text = stringResource(id = currentSetupStyle.labelRes),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    val styleColor = getRideStyleColor(currentSetupStyle, bikeCategory)
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = styleColor.copy(alpha = 0.12f),
+                                            border = BorderStroke(1.dp, styleColor.copy(alpha = 0.4f))
+                                        ) {
+                                            Text(
+                                                text = stringResource(id = currentSetupStyle.labelRes),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = styleColor,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(2.dp))
                                     val defaultCategoryName = stringResource(id = bikeCategory.labelRes)
                                     val defaultStyleName = stringResource(id = bikeCategory.defaultRideStyle.labelRes)
                                     val isDefaultStyle = activeSetup.rideStyle == null || activeSetup.rideStyle == bikeCategory.defaultRideStyle
@@ -613,12 +628,22 @@ fun BikeEditScreen(
                             )
                             HorizontalDivider()
                             RideStyle.entries.forEach { st ->
+                                val stColor = getRideStyleColor(st, bikeCategory)
                                 DropdownMenuItem(
                                     text = {
-                                        Text(
-                                            text = stringResource(id = st.labelRes),
-                                            fontWeight = if (st == currentSetupStyle) FontWeight.Bold else FontWeight.Normal
-                                        )
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(8.dp)
+                                                    .clip(androidx.compose.foundation.shape.CircleShape)
+                                                    .background(stColor)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = stringResource(id = st.labelRes),
+                                                fontWeight = if (st == currentSetupStyle) FontWeight.Bold else FontWeight.Normal
+                                            )
+                                        }
                                     },
                                     onClick = {
                                         setups = setups.mapIndexed { idx, s ->

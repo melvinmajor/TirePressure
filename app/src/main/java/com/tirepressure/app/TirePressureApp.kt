@@ -30,6 +30,9 @@ class TirePressureApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        val locale = com.tirepressure.app.core.util.LocaleHelper.getSavedLocale(this)
+        com.tirepressure.app.core.util.LocaleHelper.applyLocale(this, locale)
+
         database = AppDatabase.getInstance(this)
         bikeRepository = BikeRepositoryImpl(database.bikeDao(), this)
         preferencesRepository = PreferencesRepositoryImpl(this)

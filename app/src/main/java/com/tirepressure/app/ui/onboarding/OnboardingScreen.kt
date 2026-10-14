@@ -149,7 +149,7 @@ fun OnboardingScreen(
                                     selectedUnit = newUnit
                                     weightInput = newUnit.format(currentKg).replace(',', '.')
                                 },
-                                labelProvider = { it.displayName }
+                                labelProvider = { context.getString(it.labelRes) }
                             )
 
                             NumberInputField(

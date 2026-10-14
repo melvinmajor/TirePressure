@@ -7,8 +7,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 enum class PressureUnit(val symbol: String, val displayName: String, @StringRes val labelRes: Int, val decimals: Int) {
-    BAR("bar", "Bar", R.string.unit_bar, 2),
-    PSI("psi", "PSI", R.string.unit_psi, 1),
+    BAR("bar", "bar", R.string.unit_bar, 2),
+    PSI("psi", "psi", R.string.unit_psi, 1),
     KPA("kPa", "kPa", R.string.unit_kpa, 1);
 
     fun format(pressureInMbar: Double): String {

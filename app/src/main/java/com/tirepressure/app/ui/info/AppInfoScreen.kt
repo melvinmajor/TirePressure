@@ -17,10 +17,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.tirepressure.app.R
 import com.tirepressure.app.ui.components.AboutAndPrivacyCard
@@ -51,12 +56,10 @@ fun AppInfoScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
-
             // Logo agrandi
             Image(
                 painter = painterResource(id = R.drawable.app_logo),
@@ -68,14 +71,23 @@ fun AppInfoScreen(
 
             // Nom et version
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                val tireColor = if (isDark) Color.White else MaterialTheme.colorScheme.onBackground
                 Text(
-                    text = stringResource(id = R.string.app_name),
+                    text = buildAnnotatedString {
+                        withStyle(SpanStyle(color = tireColor)) {
+                            append("Tire")
+                        }
+                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                            append("Pressure")
+                        }
+                    },
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "v1.1.0",
+                    text = "v1.2.0.0",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -104,10 +116,10 @@ fun AppInfoScreen(
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Code,
+                            painter = painterResource(id = R.drawable.ic_github),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(26.dp)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {

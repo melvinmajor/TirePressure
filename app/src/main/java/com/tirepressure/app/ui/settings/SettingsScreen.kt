@@ -3,6 +3,8 @@ package com.tirepressure.app.ui.settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,7 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -40,12 +41,6 @@ fun SettingsScreen(
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-
-    // États de réduction des sections persistants
-    var isUnitsExpanded by rememberSaveable { mutableStateOf(true) }
-    var isDisplayExpanded by rememberSaveable { mutableStateOf(false) }
-    var isWidgetsExpanded by rememberSaveable { mutableStateOf(false) }
-    var isBackupExpanded by rememberSaveable { mutableStateOf(false) }
 
     // Gestion SAF : Export JSON
     val exportLauncher = rememberLauncherForActivityResult(
@@ -148,8 +143,8 @@ fun SettingsScreen(
                 icon = Icons.Default.SquareFoot,
                 subtitle = stringResource(id = R.string.settings_units_surfaces_desc),
                 isCollapsible = true,
-                isExpanded = isUnitsExpanded,
-                onToggleExpand = { isUnitsExpanded = !isUnitsExpanded }
+                isExpanded = state.isUnitsExpanded,
+                onToggleExpand = { viewModel.toggleUnitsExpanded() }
             ) {
                 Text(
                     text = stringResource(id = R.string.settings_mass_unit),
@@ -257,8 +252,8 @@ fun SettingsScreen(
                 icon = Icons.Default.Palette,
                 subtitle = stringResource(id = R.string.settings_display_language_desc),
                 isCollapsible = true,
-                isExpanded = isDisplayExpanded,
-                onToggleExpand = { isDisplayExpanded = !isDisplayExpanded }
+                isExpanded = state.isDisplayExpanded,
+                onToggleExpand = { viewModel.toggleDisplayExpanded() }
             ) {
                 Text(
                     text = stringResource(id = R.string.settings_appearance),
@@ -317,8 +312,8 @@ fun SettingsScreen(
                 icon = Icons.Default.Widgets,
                 subtitle = stringResource(id = R.string.settings_widget_desc),
                 isCollapsible = true,
-                isExpanded = isWidgetsExpanded,
-                onToggleExpand = { isWidgetsExpanded = !isWidgetsExpanded }
+                isExpanded = state.isWidgetsExpanded,
+                onToggleExpand = { viewModel.toggleWidgetsExpanded() }
             ) {
                 Text(
                     text = stringResource(id = R.string.widget_config_theme),
@@ -353,8 +348,8 @@ fun SettingsScreen(
                 icon = Icons.Default.SaveAlt,
                 subtitle = stringResource(id = R.string.settings_backup_desc),
                 isCollapsible = true,
-                isExpanded = isBackupExpanded,
-                onToggleExpand = { isBackupExpanded = !isBackupExpanded }
+                isExpanded = state.isBackupExpanded,
+                onToggleExpand = { viewModel.toggleBackupExpanded() }
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

@@ -41,6 +41,10 @@ data class SettingsUiState(
     val showWetSurface: Boolean = true,
     val showSnowSurface: Boolean = true,
     val defaultOverviewCompact: Boolean = false,
+    val isUnitsExpanded: Boolean = true,
+    val isDisplayExpanded: Boolean = false,
+    val isWidgetsExpanded: Boolean = false,
+    val isBackupExpanded: Boolean = false,
     val showResetConfirmation: Boolean = false,
     val pendingImportPayload: BackupPayload? = null,
     val statusMessage: UiText? = null,
@@ -115,6 +119,22 @@ class SettingsViewModel(
         viewModelScope.launch {
             preferencesRepository.setAppLanguage(language)
         }
+    }
+
+    fun toggleUnitsExpanded() {
+        _uiState.update { it.copy(isUnitsExpanded = !it.isUnitsExpanded) }
+    }
+
+    fun toggleDisplayExpanded() {
+        _uiState.update { it.copy(isDisplayExpanded = !it.isDisplayExpanded) }
+    }
+
+    fun toggleWidgetsExpanded() {
+        _uiState.update { it.copy(isWidgetsExpanded = !it.isWidgetsExpanded) }
+    }
+
+    fun toggleBackupExpanded() {
+        _uiState.update { it.copy(isBackupExpanded = !it.isBackupExpanded) }
     }
 
     fun setRiderWeight(weightKg: Double) {

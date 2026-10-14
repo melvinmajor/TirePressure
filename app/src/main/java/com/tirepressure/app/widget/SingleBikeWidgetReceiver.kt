@@ -88,11 +88,14 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
             )
             remoteViews.setOnClickPendingIntent(R.id.widget_btn_settings, configPendingIntent)
 
+            val (locContext, targetLocale) = WidgetUpdateHelper.getWidgetLocalizedContext(context)
+
             if (selectedBike == null) {
                 // Empty state
                 remoteViews.setViewVisibility(R.id.widget_empty_view, View.VISIBLE)
+                remoteViews.setViewVisibility(R.id.widget_setups_scroll, View.GONE)
                 remoteViews.setViewVisibility(R.id.widget_setups_container, View.GONE)
-                remoteViews.setTextViewText(R.id.widget_bike_name, context.getString(R.string.app_name))
+                remoteViews.setTextViewText(R.id.widget_bike_name, locContext.getString(R.string.app_name))
                 remoteViews.setTextViewText(R.id.widget_discipline_badge, "")
                 remoteViews.setTextViewText(R.id.widget_bike_weight, "")
                 appWidgetManager.updateAppWidget(appWidgetId, remoteViews)
@@ -101,17 +104,18 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
 
             // Populate Bike Info
             remoteViews.setViewVisibility(R.id.widget_empty_view, View.GONE)
+            remoteViews.setViewVisibility(R.id.widget_setups_scroll, View.VISIBLE)
             remoteViews.setViewVisibility(R.id.widget_setups_container, View.VISIBLE)
             remoteViews.setTextViewText(R.id.widget_bike_name, selectedBike.name)
-            remoteViews.setTextViewText(R.id.widget_discipline_badge, selectedBike.category.displayName.uppercase(Locale.getDefault()))
+            remoteViews.setTextViewText(R.id.widget_discipline_badge, locContext.getString(selectedBike.category.labelRes).uppercase(targetLocale))
             remoteViews.setTextViewText(
                 R.id.widget_bike_weight,
-                String.format(Locale.getDefault(), "• %.1f kg", selectedBike.bikeWeightKg)
+                String.format(targetLocale, "• %.1f kg", selectedBike.bikeWeightKg)
             )
 
-            // Populate Setups
+            // Populate Setups (all setups included, scrollable via ScrollView if widget is constrained)
             remoteViews.removeAllViews(R.id.widget_setups_container)
-            val setupsToShow = selectedBike.setups.take(2) // ColorOS widget card accommodates up to 2 setups cleanly
+            val setupsToShow = selectedBike.setups
 
             for (setup in setupsToShow) {
                 val itemLayoutId = if (isDark) R.layout.widget_single_bike_setup_item_dark else R.layout.widget_single_bike_setup_item_light
@@ -134,7 +138,7 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
 
                 setupViews.setTextViewText(R.id.setup_item_name, setup.name)
                 setupViews.setViewVisibility(R.id.setup_item_style_badge, View.VISIBLE)
-                setupViews.setTextViewText(R.id.setup_item_style_badge, getDisciplineLabel(context, effectiveStyle))
+                setupViews.setTextViewText(R.id.setup_item_style_badge, getDisciplineLabel(locContext, effectiveStyle, targetLocale))
 
                 if (dryRes.hasHooklessWarning) {
                     setupViews.setViewVisibility(R.id.setup_item_warning, View.VISIBLE)
@@ -142,8 +146,8 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
                     setupViews.setViewVisibility(R.id.setup_item_warning, View.GONE)
                 }
 
-                val frontAbbr = context.getString(R.string.widget_front_abbr)
-                val rearAbbr = context.getString(R.string.widget_rear_abbr)
+                val frontAbbr = locContext.getString(R.string.widget_front_abbr)
+                val rearAbbr = locContext.getString(R.string.widget_rear_abbr)
                 setupViews.setTextViewText(R.id.setup_front_abbr, frontAbbr)
                 setupViews.setTextViewText(R.id.setup_rear_abbr, rearAbbr)
 
@@ -153,7 +157,7 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
                 setupViews.setTextViewText(R.id.setup_rear_dry_val, rearDry)
 
                 if (setup.showWet) {
-                    val wetLabel = context.getString(R.string.overview_wet)
+                    val wetLabel = locContext.getString(R.string.overview_wet)
                     val frontWet = formatPressure(wetRes.front, pressureUnit)
                     val rearWet = formatPressure(wetRes.rear, pressureUnit)
                     setupViews.setViewVisibility(R.id.setup_wet_info, View.VISIBLE)
@@ -179,18 +183,8 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
             }
         }
 
-        private fun getDisciplineLabel(context: Context, style: RideStyle): String {
-            return when (style) {
-                RideStyle.ROAD -> context.getString(R.string.style_road)
-                RideStyle.GRAVEL -> context.getString(R.string.style_gravel)
-                RideStyle.CYCLOCROSS -> context.getString(R.string.style_cross)
-                RideStyle.XC_MTB -> context.getString(R.string.style_xc_mtb)
-                RideStyle.TRAIL_MTB -> context.getString(R.string.style_trail_mtb)
-                RideStyle.ENDURO_MTB -> context.getString(R.string.style_enduro_mtb)
-                RideStyle.DOWNHILL_MTB -> context.getString(R.string.style_dh_mtb)
-                RideStyle.FAT_BIKE -> context.getString(R.string.style_fat)
-                RideStyle.COMMUTE -> context.getString(R.string.style_commute)
-            }.uppercase(Locale.getDefault())
+        private fun getDisciplineLabel(context: Context, style: RideStyle, targetLocale: Locale): String {
+            return context.getString(style.labelRes).uppercase(targetLocale)
         }
     }
 }

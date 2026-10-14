@@ -15,15 +15,15 @@ enum class RideStyle(
     val defaultTireCasing: TireCasing,
     val isMtbInches: Boolean
 ) {
-    ROAD("Route", R.string.style_road, 7.5, 21.0, RimType.TUBELESS_STRAIGHT_SIDE, 28.0, TireCasing.STANDARD, false),
+    ROAD("Road", R.string.style_road, 7.5, 21.0, RimType.TUBELESS_STRAIGHT_SIDE, 28.0, TireCasing.STANDARD, false),
     GRAVEL("Gravel", R.string.style_gravel, 9.0, 25.0, RimType.TUBELESS_STRAIGHT_SIDE, 40.0, TireCasing.STANDARD, false),
     CYCLOCROSS("Cyclocross", R.string.style_cross, 8.0, 21.0, RimType.TUBULAR, 33.0, TireCasing.STANDARD, false),
-    XC_MTB("VTT Cross-Country", R.string.style_xc_mtb, 10.5, 30.0, RimType.TUBELESS_STRAIGHT_SIDE, 58.42, TireCasing.STANDARD, true),
-    TRAIL_MTB("VTT Trail", R.string.style_trail_mtb, 13.0, 30.0, RimType.TUBELESS_STRAIGHT_SIDE, 60.96, TireCasing.REINFORCED, true),
-    ENDURO_MTB("VTT Enduro", R.string.style_enduro_mtb, 14.5, 30.0, RimType.TUBELESS_STRAIGHT_SIDE, 60.96, TireCasing.REINFORCED, true),
-    DOWNHILL_MTB("VTT Descente", R.string.style_dh_mtb, 16.0, 30.0, RimType.TUBELESS_CROCHET, 63.5, TireCasing.DOUBLE, true),
+    XC_MTB("Cross-Country MTB", R.string.style_xc_mtb, 10.5, 30.0, RimType.TUBELESS_STRAIGHT_SIDE, 58.42, TireCasing.STANDARD, true),
+    TRAIL_MTB("Trail MTB", R.string.style_trail_mtb, 13.0, 30.0, RimType.TUBELESS_STRAIGHT_SIDE, 60.96, TireCasing.REINFORCED, true),
+    ENDURO_MTB("Enduro MTB", R.string.style_enduro_mtb, 14.5, 30.0, RimType.TUBELESS_STRAIGHT_SIDE, 60.96, TireCasing.REINFORCED, true),
+    DOWNHILL_MTB("Downhill MTB", R.string.style_dh_mtb, 16.0, 30.0, RimType.TUBELESS_CROCHET, 63.5, TireCasing.DOUBLE, true),
     FAT_BIKE("Fat Bike", R.string.style_fat, 15.0, 80.0, RimType.TUBELESS_CROCHET, 96.52, TireCasing.STANDARD, true),
-    COMMUTE("Vélotaf / Urbain", R.string.style_commute, 14.0, 21.0, RimType.TUBES, 38.0, TireCasing.STANDARD, false);
+    COMMUTE("Commute / City", R.string.style_commute, 14.0, 21.0, RimType.TUBES, 38.0, TireCasing.STANDARD, false);
 }
 
 /**
@@ -38,34 +38,34 @@ enum class BikeCategory(
     val defaultWeightKg: Double,
     val defaultRideStyle: RideStyle
 ) {
-    ROAD("Route", R.string.category_road, 8.0, RideStyle.ROAD),
+    ROAD("Road", R.string.category_road, 8.0, RideStyle.ROAD),
     GRAVEL("Gravel", R.string.category_gravel, 9.5, RideStyle.GRAVEL),
-    MTB("VTT", R.string.category_mtb, 13.0, RideStyle.XC_MTB),
-    COMMUTE("Vélotaf / Urbain", R.string.category_commute, 14.0, RideStyle.COMMUTE);
+    MTB("MTB", R.string.category_mtb, 13.0, RideStyle.XC_MTB),
+    COMMUTE("Commute", R.string.category_commute, 14.0, RideStyle.COMMUTE);
 }
 
 @Serializable
 enum class RimType(val displayName: String, @StringRes val labelRes: Int, val isHookless: Boolean) {
-    TUBELESS_STRAIGHT_SIDE("Tubeless Hookless (sans crochets)", R.string.rim_tubeless_straight, true),
-    TUBELESS_CROCHET("Tubeless avec crochets", R.string.rim_tubeless_crochet, false),
-    TUBES("Chambre à air (Clincher)", R.string.rim_tubes, false),
-    TUBULAR("Boyau (Tubular)", R.string.rim_tubular, false),
+    TUBELESS_STRAIGHT_SIDE("Tubeless Straight Side (Hookless)", R.string.rim_tubeless_straight, true),
+    TUBELESS_CROCHET("Tubeless Crocheted", R.string.rim_tubeless_crochet, false),
+    TUBES("Tubes (Clincher)", R.string.rim_tubes, false),
+    TUBULAR("Tubular", R.string.rim_tubular, false),
     WIDE_AERO_HOOKLESS("Wide Aero Hookless (32mm+)", R.string.rim_zipp_303_xplr, true);
 }
 
 @Serializable
 enum class TireCasing(val displayName: String, @StringRes val labelRes: Int) {
     STANDARD("Standard", R.string.casing_standard),
-    THIN("Fine / Légère (Supple / High TPI)", R.string.casing_thin),
-    REINFORCED("Renforcée (EXO, Grid, etc.)", R.string.casing_reinforced),
-    DOUBLE("Double carcasse (DH, DoubleDown)", R.string.casing_double);
+    THIN("Supple / Thin", R.string.casing_thin),
+    REINFORCED("Reinforced (EXO, Grid)", R.string.casing_reinforced),
+    DOUBLE("Double Casing (DH, DoubleDown)", R.string.casing_double);
 }
 
 @Serializable
 enum class SurfaceCondition(val displayName: String, @StringRes val labelRes: Int) {
-    DRY("Sec (Dry)", R.string.overview_dry),
-    WET("Pluie (Rain)", R.string.overview_wet),
-    SNOW("Neige (Snow)", R.string.overview_snow);
+    DRY("Dry", R.string.overview_dry),
+    WET("Rain", R.string.overview_wet),
+    SNOW("Snow", R.string.overview_snow);
 }
 
 @Serializable

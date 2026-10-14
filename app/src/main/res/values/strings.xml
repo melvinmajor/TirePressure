@@ -170,8 +170,8 @@
     <string name="unit_inch">in</string>
     <string name="unit_kg">Kilograms (kg)</string>
     <string name="unit_lb">Pounds (lb)</string>
-    <string name="unit_bar">Bar</string>
-    <string name="unit_psi">PSI</string>
+    <string name="unit_bar">bar</string>
+    <string name="unit_psi">psi</string>
     <string name="unit_kpa">kPa</string>
     <string name="tire_width_unit">Tire Width Unit</string>
 
@@ -267,7 +267,7 @@
 
     <!-- App Info Screen -->
     <string name="app_info_title">App Info</string>
-    <string name="app_info_github_title">Source code on GitHub</string>
+    <string name="app_info_github_title">GitHub</string>
     <string name="app_info_github_url">melvinmajor/TirePressure</string>
     <string name="app_info_algorithm_title">📐 Frank Berto Algorithm Adaptations</string>
     <string name="app_info_algorithm_desc">Frank Berto\'s classical formula was designed for static trainer equilibrium. TirePressure enhances it with dynamic compliance, rolling impedance break-points, internal rim width influence, and ETRTO hookless safety boundaries.\n\nTo ensure realistic pressures across diverse modern disciplines (Road, Gravel, Enduro, Downhill), our model is calibrated against real-world industry reference benchmarks (such as SRAM AXS App reference points) while maintaining its own 100% clean-room, open-source mathematical physics implementation computed fully offline.</string>

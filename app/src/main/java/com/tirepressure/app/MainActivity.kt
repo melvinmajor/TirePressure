@@ -24,6 +24,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.tirepressure.app.core.model.AppLanguage
+import com.tirepressure.app.core.util.LocaleHelper
 import com.tirepressure.app.ui.navigation.AppNavigation
 import com.tirepressure.app.ui.overview.OverviewViewModel
 import com.tirepressure.app.ui.settings.SettingsViewModel
@@ -32,8 +33,28 @@ import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        val locale = LocaleHelper.getSavedLocale(newBase)
+        super.attachBaseContext(LocaleHelper.wrapContext(newBase, locale))
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val locale = LocaleHelper.getSavedLocale(this)
+        LocaleHelper.applyLocale(this, locale)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val locale = LocaleHelper.getSavedLocale(this)
+        LocaleHelper.applyLocale(this, locale)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val initialLocale = LocaleHelper.getSavedLocale(this)
+        LocaleHelper.applyLocale(this, initialLocale)
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
             window.isNavigationBarContrastEnforced = false
             window.isStatusBarContrastEnforced = false
@@ -74,14 +95,11 @@ class MainActivity : ComponentActivity() {
 
             // Résolution dynamique de la locale pour le support bilingue (EN / FR)
             val currentLocale = remember(settingsState.language) {
-                when (settingsState.language) {
-                    AppLanguage.FRENCH -> Locale.FRENCH
-                    AppLanguage.ENGLISH -> Locale.ENGLISH
-                    AppLanguage.SYSTEM -> {
-                        val sysLoc = Resources.getSystem().configuration.locales[0] ?: Locale.getDefault()
-                        if (sysLoc.language.startsWith("fr")) Locale.FRENCH else Locale.ENGLISH
-                    }
-                }
+                LocaleHelper.resolveLocale(this@MainActivity, settingsState.language)
+            }
+
+            androidx.compose.runtime.LaunchedEffect(currentLocale) {
+                LocaleHelper.applyLocale(this@MainActivity, currentLocale)
             }
 
             val localConfig = LocalConfiguration.current

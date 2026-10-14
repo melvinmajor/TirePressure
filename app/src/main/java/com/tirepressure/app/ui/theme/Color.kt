@@ -1,6 +1,8 @@
 package com.tirepressure.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import com.tirepressure.app.domain.model.BikeCategory
+import com.tirepressure.app.domain.model.RideStyle
 
 // Palette inspirée du logo TirePressure : Electric Lime & Dark Titanium
 val ElectricLime = Color(0xFFD4FF00) // Vert lime éclatant du logo
@@ -32,3 +34,26 @@ val ErrorRed = Color(0xFFEF4444)
 val ErrorRedBg = Color(0xFFFEE2E2)
 val ErrorRedBgDark = Color(0xFF3B1212)
 val SuccessGreen = Color(0xFF22C55E)
+
+// Couleurs distinctes par Catégorie de vélo
+val CategoryRoad = Color(0xFF0284C7)      // Cyan / Bleu Vitesse (Road)
+val CategoryGravel = Color(0xFFEA580C)    // Terre cuite / Orange chaleureux (Gravel)
+val CategoryMtb = Color(0xFF10B981)       // Vert émeraude / Forêt dynamique (MTB)
+val CategoryCommute = Color(0xFF8B5CF6)   // Violet urbain moderne (Commute)
+
+fun getCategoryColor(category: BikeCategory): Color = when (category) {
+    BikeCategory.ROAD -> CategoryRoad
+    BikeCategory.GRAVEL -> CategoryGravel
+    BikeCategory.MTB -> CategoryMtb
+    BikeCategory.COMMUTE -> CategoryCommute
+}
+
+fun getRideStyleColor(style: RideStyle, fallbackCategory: BikeCategory): Color {
+    val matchedCat = when (style) {
+        RideStyle.ROAD -> BikeCategory.ROAD
+        RideStyle.GRAVEL, RideStyle.CYCLOCROSS -> BikeCategory.GRAVEL
+        RideStyle.XC_MTB, RideStyle.TRAIL_MTB, RideStyle.ENDURO_MTB, RideStyle.DOWNHILL_MTB, RideStyle.FAT_BIKE -> BikeCategory.MTB
+        RideStyle.COMMUTE -> BikeCategory.COMMUTE
+    }
+    return getCategoryColor(matchedCat)
+}

@@ -13,7 +13,7 @@
   <img src="https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026%2B)-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android" />
   <img src="https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white" alt="Kotlin" />
   <img src="https://img.shields.io/badge/UI-Jetpack%20Compose%20%26%20Material%203-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white" alt="Compose" />
-  <img src="https://img.shields.io/badge/Widgets-YES-00E5FF?style=for-the-badge" alt="Widgets" />
+  <img src="https://img.shields.io/badge/Widgets-YES-22C55E?style=for-the-badge" alt="Widgets" />
   <img src="https://img.shields.io/badge/Privacy-100%25%20Offline%20(Zero%20Network)-22C55E?style=for-the-badge" alt="Offline" />
   <img src="https://img.shields.io/badge/Built%20With-AI--Assisted%20Coding-FF6F00?style=for-the-badge&logo=google&logoColor=white" alt="AI-Assisted" />
 </p>
@@ -57,6 +57,11 @@ Modern cyclists swap wheels, ride mixed wheel sizes, or ride different disciplin
   - **Discipline Variations on the Same Wheelset:** An XC mountain bike ridden for **XC Racing** (supple 0.95 factor for compliance) vs. **Trail / All-Mountain** (1.02 factor for heavier drops and berm support) vs. road training with locked suspensions.
 
 #### 3. Android Widgets
+
+<p align="center">
+  <img src="files/Widget-Presentation.png" alt="TirePressure Android Widgets Presentation" width="800" />
+</p>
+
 - **Widget 1 (Single Bike + Multi-Profile):** Displays your chosen bike with its primary and secondary wheelset setups, showing front and rear dry/wet pressures directly on your home screen. Includes a gear button to reconfigure and a bike icon to jump straight into the bike details.
 - **Widget 2 (All Bikes List):** A scrollable list overview displaying all bikes in your garage, their weights, disciplines, and baseline tire pressures.
 - **Personalized Theme Support:** Each widget can be configured to:
@@ -89,6 +94,9 @@ Modern cyclists swap wheels, ride mixed wheel sizes, or ride different disciplin
 Inspired by modern smartphone UI innovations:
 - **Electric Lime (`#D4FF00`)**: Vibrant, energetic accents highlighting primary actions, tire gauges, and key data points.
 - **Dark Titanium & Graphite (`#0E1217`, `#161B22`, `#212732`)**: High-contrast, battery-efficient dark theme tailored for outdoor sunlight readability and OLED screens.
+- **Dual Typeface Typography System (Hubot Sans & Inter)**:
+  - **Hubot Sans** (by GitHub, SIL OFL-1.1): Expressive, industrial geometric grotesque used for brand identity, screen headers, section titles, and high-visibility numeric pressure readings.
+  - **Inter** (by Rasmus Andersson, SIL OFL-1.1): Ultra-legible, tall x-height grotesque designed for crisp readability across form fields, labels, explanatory documentation, and dense data layouts.
 - **Frosted Glass Cards & Pill Gauges**: High-contrast, beautifully rounded cards and pill buttons that feel right at home on modern Android launchers.
 - **Clean Material 3 Typography**: Legible typography with spacious touch targets designed for gloved fingers and quick glanceability.
 - **Adaptive System Themes**: Seamless automatic switching between Dark and Light themes following your device preferences.
@@ -233,6 +241,15 @@ Execute the automated test suite verifying Berto 15% drop mathematical accuracy,
 .\gradlew.bat testDebugUnitTest
 ```
 
+### 📲 Ready-to-Test Release APK (Ongoing Development Build)
+Even during ongoing development, a pre-compiled release APK built with full R8 optimization, resource shrinking, and baseline profiles is provided directly in the repository for immediate testing:
+- **Direct APK:** [`files/TirePressure.apk`](files/TirePressure.apk)
+
+Install directly onto a connected device via ADB:
+```powershell
+adb install -r files/TirePressure.apk
+```
+
 ### Building the Debug APK
 Compile and package the debug APK:
 ```powershell
@@ -248,12 +265,19 @@ Install directly onto a connected device via ADB:
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## 📄 License
+## 📄 License & Third-Party Notices
 
-This project is open-source software licensed under the **[MIT License](LICENSE)**.
+This project's source code is open-source software licensed under the **[MIT License](LICENSE)**.
 
 ```
 MIT License
 
 Copyright (c) 2026 TirePressure Contributors
 ```
+
+### Third-Party Typefaces & Assets
+The bundled typefaces are distributed under their own upstream open-source licenses and are **not** covered by the project's MIT License:
+- **Hubot Sans:** Copyright (c) 2022, GitHub Inc. ([SIL Open Font License 1.1](third_party/fonts/hubot-sans/LICENSE))
+- **Inter:** Copyright (c) 2016-2024, The Inter Project Authors ([SIL Open Font License 1.1](third_party/fonts/inter/LICENSE.txt))
+
+For full licensing terms, upstream repository references, and complete verbatim OFL-1.1 text, see **[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)**.

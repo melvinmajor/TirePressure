@@ -6,7 +6,8 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -18,10 +19,14 @@ fun AboutAndPrivacyCard(
     modifier: Modifier = Modifier,
     showVersion: Boolean = true
 ) {
+    var isExpanded by rememberSaveable { mutableStateOf(false) }
+
     SectionCard(
         title = stringResource(id = R.string.about_privacy_title),
         icon = Icons.Default.Security,
-        isCollapsible = false,
+        isCollapsible = true,
+        isExpanded = isExpanded,
+        onToggleExpand = { isExpanded = !isExpanded },
         modifier = modifier
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -48,7 +53,7 @@ fun AboutAndPrivacyCard(
             )
             if (showVersion) {
                 Text(
-                    text = stringResource(id = R.string.about_version_license, "1.1.0"),
+                    text = stringResource(id = R.string.about_version_license, "1.2.0.0"),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold
@@ -57,4 +62,3 @@ fun AboutAndPrivacyCard(
         }
     }
 }
-

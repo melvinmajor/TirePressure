@@ -29,12 +29,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tirepressure.app.R
@@ -45,6 +49,9 @@ import com.tirepressure.app.ui.components.EditBikeDialog
 import com.tirepressure.app.ui.components.PillSelector
 import com.tirepressure.app.ui.theme.ElectricLime
 import com.tirepressure.app.ui.theme.ElectricLimeContainerDark
+import com.tirepressure.app.ui.theme.getCategoryColor
+import com.tirepressure.app.ui.theme.getRideStyleColor
+import com.tirepressure.app.ui.theme.pressureReading
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,11 +85,19 @@ fun OverviewScreen(
                                 .clip(RoundedCornerShape(8.dp))
                         )
                         Spacer(modifier = Modifier.width(10.dp))
+                        val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                        val tireColor = if (isDark) Color.White else MaterialTheme.colorScheme.onBackground
                         Text(
-                            text = stringResource(id = R.string.app_name),
+                            text = buildAnnotatedString {
+                                withStyle(SpanStyle(color = tireColor)) {
+                                    append("Tire")
+                                }
+                                withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                                    append("Pressure")
+                                }
+                            },
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 },
@@ -443,57 +458,46 @@ private fun BikeOverviewCard(
             .animateContentSize(animationSpec = tween(300, easing = FastOutSlowInEasing)),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(
-            width = if (bike.isDefault) 1.5.dp else 1.dp,
-            color = if (bike.isDefault) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-        )
+        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // En-tête du vélo
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // En-tête du vélo
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { isExpanded = !isExpanded }
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = bike.name,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-                    if (bike.isDefault) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Icon(
-                            imageVector = Icons.Filled.Star,
-                            contentDescription = stringResource(id = R.string.overview_badge_default),
-                            tint = Color(0xFFFFB800),
-                            modifier = Modifier.size(20.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { isExpanded = !isExpanded }
+                    ) {
+                        Text(
+                            text = bike.name,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
                         )
                     }
-                }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box {
-                        IconButton(onClick = { bikeMenuExpanded = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "Options")
-                        }
-                        DropdownMenu(
-                            expanded = bikeMenuExpanded,
-                            onDismissRequest = { bikeMenuExpanded = false }
-                        ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.padding(end = if (bike.isDefault) 26.dp else 0.dp)) {
+                            IconButton(onClick = { bikeMenuExpanded = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "Options")
+                            }
+                            DropdownMenu(
+                                expanded = bikeMenuExpanded,
+                                onDismissRequest = { bikeMenuExpanded = false }
+                            ) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(id = R.string.overview_edit_bike_info)) },
                                 leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
@@ -592,14 +596,17 @@ private fun BikeOverviewCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val catColor = getCategoryColor(bike.category)
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant
+                        color = catColor.copy(alpha = 0.18f),
+                        border = BorderStroke(1.dp, catColor.copy(alpha = 0.6f))
                     ) {
                         Text(
                             text = stringResource(id = bike.category.labelRes),
                             style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Medium,
+                            fontWeight = FontWeight.Bold,
+                            color = catColor,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
@@ -676,17 +683,19 @@ private fun BikeOverviewCard(
                                         fontWeight = FontWeight.Bold
                                     )
                                     val effStyle = setup.getEffectiveRideStyle(bike.category)
+                                    val styleColor = getRideStyleColor(effStyle, bike.category)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Surface(
                                         shape = RoundedCornerShape(6.dp),
-                                        color = MaterialTheme.colorScheme.secondaryContainer
+                                        color = styleColor.copy(alpha = 0.10f),
+                                        border = BorderStroke(1.dp, styleColor.copy(alpha = 0.35f))
                                     ) {
                                         Text(
                                             text = stringResource(id = effStyle.labelRes),
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            color = styleColor.copy(alpha = 0.9f),
                                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.SemiBold
                                         )
                                     }
                                 }
@@ -822,6 +831,27 @@ private fun BikeOverviewCard(
                 }
             }
         }
+
+        if (bike.isDefault) {
+                Surface(
+                    modifier = Modifier.align(Alignment.TopEnd),
+                    shape = RoundedCornerShape(bottomStart = 12.dp, topEnd = 16.dp),
+                    color = MaterialTheme.colorScheme.primary
+                ) {
+                    Box(
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = stringResource(id = R.string.overview_badge_default),
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -875,8 +905,7 @@ private fun SurfacePressureBadge(
                 )
                 Text(
                     text = "$frontPressure $unitSymbol",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.pressureReading
                 )
             }
 
@@ -896,8 +925,7 @@ private fun SurfacePressureBadge(
                 )
                 Text(
                     text = "$rearPressure $unitSymbol",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.pressureReading
                 )
             }
 
@@ -938,69 +966,61 @@ private fun BikeOverviewCardSimplified(
             .animateContentSize(animationSpec = tween(300, easing = FastOutSlowInEasing)),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(
-            width = if (bike.isDefault) 1.5.dp else 1.dp,
-            color = if (bike.isDefault) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
-        )
+        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // En-tête compact du vélo
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // En-tête compact du vélo
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = bike.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-                    if (bike.isDefault) {
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = Icons.Filled.Star,
-                            contentDescription = stringResource(id = R.string.overview_badge_default),
-                            tint = Color(0xFFFFB800),
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = stringResource(id = bike.category.labelRes),
+                            text = bike.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        val catColor = getCategoryColor(bike.category)
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = catColor.copy(alpha = 0.18f),
+                            border = BorderStroke(1.dp, catColor.copy(alpha = 0.6f))
+                        ) {
+                            Text(
+                                text = stringResource(id = bike.category.labelRes),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = catColor,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "• ${String.format(java.util.Locale.US, "%.1f", bike.bikeWeightKg)} kg",
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "• ${String.format(java.util.Locale.US, "%.1f", bike.bikeWeightKg)} kg",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
 
-                Box {
-                    IconButton(
-                        onClick = { bikeMenuExpanded = true },
-                        modifier = Modifier.size(28.dp)
-                    ) {
+                    Box(modifier = Modifier.padding(end = if (bike.isDefault) 24.dp else 0.dp)) {
+                        IconButton(
+                            onClick = { bikeMenuExpanded = true },
+                            modifier = Modifier.size(28.dp)
+                        ) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "Options",
@@ -1104,17 +1124,19 @@ private fun BikeOverviewCardSimplified(
                                         modifier = Modifier.weight(1f, fill = false)
                                     )
                                     val effStyle = setup.getEffectiveRideStyle(bike.category)
+                                    val styleColor = getRideStyleColor(effStyle, bike.category)
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Surface(
                                         shape = RoundedCornerShape(4.dp),
-                                        color = MaterialTheme.colorScheme.secondaryContainer
+                                        color = styleColor.copy(alpha = 0.10f),
+                                        border = BorderStroke(1.dp, styleColor.copy(alpha = 0.35f))
                                     ) {
                                         Text(
                                             text = stringResource(id = effStyle.labelRes),
                                             style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            color = styleColor.copy(alpha = 0.9f),
                                             modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.SemiBold
                                         )
                                     }
                                 }
@@ -1209,6 +1231,27 @@ private fun BikeOverviewCardSimplified(
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        if (bike.isDefault) {
+                Surface(
+                    modifier = Modifier.align(Alignment.TopEnd),
+                    shape = RoundedCornerShape(bottomStart = 10.dp, topEnd = 14.dp),
+                    color = MaterialTheme.colorScheme.primary
+                ) {
+                    Box(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = stringResource(id = R.string.overview_badge_default),
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(13.dp)
+                        )
                     }
                 }
             }
