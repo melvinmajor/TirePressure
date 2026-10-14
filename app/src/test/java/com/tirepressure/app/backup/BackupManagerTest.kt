@@ -104,6 +104,8 @@ class BackupManagerTest {
             flow.value = bikes.toList()
         }
         override suspend fun setDefaultBike(id: String) {}
+        override suspend fun toggleFavoriteBike(id: String) {}
+        override suspend fun reconcileFavorites(mode: com.tirepressure.app.core.model.FavoriteMode) {}
         override suspend fun duplicateBike(id: String): BikeProfile? = null
         override suspend fun replaceAll(newBikes: List<BikeProfile>) {
             bikes.clear()
@@ -127,6 +129,8 @@ class BackupManagerTest {
         override val showWetSurfaceFlow = MutableStateFlow(true)
         override val showSnowSurfaceFlow = MutableStateFlow(true)
         override val defaultOverviewCompactFlow = MutableStateFlow(false)
+        override val favoriteModeFlow = MutableStateFlow(com.tirepressure.app.core.model.FavoriteMode.GLOBAL)
+        override val accentColorFlow = MutableStateFlow(com.tirepressure.app.core.model.AppAccentColor.ELECTRIC_LIME)
 
         override suspend fun setTheme(theme: AppTheme) { themeFlow.value = theme }
         override suspend fun setAppLanguage(language: com.tirepressure.app.core.model.AppLanguage) { appLanguageFlow.value = language }
@@ -138,6 +142,8 @@ class BackupManagerTest {
         override suspend fun setShowWetSurface(show: Boolean) { showWetSurfaceFlow.value = show }
         override suspend fun setShowSnowSurface(show: Boolean) { showSnowSurfaceFlow.value = show }
         override suspend fun setDefaultOverviewCompact(compact: Boolean) { defaultOverviewCompactFlow.value = compact }
+        override suspend fun setFavoriteMode(mode: com.tirepressure.app.core.model.FavoriteMode) { favoriteModeFlow.value = mode }
+        override suspend fun setAccentColor(accentColor: com.tirepressure.app.core.model.AppAccentColor) { accentColorFlow.value = accentColor }
         override suspend fun clear() {}
     }
 }

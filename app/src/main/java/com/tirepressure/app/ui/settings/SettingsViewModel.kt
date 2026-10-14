@@ -3,8 +3,10 @@ package com.tirepressure.app.ui.settings
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tirepressure.app.core.model.AppAccentColor
 import com.tirepressure.app.core.model.AppLanguage
 import com.tirepressure.app.core.model.AppTheme
+import com.tirepressure.app.core.model.FavoriteMode
 import com.tirepressure.app.core.model.MassUnit
 import com.tirepressure.app.core.model.PressureUnit
 import com.tirepressure.app.data.backup.BackupManager
@@ -35,6 +37,8 @@ data class UiText(
 data class SettingsUiState(
     val theme: AppTheme = AppTheme.SYSTEM,
     val language: AppLanguage = AppLanguage.SYSTEM,
+    val favoriteMode: FavoriteMode = FavoriteMode.GLOBAL,
+    val accentColor: AppAccentColor = AppAccentColor.ELECTRIC_LIME,
     val riderWeightKg: Double = 75.0,
     val massUnit: MassUnit = MassUnit.KG,
     val pressureUnit: PressureUnit = PressureUnit.BAR,
@@ -62,35 +66,39 @@ class SettingsViewModel(
 
     init {
         viewModelScope.launch {
-            combine(
+            val flowA = combine(
                 preferencesRepository.themeFlow,
                 preferencesRepository.appLanguageFlow,
                 preferencesRepository.riderWeightFlow,
                 preferencesRepository.massUnitFlow,
-                preferencesRepository.pressureUnitFlow,
+                preferencesRepository.pressureUnitFlow
+            ) { theme, language, riderWeight, massUnit, pressureUnit ->
+                SettingsBase(theme, language, riderWeight, massUnit, pressureUnit)
+            }
+
+            val flowB = combine(
                 preferencesRepository.showWetSurfaceFlow,
                 preferencesRepository.showSnowSurfaceFlow,
-                preferencesRepository.defaultOverviewCompactFlow
-            ) { flows ->
-                @Suppress("UNCHECKED_CAST")
-                val theme = flows[0] as AppTheme
-                val language = flows[1] as AppLanguage
-                val riderWeight = flows[2] as Double
-                val massUnit = flows[3] as MassUnit
-                val pressureUnit = flows[4] as PressureUnit
-                val showWet = flows[5] as Boolean
-                val showSnow = flows[6] as Boolean
-                val defaultCompact = flows[7] as Boolean
+                preferencesRepository.defaultOverviewCompactFlow,
+                preferencesRepository.favoriteModeFlow,
+                preferencesRepository.accentColorFlow
+            ) { wet, snow, defaultCompact, favMode, accent ->
+                SettingsExtras(wet, snow, defaultCompact, favMode, accent)
+            }
+
+            combine(flowA, flowB) { base, extras ->
                 _uiState.update { current ->
                     current.copy(
-                        theme = theme,
-                        language = language,
-                        riderWeightKg = riderWeight,
-                        massUnit = massUnit,
-                        pressureUnit = pressureUnit,
-                        showWetSurface = showWet,
-                        showSnowSurface = showSnow,
-                        defaultOverviewCompact = defaultCompact
+                        theme = base.theme,
+                        language = base.language,
+                        riderWeightKg = base.riderWeight,
+                        massUnit = base.massUnit,
+                        pressureUnit = base.pressureUnit,
+                        showWetSurface = extras.showWet,
+                        showSnowSurface = extras.showSnow,
+                        defaultOverviewCompact = extras.defaultCompact,
+                        favoriteMode = extras.favMode,
+                        accentColor = extras.accent
                     )
                 }
             }.collect()
@@ -118,6 +126,19 @@ class SettingsViewModel(
     fun setLanguage(language: AppLanguage) {
         viewModelScope.launch {
             preferencesRepository.setAppLanguage(language)
+        }
+    }
+
+    fun setFavoriteMode(mode: FavoriteMode) {
+        viewModelScope.launch {
+            preferencesRepository.setFavoriteMode(mode)
+            bikeRepository.reconcileFavorites(mode)
+        }
+    }
+
+    fun setAccentColor(color: AppAccentColor) {
+        viewModelScope.launch {
+            preferencesRepository.setAccentColor(color)
         }
     }
 
@@ -244,4 +265,20 @@ class SettingsViewModel(
         }
     }
 }
+
+private data class SettingsBase(
+    val theme: AppTheme,
+    val language: AppLanguage,
+    val riderWeight: Double,
+    val massUnit: MassUnit,
+    val pressureUnit: PressureUnit
+)
+
+private data class SettingsExtras(
+    val showWet: Boolean,
+    val showSnow: Boolean,
+    val defaultCompact: Boolean,
+    val favMode: FavoriteMode,
+    val accent: AppAccentColor
+)
 

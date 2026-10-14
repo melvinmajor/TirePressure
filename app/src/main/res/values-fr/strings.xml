@@ -211,7 +211,10 @@
     <string name="overview_duplicate_setup">Dupliquer cette config</string>
     <string name="overview_collapse_bike">Réduire le vélo</string>
     <string name="overview_expand_bike">Développer le vélo</string>
-    <string name="overview_badge_default">Vélo par défaut</string>
+    <string name="overview_badge_default">Vélo favori</string>
+    <string name="overview_badge_favorite">Vélo favori</string>
+    <string name="overview_set_as_favorite">Définir comme favori</string>
+    <string name="overview_remove_favorite">Retirer des favoris</string>
     <string name="overview_frame_size">Taille %1$s</string>
     <string name="overview_toast_copied">Pressions copiées !</string>
     <string name="overview_toast_setup_created">Configuration « %1$s » créée !</string>
@@ -219,6 +222,7 @@
     <string name="overview_subtitle">Berto 15% Drop • Multi-Surfaces</string>
     <string name="overview_view_simplified">Vue simplifiée</string>
     <string name="overview_view_detailed">Vue détaillée</string>
+    <string name="overview_luggage_weight_short">+%1$s kg équipement</string>
     <string name="rim_tubes_short">Chambre à air</string>
     <string name="rim_tubeless_badge">Tubeless</string>
 
@@ -227,7 +231,8 @@
     <string name="bike_edit_title_edit">Modifier la configuration</string>
     <string name="bike_general_info_section">Informations Générales</string>
     <string name="bike_general_info_readonly_notice">Ces informations sont partagées par tous les profils de ce vélo. Pour les modifier, utilisez l\'option « Modifier les informations du vélo » sur l\'accueil.</string>
-    <string name="bike_is_default_checkbox">Définir comme vélo par défaut</string>
+    <string name="bike_is_default_checkbox">Définir comme vélo favori</string>
+    <string name="bike_is_favorite_checkbox">Définir comme vélo favori</string>
     <string name="bike_setups_section_title">Configurations de Roues &amp; Pneus (%1$d)</string>
     <string name="bike_setups_section_desc">Un vélo peut posséder plusieurs configurations de roues selon vos sorties.</string>
     <string name="bike_setup_name_label">Nom de cette configuration</string>
@@ -304,5 +309,24 @@
     <string name="settings_backup_export_error">Erreur lors de l\'exportation : %1$s</string>
     <string name="settings_backup_import_read_error">Impossible de lire le fichier : %1$s</string>
     <string name="settings_backup_import_success">%1$d vélo(s) restauré(s) avec succès !</string>
+
+    <!-- Gestion des vélos favoris -->
+    <string name="settings_favorites_title">Gestion des vélos favoris</string>
+    <string name="settings_favorites_desc">Définissez comment vos vélos favoris sont mis en avant</string>
+    <string name="favorite_mode_global">1 vélo (tous vélos)</string>
+    <string name="favorite_mode_global_desc">Un seul vélo favori mis en valeur pour l\'ensemble du garage.</string>
+    <string name="favorite_mode_per_category">1 par catégorie</string>
+    <string name="favorite_mode_per_category_desc">Un vélo favori mis en valeur par catégorie (Route, Gravel, VTT, Vélotaf).</string>
+
+    <!-- Couleur d'accentuation -->
+    <string name="settings_accent_color_title">Couleur d\'accentuation</string>
+    <string name="settings_accent_color_desc">Personnalisez la couleur d\'accent de l\'interface.</string>
+    <string name="accent_color_lime">Vert lime (original)</string>
+    <string name="accent_color_blue">Bleu ciel</string>
+    <string name="accent_color_orange">Orange pastel</string>
+    <string name="accent_color_green">Vert émeraude</string>
+
+    <!-- Défilement -->
+    <string name="settings_scroll_more">Faites défiler</string>
 </resources>
 

@@ -124,6 +124,12 @@ class OverviewViewModel(
         }
     }
 
+    fun toggleFavoriteBike(bike: BikeProfile) {
+        viewModelScope.launch {
+            bikeRepository.toggleFavoriteBike(bike.id)
+        }
+    }
+
     fun duplicateBike(bike: BikeProfile, copySuffix: String = " (copy)") {
         viewModelScope.launch {
             val duplicate = bike.copy(

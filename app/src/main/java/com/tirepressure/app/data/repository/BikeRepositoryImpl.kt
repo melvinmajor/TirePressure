@@ -1,10 +1,13 @@
 package com.tirepressure.app.data.repository
 
+import com.tirepressure.app.core.model.FavoriteMode
 import com.tirepressure.app.data.local.dao.BikeDao
 import com.tirepressure.app.data.local.entity.BikeEntity
 import com.tirepressure.app.domain.model.BikeProfile
 import com.tirepressure.app.domain.repository.BikeRepository
+import com.tirepressure.app.domain.repository.PreferencesRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import android.content.Context
 import com.tirepressure.app.widget.WidgetUpdateHelper
@@ -12,7 +15,8 @@ import java.util.UUID
 
 class BikeRepositoryImpl(
     private val bikeDao: BikeDao,
-    private val context: Context? = null
+    private val context: Context? = null,
+    private val preferencesRepository: PreferencesRepository? = null
 ) : BikeRepository {
 
     override fun getAllBikes(): Flow<List<BikeProfile>> {
@@ -33,7 +37,7 @@ class BikeRepositoryImpl(
         val entity = BikeEntity.fromDomain(bike)
         bikeDao.insert(entity)
         if (bike.isDefault) {
-            bikeDao.setDefaultBike(bike.id)
+            setDefaultBike(bike.id)
         }
         context?.let { WidgetUpdateHelper.updateAllWidgets(it) }
     }
@@ -42,7 +46,7 @@ class BikeRepositoryImpl(
         val entity = BikeEntity.fromDomain(bike.copy(updatedAt = System.currentTimeMillis()))
         bikeDao.update(entity)
         if (bike.isDefault) {
-            bikeDao.setDefaultBike(bike.id)
+            setDefaultBike(bike.id)
         }
         context?.let { WidgetUpdateHelper.updateAllWidgets(it) }
     }
@@ -53,7 +57,38 @@ class BikeRepositoryImpl(
     }
 
     override suspend fun setDefaultBike(id: String) {
-        bikeDao.setDefaultBike(id)
+        val mode = preferencesRepository?.favoriteModeFlow?.first() ?: FavoriteMode.GLOBAL
+        if (mode == FavoriteMode.PER_CATEGORY) {
+            val bike = bikeDao.getBikeById(id)
+            if (bike != null) {
+                bikeDao.setCategoryDefaultBike(id, bike.rideStyle)
+            } else {
+                bikeDao.setDefaultBike(id)
+            }
+        } else {
+            bikeDao.setDefaultBike(id)
+        }
+        context?.let { WidgetUpdateHelper.updateAllWidgets(it) }
+    }
+
+    override suspend fun toggleFavoriteBike(id: String) {
+        val bike = bikeDao.getBikeById(id) ?: return
+        if (bike.isDefault) {
+            bikeDao.removeAsDefault(id)
+        } else {
+            setDefaultBike(id)
+        }
+        context?.let { WidgetUpdateHelper.updateAllWidgets(it) }
+    }
+
+    override suspend fun reconcileFavorites(mode: FavoriteMode) {
+        if (mode == FavoriteMode.GLOBAL) {
+            val defaults = bikeDao.getDefaultBikes()
+            if (defaults.size > 1) {
+                bikeDao.clearAllDefaults()
+                bikeDao.setAsDefault(defaults.first().id)
+            }
+        }
         context?.let { WidgetUpdateHelper.updateAllWidgets(it) }
     }
 

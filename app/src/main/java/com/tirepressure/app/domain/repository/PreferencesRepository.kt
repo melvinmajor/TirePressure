@@ -1,7 +1,9 @@
 package com.tirepressure.app.domain.repository
 
+import com.tirepressure.app.core.model.AppAccentColor
 import com.tirepressure.app.core.model.AppLanguage
 import com.tirepressure.app.core.model.AppTheme
+import com.tirepressure.app.core.model.FavoriteMode
 import com.tirepressure.app.core.model.MassUnit
 import com.tirepressure.app.core.model.PressureUnit
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +19,8 @@ interface PreferencesRepository {
     val showWetSurfaceFlow: Flow<Boolean>
     val showSnowSurfaceFlow: Flow<Boolean>
     val defaultOverviewCompactFlow: Flow<Boolean>
+    val favoriteModeFlow: Flow<FavoriteMode>
+    val accentColorFlow: Flow<AppAccentColor>
 
     suspend fun setTheme(theme: AppTheme)
     suspend fun setAppLanguage(language: AppLanguage)
@@ -28,5 +32,7 @@ interface PreferencesRepository {
     suspend fun setShowWetSurface(show: Boolean)
     suspend fun setShowSnowSurface(show: Boolean)
     suspend fun setDefaultOverviewCompact(compact: Boolean)
+    suspend fun setFavoriteMode(mode: FavoriteMode)
+    suspend fun setAccentColor(color: AppAccentColor)
     suspend fun clear()
 }

@@ -34,6 +34,21 @@ interface BikeDao {
     @Query("UPDATE bikes SET isDefault = 1 WHERE id = :id")
     suspend fun setAsDefault(id: String)
 
+    @Query("UPDATE bikes SET isDefault = 0 WHERE id = :id")
+    suspend fun removeAsDefault(id: String)
+
+    @Query("UPDATE bikes SET isDefault = 0 WHERE rideStyle = :category")
+    suspend fun clearCategoryDefaults(category: String)
+
+    @Transaction
+    suspend fun setCategoryDefaultBike(id: String, category: String) {
+        clearCategoryDefaults(category)
+        setAsDefault(id)
+    }
+
+    @Query("SELECT * FROM bikes WHERE isDefault = 1 ORDER BY createdAt ASC")
+    suspend fun getDefaultBikes(): List<BikeEntity>
+
     @Transaction
     suspend fun setDefaultBike(id: String) {
         clearAllDefaults()

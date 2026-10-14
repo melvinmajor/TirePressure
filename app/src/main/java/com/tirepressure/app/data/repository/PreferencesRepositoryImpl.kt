@@ -28,6 +28,18 @@ class PreferencesRepositoryImpl(
         val KEY_SHOW_WET_SURFACE = booleanPreferencesKey("show_wet_surface")
         val KEY_SHOW_SNOW_SURFACE = booleanPreferencesKey("show_snow_surface")
         val KEY_DEFAULT_OVERVIEW_COMPACT = booleanPreferencesKey("default_overview_compact")
+        val KEY_FAVORITE_MODE = stringPreferencesKey("favorite_mode")
+        val KEY_ACCENT_COLOR = stringPreferencesKey("accent_color")
+    }
+
+    override val favoriteModeFlow: Flow<com.tirepressure.app.core.model.FavoriteMode> = context.dataStore.data.map { prefs ->
+        val raw = prefs[KEY_FAVORITE_MODE] ?: com.tirepressure.app.core.model.FavoriteMode.GLOBAL.name
+        runCatching { com.tirepressure.app.core.model.FavoriteMode.valueOf(raw) }.getOrDefault(com.tirepressure.app.core.model.FavoriteMode.GLOBAL)
+    }
+
+    override val accentColorFlow: Flow<com.tirepressure.app.core.model.AppAccentColor> = context.dataStore.data.map { prefs ->
+        val raw = prefs[KEY_ACCENT_COLOR] ?: com.tirepressure.app.core.model.AppAccentColor.ELECTRIC_LIME.name
+        runCatching { com.tirepressure.app.core.model.AppAccentColor.valueOf(raw) }.getOrDefault(com.tirepressure.app.core.model.AppAccentColor.ELECTRIC_LIME)
     }
 
     override val themeFlow: Flow<AppTheme> = context.dataStore.data.map { prefs ->
@@ -141,6 +153,18 @@ class PreferencesRepositoryImpl(
     override suspend fun setDefaultOverviewCompact(compact: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[KEY_DEFAULT_OVERVIEW_COMPACT] = compact
+        }
+    }
+
+    override suspend fun setFavoriteMode(mode: com.tirepressure.app.core.model.FavoriteMode) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_FAVORITE_MODE] = mode.name
+        }
+    }
+
+    override suspend fun setAccentColor(color: com.tirepressure.app.core.model.AppAccentColor) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_ACCENT_COLOR] = color.name
         }
     }
 

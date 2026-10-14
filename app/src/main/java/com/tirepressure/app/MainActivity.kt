@@ -122,7 +122,10 @@ class MainActivity : ComponentActivity() {
                 LocalConfiguration provides configuration,
                 LocalContext provides localizedContext
             ) {
-                TirePressureTheme(appTheme = settingsState.theme) {
+                TirePressureTheme(
+                    appTheme = settingsState.theme,
+                    accentColor = settingsState.accentColor
+                ) {
                     val completed = isOnboardingCompleted
                     Surface(
                         modifier = Modifier.fillMaxSize(),

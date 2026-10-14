@@ -13,13 +13,28 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.tirepressure.app.R
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import com.tirepressure.app.core.model.AppAccentColor
+import com.tirepressure.app.core.model.FavoriteMode
 import com.tirepressure.app.core.model.AppLanguage
 import com.tirepressure.app.core.model.AppTheme
 import com.tirepressure.app.core.model.MassUnit
@@ -93,51 +108,70 @@ fun SettingsScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 1. Profil Cycliste (Poids de référence) - En tête, non réductible
-            var riderWeightInput by remember(state.riderWeightKg, state.massUnit) {
-                mutableStateOf(state.massUnit.format(state.riderWeightKg).replace(',', '.'))
-            }
-            var riderWeightError by remember { mutableStateOf<String?>(null) }
-
-            SectionCard(
-                title = stringResource(id = R.string.settings_rider_profile),
-                icon = Icons.Default.Person,
-                subtitle = stringResource(id = R.string.onboarding_weight_desc),
-                isCollapsible = false
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                NumberInputField(
-                    value = riderWeightInput,
-                    onValueChange = { input ->
-                        riderWeightInput = input
-                        val num = input.toDoubleOrNull()
-                        if (num != null) {
-                            val kg = UnitConverter.toKg(num, state.massUnit)
-                            if (kg in 30.0..250.0) {
-                                riderWeightError = null
-                                viewModel.setRiderWeight(kg)
-                            } else {
-                                riderWeightError = "30 - 250 kg"
-                            }
-                        } else {
-                            riderWeightError = "..."
-                        }
-                    },
-                    label = stringResource(id = R.string.settings_rider_weight),
-                    suffix = state.massUnit.symbol,
-                    isError = riderWeightError != null,
-                    errorMessage = riderWeightError
-                )
-            }
+                // 1. Profil Cycliste (Poids de référence) - En tête, non réductible
+                var riderWeightInput by remember(state.riderWeightKg, state.massUnit) {
+                    mutableStateOf(state.massUnit.format(state.riderWeightKg).replace(',', '.'))
+                }
+                var riderWeightError by remember { mutableStateOf<String?>(null) }
 
-            // 2. Unités & Calculs (Regroupé, réductible)
+                SectionCard(
+                    title = stringResource(id = R.string.settings_rider_profile),
+                    icon = Icons.Default.Person,
+                    subtitle = stringResource(id = R.string.onboarding_weight_desc),
+                    isCollapsible = false
+                ) {
+                    NumberInputField(
+                        value = riderWeightInput,
+                        onValueChange = { input ->
+                            riderWeightInput = input
+                            val num = input.toDoubleOrNull()
+                            if (num != null) {
+                                val kg = UnitConverter.toKg(num, state.massUnit)
+                                if (kg in 30.0..250.0) {
+                                    riderWeightError = null
+                                    viewModel.setRiderWeight(kg)
+                                } else {
+                                    riderWeightError = "30 - 250 kg"
+                                }
+                            } else {
+                                riderWeightError = "..."
+                            }
+                        },
+                        label = stringResource(id = R.string.settings_rider_weight),
+                        suffix = state.massUnit.symbol,
+                        isError = riderWeightError != null,
+                        errorMessage = riderWeightError
+                    )
+                }
+
+                // 2. Vélos favoris (Non réductible, juste après Profil Cycliste)
+                SectionCard(
+                    title = stringResource(id = R.string.settings_favorites_title),
+                    icon = Icons.Default.Star,
+                    subtitle = stringResource(id = R.string.settings_favorites_desc),
+                    isCollapsible = false
+                ) {
+                    PillSelector(
+                        items = FavoriteMode.entries,
+                        selectedItem = state.favoriteMode,
+                        onItemSelected = { viewModel.setFavoriteMode(it) },
+                        labelProvider = { context.getString(it.labelRes) }
+                    )
+                }
+
+                // 3. Unités & Calculs (Regroupé, réductible)
             SectionCard(
                 title = stringResource(id = R.string.settings_units_surfaces_title),
                 icon = Icons.Default.SquareFoot,
@@ -231,22 +265,9 @@ fun SettingsScreen(
                         modifier = Modifier.weight(1f)
                     )
                 }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = when {
-                        state.showWetSurface && state.showSnowSurface -> stringResource(R.string.surfaces_count_3)
-                        state.showWetSurface -> stringResource(R.string.surfaces_count_2_wet)
-                        state.showSnowSurface -> stringResource(R.string.surfaces_count_2_snow)
-                        else -> stringResource(R.string.surfaces_count_1)
-                    },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
 
-            // 3. Affichage & Langue (Regroupé, réductible)
+            // 4. Affichage & Langue (Regroupé, réductible)
             SectionCard(
                 title = stringResource(id = R.string.settings_display_language_title),
                 icon = Icons.Default.Palette,
@@ -267,6 +288,52 @@ fun SettingsScreen(
                     onItemSelected = { viewModel.setTheme(it) },
                     labelProvider = { context.getString(it.labelRes) }
                 )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Text(
+                    text = stringResource(id = R.string.settings_accent_color_title),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    AppAccentColor.entries.forEach { accent ->
+                        val isSelected = accent == state.accentColor
+                        val circleColor = accent.getPrimary(isDark)
+                        val onCircleColor = accent.getOnPrimary(isDark)
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(circleColor)
+                                .clickable { viewModel.setAccentColor(accent) }
+                                .then(
+                                    if (isSelected) {
+                                        Modifier.border(
+                                            width = 3.dp,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            shape = CircleShape
+                                        )
+                                    } else Modifier
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = stringResource(id = accent.labelRes),
+                                    tint = onCircleColor,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(14.dp))
 
@@ -393,11 +460,80 @@ fun SettingsScreen(
                 }
             }
 
-            // 6. À propos & Confidentialité - En pied, non réductible
+            // 7. À propos & Confidentialité - En pied, non réductible
             AboutAndPrivacyCard()
 
             Spacer(modifier = Modifier.height(32.dp))
         }
+
+        // Estompage supérieur lors du défilement vers le bas
+        if (scrollState.canScrollBackward) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(20.dp)
+                    .align(Alignment.TopCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.background,
+                                Color.Transparent
+                            )
+                        )
+                    )
+            )
+        }
+
+        // Estompage inférieur et indicateur flottant si du contenu supplémentaire existe
+        AnimatedVisibility(
+            visible = scrollState.canScrollForward,
+            enter = fadeIn(animationSpec = tween(200)),
+            exit = fadeOut(animationSpec = tween(200)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .align(Alignment.BottomCenter)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.background
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.92f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                    shadowElevation = 4.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = stringResource(id = R.string.settings_scroll_more),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
 
         // Dialogue de réinitialisation
         if (state.showResetConfirmation) {

@@ -147,8 +147,8 @@ val Typography.pressureReading: TextStyle
     get() = TextStyle(
         fontFamily = HubotSans,
         fontWeight = FontWeight.Bold,
-        fontSize = 14.sp,
-        lineHeight = 18.sp
+        fontSize = 16.sp,
+        lineHeight = 20.sp
     )
 
 /**

@@ -211,7 +211,10 @@
     <string name="overview_duplicate_setup">Duplicate this setup</string>
     <string name="overview_collapse_bike">Collapse bike</string>
     <string name="overview_expand_bike">Expand bike</string>
-    <string name="overview_badge_default">Default bike</string>
+    <string name="overview_badge_default">Favorite bike</string>
+    <string name="overview_badge_favorite">Favorite bike</string>
+    <string name="overview_set_as_favorite">Set as favorite</string>
+    <string name="overview_remove_favorite">Remove from favorites</string>
     <string name="overview_frame_size">Size %1$s</string>
     <string name="overview_toast_copied">Pressures copied!</string>
     <string name="overview_toast_setup_created">Setup \"%1$s\" created!</string>
@@ -219,6 +222,7 @@
     <string name="overview_subtitle">Berto 15% Drop • Multi-Surfaces</string>
     <string name="overview_view_simplified">Simplified view</string>
     <string name="overview_view_detailed">Detailed view</string>
+    <string name="overview_luggage_weight_short">+%1$s kg gear</string>
     <string name="rim_tubes_short">Clincher</string>
     <string name="rim_tubeless_badge">Tubeless</string>
 
@@ -227,7 +231,8 @@
     <string name="bike_edit_title_edit">Edit Setup</string>
     <string name="bike_general_info_section">General Information</string>
     <string name="bike_general_info_readonly_notice">These details are shared across all profiles for this bike. To edit them, use \"Edit bike details\" on the home screen.</string>
-    <string name="bike_is_default_checkbox">Set as default bike</string>
+    <string name="bike_is_default_checkbox">Set as favorite bike</string>
+    <string name="bike_is_favorite_checkbox">Set as favorite bike</string>
     <string name="bike_setups_section_title">Wheel &amp; Tire Setups (%1$d)</string>
     <string name="bike_setups_section_desc">A bike can have multiple wheelset configurations for different rides.</string>
     <string name="bike_setup_name_label">Setup Name</string>
@@ -304,4 +309,23 @@
     <string name="settings_backup_export_error">Error during export: %1$s</string>
     <string name="settings_backup_import_read_error">Unable to read file: %1$s</string>
     <string name="settings_backup_import_success">%1$d bike(s) restored successfully!</string>
+
+    <!-- Favorite Bikes Strategy -->
+    <string name="settings_favorites_title">Favorite Bikes</string>
+    <string name="settings_favorites_desc">Define how favorite bikes are highlighted</string>
+    <string name="favorite_mode_global">1 across all bikes</string>
+    <string name="favorite_mode_global_desc">A single favorite bike is highlighted across your entire garage.</string>
+    <string name="favorite_mode_per_category">1 per category</string>
+    <string name="favorite_mode_per_category_desc">One favorite bike highlighted per category (Road, Gravel, MTB, Commute).</string>
+
+    <!-- Accent Color Customization -->
+    <string name="settings_accent_color_title">Accent Color</string>
+    <string name="settings_accent_color_desc">Customize the primary accent color of the interface.</string>
+    <string name="accent_color_lime">Electric Lime</string>
+    <string name="accent_color_blue">Sky Blue</string>
+    <string name="accent_color_orange">Pastel Orange</string>
+    <string name="accent_color_green">Emerald Green</string>
+
+    <!-- Scroll Affordance -->
+    <string name="settings_scroll_more">Scroll for more</string>
 </resources>

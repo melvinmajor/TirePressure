@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.tirepressure.app.core.model.AppAccentColor
 import com.tirepressure.app.core.model.AppTheme
 
 private val DarkColorScheme = darkColorScheme(
@@ -55,6 +56,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun TirePressureTheme(
     appTheme: AppTheme = AppTheme.SYSTEM,
+    accentColor: AppAccentColor = AppAccentColor.ELECTRIC_LIME,
     content: @Composable () -> Unit
 ) {
     val darkTheme = when (appTheme) {
@@ -63,7 +65,23 @@ fun TirePressureTheme(
         AppTheme.SYSTEM -> isSystemInDarkTheme()
     }
 
-    val targetColors = if (darkTheme) DarkColorScheme else LightColorScheme
+    val baseColors = if (darkTheme) DarkColorScheme else LightColorScheme
+    val primaryColor = accentColor.getPrimary(darkTheme)
+    val containerColor = accentColor.getContainer(darkTheme)
+    val onPrimaryColor = if (accentColor == AppAccentColor.ELECTRIC_LIME && darkTheme) {
+        Color(0xFF0E1217)
+    } else {
+        Color.White
+    }
+
+    val targetColors = baseColors.copy(
+        primary = primaryColor,
+        onPrimary = onPrimaryColor,
+        primaryContainer = containerColor,
+        onPrimaryContainer = primaryColor,
+        secondary = primaryColor,
+        onSecondary = onPrimaryColor
+    )
 
     val animPrimary by animateColorAsState(targetColors.primary, tween(300), label = "primary")
     val animOnPrimary by animateColorAsState(targetColors.onPrimary, tween(300), label = "onPrimary")

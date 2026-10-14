@@ -11,6 +11,8 @@ interface BikeRepository {
     suspend fun updateBike(bike: BikeProfile)
     suspend fun deleteBike(id: String)
     suspend fun setDefaultBike(id: String)
+    suspend fun toggleFavoriteBike(id: String)
+    suspend fun reconcileFavorites(mode: com.tirepressure.app.core.model.FavoriteMode)
     suspend fun duplicateBike(id: String): BikeProfile?
     suspend fun replaceAll(bikes: List<BikeProfile>)
     suspend fun clearAll()

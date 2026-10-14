@@ -34,8 +34,8 @@ class TirePressureApp : Application() {
         com.tirepressure.app.core.util.LocaleHelper.applyLocale(this, locale)
 
         database = AppDatabase.getInstance(this)
-        bikeRepository = BikeRepositoryImpl(database.bikeDao(), this)
         preferencesRepository = PreferencesRepositoryImpl(this)
+        bikeRepository = BikeRepositoryImpl(database.bikeDao(), this, preferencesRepository)
         backupManager = BackupManager(bikeRepository, preferencesRepository)
     }
 }
