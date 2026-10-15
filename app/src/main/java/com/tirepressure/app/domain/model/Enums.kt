@@ -23,7 +23,7 @@ enum class RideStyle(
     ENDURO_MTB("Enduro MTB", R.string.style_enduro_mtb, 14.5, 30.0, RimType.TUBELESS_STRAIGHT_SIDE, 60.96, TireCasing.REINFORCED, true),
     DOWNHILL_MTB("Downhill MTB", R.string.style_dh_mtb, 16.0, 30.0, RimType.TUBELESS_CROCHET, 63.5, TireCasing.DOUBLE, true),
     FAT_BIKE("Fat Bike", R.string.style_fat, 15.0, 80.0, RimType.TUBELESS_CROCHET, 96.52, TireCasing.STANDARD, true),
-    COMMUTE("Commute / City", R.string.style_commute, 14.0, 21.0, RimType.TUBES, 38.0, TireCasing.STANDARD, false);
+    COMMUTE("Urban", R.string.style_commute, 14.0, 21.0, RimType.TUBES, 38.0, TireCasing.STANDARD, false);
 }
 
 /**

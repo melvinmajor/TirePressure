@@ -68,11 +68,7 @@ fun TirePressureTheme(
     val baseColors = if (darkTheme) DarkColorScheme else LightColorScheme
     val primaryColor = accentColor.getPrimary(darkTheme)
     val containerColor = accentColor.getContainer(darkTheme)
-    val onPrimaryColor = if (accentColor == AppAccentColor.ELECTRIC_LIME && darkTheme) {
-        Color(0xFF0E1217)
-    } else {
-        Color.White
-    }
+    val onPrimaryColor = accentColor.getOnPrimary(darkTheme)
 
     val targetColors = baseColors.copy(
         primary = primaryColor,

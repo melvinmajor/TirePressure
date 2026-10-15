@@ -38,7 +38,7 @@ fun EditBikeDialog(
     var nameError by remember { mutableStateOf<String?>(null) }
     val scrollState = rememberScrollState()
 
-    AlertDialog(
+    GlassAlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {

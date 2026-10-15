@@ -55,5 +55,16 @@ class UnitConverterTest {
         // Masse lb : entier arrondi
         assertEquals("165", MassUnit.LB.format(75.0))
     }
+
+    @Test
+    fun testFormatDecimal() {
+        assertEquals("2.35", com.tirepressure.app.ui.components.formatDecimal(2.35, 2))
+        assertEquals("2.4", com.tirepressure.app.ui.components.formatDecimal(2.4, 2))
+        assertEquals("2", com.tirepressure.app.ui.components.formatDecimal(2.0, 2))
+        assertEquals("59.69", com.tirepressure.app.ui.components.formatDecimal(59.69, 2))
+        assertEquals("60", com.tirepressure.app.ui.components.formatDecimal(60.0, 2))
+        assertEquals("25.4", com.tirepressure.app.ui.components.formatDecimal(25.4, 2))
+        assertEquals("", com.tirepressure.app.ui.components.formatDecimal(0.0, 2))
+    }
 }
 

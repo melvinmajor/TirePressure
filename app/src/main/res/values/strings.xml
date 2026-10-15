@@ -12,7 +12,7 @@
     <string name="onboarding_weight_prompt">To get started, what is your regular riding weight?</string>
     <string name="onboarding_weight_desc">This weight serves as the benchmark to calculate ideal tire pressures for all your bikes and wheelsets. You can edit it anytime in Settings.</string>
     <string name="onboarding_continue">Continue</string>
-    <string name="onboarding_step1_title">Multiple Wheelset Setups</string>
+    <string name="onboarding_step1_title">Multiple Setups</string>
     <string name="onboarding_step1_desc">Each bike can store multiple wheel &amp; tire configurations (summer slicks, winter training, mud tires...).</string>
     <string name="onboarding_step2_title">Instant Multi-Surface Pressures</string>
     <string name="onboarding_step2_desc">Check recommended pressures for any riding condition at a glance: dry roads, wet asphalt, or snow/sand.</string>
@@ -36,7 +36,7 @@
     <string name="bike_discipline">Discipline</string>
     <string name="bike_weight">Bike Weight</string>
     <string name="config_name_label">Setup Name</string>
-    <string name="config_default_name">Primary Wheelset</string>
+    <string name="config_default_name">Primary setup</string>
     <string name="luggage_weight">Luggage / Gear Weight</string>
     <string name="wheel_front">Front Wheel</string>
     <string name="wheel_rear">Rear Wheel</string>
@@ -64,9 +64,11 @@
     <string name="action_confirm">Confirm</string>
     <string name="action_copy_pressures">Copy Pressures</string>
     <string name="action_copied">Pressures copied to clipboard!</string>
+    <string name="action_clear">Clear</string>
+    <string name="bike_year_unknown_or_pre_1980">No year (unknown / pre-1980)</string>
 
     <!-- Add Setup Dialog -->
-    <string name="add_setup_dialog_title">New Wheelset Setup</string>
+    <string name="add_setup_dialog_title">New Setup</string>
     <string name="add_setup_name_label">Setup Name</string>
     <string name="setup_default_prefix">Setup</string>
     <string name="add_setup_template_title">Starting Template</string>
@@ -85,7 +87,7 @@
     <string name="style_enduro_mtb">Enduro MTB</string>
     <string name="style_dh_mtb">Downhill MTB</string>
     <string name="style_fat">Fat Bike</string>
-    <string name="style_commute">Commute / Urban</string>
+    <string name="style_commute">Urban</string>
 
     <!-- Bike Categories -->
     <string name="bike_category_label">Bike Category</string>
@@ -190,10 +192,10 @@
 
     <!-- Deletion Confirmations -->
     <string name="delete_bike_dialog_title">Delete Bike?</string>
-    <string name="delete_bike_dialog_msg">Are you sure you want to delete \"%1$s\"? All profiles and wheelset setups for this bike will be permanently deleted.</string>
+    <string name="delete_bike_dialog_msg">Are you sure you want to delete \"%1$s\"? All profiles and setups for this bike will be permanently deleted.</string>
     <string name="delete_bike_button">Delete Bike</string>
     <string name="delete_bike_danger_zone">Danger Zone</string>
-    <string name="delete_bike_danger_desc">Permanently remove this bike and all its wheelset profiles from your garage.</string>
+    <string name="delete_bike_danger_desc">Permanently remove this bike and all its profiles from your garage.</string>
     <string name="delete_setup_dialog_title">Delete Setup Profile?</string>
     <string name="delete_setup_dialog_msg">Are you sure you want to delete profile \"%1$s\"?</string>
     <string name="delete_setup_button">Delete Profile</string>
@@ -201,7 +203,7 @@
     <!-- Overview Extra Strings -->
     <string name="overview_rider_label">Rider:</string>
     <string name="overview_pressures_display_in">Display pressures in:</string>
-    <string name="overview_bike_weight">Bike weight: %1$s kg</string>
+    <string name="overview_bike_weight">%1$s kg</string>
     <string name="overview_config_count_one">1 setup</string>
     <string name="overview_config_count_many">%1$d setups</string>
     <string name="overview_edit_bike_info">Edit bike details</string>
@@ -222,7 +224,7 @@
     <string name="overview_subtitle">Berto 15% Drop • Multi-Surfaces</string>
     <string name="overview_view_simplified">Simplified view</string>
     <string name="overview_view_detailed">Detailed view</string>
-    <string name="overview_luggage_weight_short">+%1$s kg gear</string>
+    <string name="overview_luggage_weight_short">+%1$s kg</string>
     <string name="rim_tubes_short">Clincher</string>
     <string name="rim_tubeless_badge">Tubeless</string>
 
@@ -233,8 +235,8 @@
     <string name="bike_general_info_readonly_notice">These details are shared across all profiles for this bike. To edit them, use \"Edit bike details\" on the home screen.</string>
     <string name="bike_is_default_checkbox">Set as favorite bike</string>
     <string name="bike_is_favorite_checkbox">Set as favorite bike</string>
-    <string name="bike_setups_section_title">Wheel &amp; Tire Setups (%1$d)</string>
-    <string name="bike_setups_section_desc">A bike can have multiple wheelset configurations for different rides.</string>
+    <string name="bike_setups_section_title">Wheel &amp; Tire Setup (%1$d)</string>
+    <string name="bike_setups_section_desc">A bike can have multiple configurations for different rides.</string>
     <string name="bike_setup_name_label">Setup Name</string>
     <string name="bike_setup_style_label">Discipline / Riding style for this profile:</string>
     <string name="bike_setup_style_default">Default (%1$s: %2$s)</string>
@@ -325,6 +327,8 @@
     <string name="accent_color_blue">Sky Blue</string>
     <string name="accent_color_orange">Pastel Orange</string>
     <string name="accent_color_green">Emerald Green</string>
+    <string name="accent_color_purple">Royal Purple</string>
+    <string name="accent_color_monochrome">Monochrome</string>
 
     <!-- Scroll Affordance -->
     <string name="settings_scroll_more">Scroll for more</string>

@@ -65,7 +65,9 @@ enum class AppAccentColor(
     ELECTRIC_LIME("lime", "Electric Lime", R.string.accent_color_lime, 0xFFD4FF00, 0xFF5A7500, 0xFF263300, 0xFFEAF8B5),
     LIGHT_BLUE("blue", "Sky Blue", R.string.accent_color_blue, 0xFF38BDF8, 0xFF0284C7, 0xFF0C4A6E, 0xFFE0F2FE),
     PASTEL_ORANGE("orange", "Pastel Orange", R.string.accent_color_orange, 0xFFFB923C, 0xFFC2410C, 0xFF431407, 0xFFFFEDD5),
-    GREEN("green", "Emerald Green", R.string.accent_color_green, 0xFF34D399, 0xFF059669, 0xFF064E3B, 0xFFD1FAE5);
+    GREEN("green", "Emerald Green", R.string.accent_color_green, 0xFF34D399, 0xFF059669, 0xFF064E3B, 0xFFD1FAE5),
+    PURPLE("purple", "Royal Purple", R.string.accent_color_purple, 0xFFA78BFA, 0xFF7C3AED, 0xFF2E1065, 0xFFEDE9FE),
+    MONOCHROME("monochrome", "Monochrome", R.string.accent_color_monochrome, 0xFFCBD5E1, 0xFF475569, 0xFF1E293B, 0xFFE2E8F0);
 
     fun getPrimary(isDark: Boolean): androidx.compose.ui.graphics.Color =
         androidx.compose.ui.graphics.Color(if (isDark) darkPrimaryHex else lightPrimaryHex)
@@ -74,10 +76,10 @@ enum class AppAccentColor(
         androidx.compose.ui.graphics.Color(if (isDark) darkContainerHex else lightContainerHex)
 
     fun getOnPrimary(isDark: Boolean): androidx.compose.ui.graphics.Color =
-        if (this == ELECTRIC_LIME && isDark) {
-            androidx.compose.ui.graphics.Color.Black
-        } else {
-            androidx.compose.ui.graphics.Color.White
+        when (this) {
+            ELECTRIC_LIME -> if (isDark) androidx.compose.ui.graphics.Color(0xFF0E1217) else androidx.compose.ui.graphics.Color.White
+            MONOCHROME -> if (isDark) androidx.compose.ui.graphics.Color(0xFF0E1217) else androidx.compose.ui.graphics.Color.White
+            else -> androidx.compose.ui.graphics.Color.White
         }
 }
 

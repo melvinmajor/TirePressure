@@ -25,11 +25,17 @@ import com.tirepressure.app.domain.model.*
 import com.tirepressure.app.domain.repository.BikeRepository
 import com.tirepressure.app.domain.repository.PreferencesRepository
 import com.tirepressure.app.ui.components.AddSetupDialog
+import com.tirepressure.app.ui.components.GlassAlertDialog
 import com.tirepressure.app.ui.components.NumberInputField
 import com.tirepressure.app.ui.components.PillSelector
 import androidx.compose.foundation.BorderStroke
 import com.tirepressure.app.ui.components.SectionCard
 import com.tirepressure.app.ui.components.YearInputField
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import com.tirepressure.app.ui.components.formatDecimal
 import com.tirepressure.app.ui.theme.getCategoryColor
 import com.tirepressure.app.ui.theme.getRideStyleColor
 import kotlinx.coroutines.launch
@@ -105,8 +111,15 @@ fun BikeEditScreen(
     }
 
     val nameRequiredErrorMsg = stringResource(id = R.string.bike_name_required_error)
+    val isDeleteDialogOpen = showDeleteBikeConfirmation || setupToDeleteConfirmation != null
+    val blurRadius by animateDpAsState(
+        targetValue = if (isDeleteDialogOpen) 14.dp else 0.dp,
+        animationSpec = tween(250),
+        label = "EditScreenDialogBlur"
+    )
 
     Scaffold(
+        modifier = Modifier.blur(blurRadius),
         topBar = {
             TopAppBar(
                 title = {
@@ -494,13 +507,16 @@ fun BikeEditScreen(
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(if (isSelected) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent)
                                     .clickable { selectedSetupIndex = index }
-                                    .padding(vertical = 8.dp, horizontal = 4.dp)
+                                    .padding(vertical = 8.dp, horizontal = 6.dp)
                             ) {
                                 Text(
-                                    text = setup.name.take(15),
+                                    text = setup.name,
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    textAlign = TextAlign.Center
                                 )
                             }
                         }
@@ -658,9 +674,20 @@ fun BikeEditScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    var luggageWeightInput by rememberSaveable(selectedSetupIndex, activeSetup.id) {
+                        mutableStateOf(formatDecimal(activeSetup.luggageWeightKg, 2))
+                    }
+                    LaunchedEffect(activeSetup.luggageWeightKg) {
+                        val typed = luggageWeightInput.toDoubleOrNull() ?: 0.0
+                        if (Math.abs(typed - activeSetup.luggageWeightKg) > 0.02) {
+                            luggageWeightInput = formatDecimal(activeSetup.luggageWeightKg, 2)
+                        }
+                    }
+
                     NumberInputField(
-                        value = activeSetup.luggageWeightKg.toString(),
+                        value = luggageWeightInput,
                         onValueChange = { wStr ->
+                            luggageWeightInput = wStr
                             val w = wStr.toDoubleOrNull() ?: 0.0
                             setups = setups.mapIndexed { idx, s ->
                                 if (idx == selectedSetupIndex) s.copy(luggageWeightKg = w) else s
@@ -838,13 +865,14 @@ fun BikeEditScreen(
                         val cStr = stringResource(id = activeSetup.frontTire.casing.labelRes)
                         val rStr = stringResource(id = activeSetup.frontWheel.rimType.labelRes)
                         Text(
-                            text = "${activeSetup.frontTire.widthMm.toInt()}mm • $rStr • $cStr",
+                            text = "${formatDecimal(activeSetup.frontTire.widthMm)}mm • $rStr • $cStr",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 ) {
                     WheelTireFormBlock(
+                        wheelKey = "${activeSetup.id}_front",
                         tireWidthMm = activeSetup.frontTire.widthMm,
                         onTireWidthChangeMm = { w ->
                             setups = setups.mapIndexed { idx, s ->
@@ -856,9 +884,8 @@ fun BikeEditScreen(
                                 } else s
                             }
                         },
-                        innerRimWidth = activeSetup.frontWheel.innerRimWidthMm.toString(),
-                        onInnerRimWidthChange = { rStr ->
-                            val r = rStr.toDoubleOrNull() ?: activeSetup.frontWheel.innerRimWidthMm
+                        innerRimWidthMm = activeSetup.frontWheel.innerRimWidthMm,
+                        onInnerRimWidthChangeMm = { r ->
                             setups = setups.mapIndexed { idx, s ->
                                 if (idx == selectedSetupIndex) {
                                     s.copy(
@@ -983,22 +1010,22 @@ fun BikeEditScreen(
                                 val cStr = stringResource(id = activeSetup.rearTire.casing.labelRes)
                                 val rStr = stringResource(id = activeSetup.rearWheel.rimType.labelRes)
                                 Text(
-                                    text = "${activeSetup.rearTire.widthMm.toInt()}mm • $rStr • $cStr",
+                                    text = "${formatDecimal(activeSetup.rearTire.widthMm)}mm • $rStr • $cStr",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         ) {
                             WheelTireFormBlock(
+                                wheelKey = "${activeSetup.id}_rear",
                                 tireWidthMm = activeSetup.rearTire.widthMm,
                                 onTireWidthChangeMm = { w ->
                                     setups = setups.mapIndexed { idx, s ->
                                         if (idx == selectedSetupIndex) s.copy(rearTire = s.rearTire.copy(widthMm = w)) else s
                                     }
                                 },
-                                innerRimWidth = activeSetup.rearWheel.innerRimWidthMm.toString(),
-                                onInnerRimWidthChange = { rStr ->
-                                    val r = rStr.toDoubleOrNull() ?: activeSetup.rearWheel.innerRimWidthMm
+                                innerRimWidthMm = activeSetup.rearWheel.innerRimWidthMm,
+                                onInnerRimWidthChangeMm = { r ->
                                     setups = setups.mapIndexed { idx, s ->
                                         if (idx == selectedSetupIndex) s.copy(rearWheel = s.rearWheel.copy(innerRimWidthMm = r)) else s
                                     }
@@ -1099,7 +1126,7 @@ fun BikeEditScreen(
     }
 
     if (showDeleteBikeConfirmation) {
-        AlertDialog(
+        GlassAlertDialog(
             onDismissRequest = { showDeleteBikeConfirmation = false },
             icon = {
                 Icon(
@@ -1134,7 +1161,7 @@ fun BikeEditScreen(
     }
 
     setupToDeleteConfirmation?.let { setupToDel ->
-        AlertDialog(
+        GlassAlertDialog(
             onDismissRequest = { setupToDeleteConfirmation = null },
             icon = {
                 Icon(
@@ -1221,37 +1248,67 @@ fun BikeEditScreen(
 
 @Composable
 private fun WheelTireFormBlock(
+    wheelKey: String,
     tireWidthMm: Double,
     onTireWidthChangeMm: (Double) -> Unit,
-    innerRimWidth: String,
-    onInnerRimWidthChange: (String) -> Unit,
+    innerRimWidthMm: Double,
+    onInnerRimWidthChangeMm: (Double) -> Unit,
     rimType: RimType,
     onRimTypeChange: (RimType) -> Unit,
     casing: TireCasing,
     onCasingChange: (TireCasing) -> Unit
 ) {
     // Mode d'unité : mm ou pouces
-    // Détecte intelligemment si la valeur stockée correspond à une valeur ronde en pouces (ex: 60.96mm = 2.4")
-    var isInchUnit by remember(tireWidthMm) {
+    // Initialise une seule fois par configuration de roue la préférence d'unité sans bascule automatique lors de la saisie
+    val defaultToInches = remember(wheelKey) {
         val inInches = tireWidthMm / 25.4
         val nearestTenth = Math.round(inInches * 10.0) / 10.0
-        mutableStateOf(tireWidthMm >= 50.0 && Math.abs(inInches - nearestTenth) < 0.05)
+        tireWidthMm >= 50.0 && Math.abs(inInches - nearestTenth) < 0.08
     }
 
-    var textInput by remember(tireWidthMm, isInchUnit) {
+    var isInchUnit by rememberSaveable(wheelKey) {
+        mutableStateOf(defaultToInches)
+    }
+
+    var tireTextInput by rememberSaveable(wheelKey) {
         val str = if (isInchUnit) {
-            val inInches = tireWidthMm / 25.4
-            String.format(java.util.Locale.US, "%.1f", inInches)
+            formatDecimal(tireWidthMm / 25.4, 2)
         } else {
-            val rounded = Math.round(tireWidthMm)
-            if (Math.abs(tireWidthMm - rounded) < 0.05) rounded.toString()
-            else String.format(java.util.Locale.US, "%.1f", tireWidthMm)
+            formatDecimal(tireWidthMm, 2)
         }
         mutableStateOf(str)
     }
 
+    var innerRimTextInput by rememberSaveable(wheelKey) {
+        mutableStateOf(formatDecimal(innerRimWidthMm, 2))
+    }
+
+    // Synchronisation de la valeur de pneu externe uniquement lors d'un vrai changement externe (ex: preset, copie)
+    LaunchedEffect(tireWidthMm, isInchUnit) {
+        val typedNum = tireTextInput.toDoubleOrNull()
+        val typedMm = if (typedNum != null) {
+            if (isInchUnit) typedNum * 25.4 else typedNum
+        } else null
+
+        if (typedMm == null || Math.abs(typedMm - tireWidthMm) > 0.02) {
+            tireTextInput = if (isInchUnit) {
+                formatDecimal(tireWidthMm / 25.4, 2)
+            } else {
+                formatDecimal(tireWidthMm, 2)
+            }
+        }
+    }
+
+    // Synchronisation de la largeur interne de jante externe
+    LaunchedEffect(innerRimWidthMm) {
+        val typedNum = innerRimTextInput.toDoubleOrNull()
+        if (typedNum == null || Math.abs(typedNum - innerRimWidthMm) > 0.02) {
+            innerRimTextInput = formatDecimal(innerRimWidthMm, 2)
+        }
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // En-tête avec sélecteur d'unité de largeur (mm ou pouces)
+        // En-tête avec sélecteur d'unité de largeur (mm ou pouces) - Bascule manuelle stricte
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1265,13 +1322,23 @@ private fun WheelTireFormBlock(
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 FilterChip(
                     selected = !isInchUnit,
-                    onClick = { isInchUnit = false },
+                    onClick = {
+                        if (isInchUnit) {
+                            isInchUnit = false
+                            tireTextInput = formatDecimal(tireWidthMm, 2)
+                        }
+                    },
                     label = { Text(stringResource(id = R.string.unit_mm), style = MaterialTheme.typography.labelSmall) },
                     modifier = Modifier.height(28.dp)
                 )
                 FilterChip(
                     selected = isInchUnit,
-                    onClick = { isInchUnit = true },
+                    onClick = {
+                        if (!isInchUnit) {
+                            isInchUnit = true
+                            tireTextInput = formatDecimal(tireWidthMm / 25.4, 2)
+                        }
+                    },
                     label = { Text(stringResource(id = R.string.unit_inch), style = MaterialTheme.typography.labelSmall) },
                     modifier = Modifier.height(28.dp)
                 )
@@ -1283,9 +1350,9 @@ private fun WheelTireFormBlock(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             NumberInputField(
-                value = textInput,
+                value = tireTextInput,
                 onValueChange = { newVal ->
-                    textInput = newVal
+                    tireTextInput = newVal
                     val num = newVal.toDoubleOrNull()
                     if (num != null && num > 0.0) {
                         val mm = if (isInchUnit) num * 25.4 else num
@@ -1297,8 +1364,14 @@ private fun WheelTireFormBlock(
                 modifier = Modifier.weight(1f)
             )
             NumberInputField(
-                value = innerRimWidth,
-                onValueChange = onInnerRimWidthChange,
+                value = innerRimTextInput,
+                onValueChange = { newVal ->
+                    innerRimTextInput = newVal
+                    val num = newVal.toDoubleOrNull()
+                    if (num != null && num > 0.0) {
+                        onInnerRimWidthChangeMm(num)
+                    }
+                },
                 label = stringResource(id = R.string.inner_rim_width),
                 suffix = "mm",
                 modifier = Modifier.weight(1f)

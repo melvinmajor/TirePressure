@@ -47,7 +47,7 @@ Modern cyclists swap wheels, ride mixed wheel sizes, or ride different disciplin
 - **Full Mullet / MX Support (Front ≠ Rear):** Seamlessly configure bikes with mixed wheel diameters—such as **29" Front / 27.5" Rear** (the gold standard in modern Enduro, E-MTB, and DH) or **32" Front / 29" Rear** prototypes. Front and rear wheels feature completely independent diameter selectors, rim widths, tire widths, and casing structures.
 - **Emerging 32" Wheel Standard (686 mm ISO):** Full compatibility with the emerging **32-inch** wheel format (`686 mm BSD`), pioneered in prototype Downhill / XC race rigs and tall-rider geometries.
 - **Rich Bike Specifications & Safe Bike Management:** Record and display detailed metadata for every bike, including **Brand**, **Model**, **Year**, and **Frame Size** (in inches or letter sizing like S/M/L). When creating or editing a bike, select a primary bike category (**Road**, **Gravel**, **MTB**, or **Commute / Urban**). Bike weight and metadata can be edited anytime—changes automatically propagate to recalculate pressures across all profiles of that bike. Bikes and wheelset profiles can be safely removed with explicit warning confirmation popups to prevent accidental data loss.
-- **Detailed Disciplines on Profiles:** While bikes belong to general categories, each profile / wheelset allows choosing specific riding practices (**Enduro MTB**, **Trail MTB**, **XC MTB**, **Downhill MTB**, **Road**, **Gravel**, **Cyclocross**, **Fat Bike**, **Commute / Urban**). This allows the exact same bike or wheelset to have tailored pressures depending on intended terrain and riding style.
+- **Detailed Disciplines on Profiles:** While bikes belong to general categories, each profile / wheelset allows choosing specific riding practices (**Enduro MTB**, **Trail MTB**, **XC MTB**, **Downhill MTB**, **Road**, **Gravel**, **Cyclocross**, **Fat Bike**, **Urban**). This allows the exact same bike or wheelset to have tailored pressures depending on intended terrain and riding style.
 - **Tire Width in Millimeters or Inches:** Configure tire widths in either **mm** or **inches (po / ")** with an instant toggle chip, letting you enter standard mountain bike dimensions like `2.4"` or road widths like `28mm`.
 - **Profile Template Cloning:** When creating a new profile/setup for an existing bike, you can choose any existing setup as a starting template.
 - **Inherited Bike Specs:** The bike's weight and configuration are automatically populated, allowing you to quickly modify just tire width, rim width, or riding discipline.
@@ -155,7 +155,7 @@ To resolve this, TirePressure extends Berto's model with a calibrated dynamic di
 - **Enduro MTB (`1.10`):** High-speed stability, rocky terrain protection, and drop-off resistance.
 - **Downhill MTB (`1.18`):** Extreme compression absorption (G-outs 2.5–3.5G), berm support, and rim defense.
 - **Fat Bike (`0.90`):** Soft-ground displacement and snow/sand flotation.
-- **Commute / Urban (`1.05`):** Pavement puncture protection and reliable urban rolling resistance under daily commuting conditions.
+- **Urban (`1.05`):** Pavement puncture protection and reliable urban rolling resistance under daily commuting conditions.
 
 ### 6. Full Multiplier Equation & Safety Bounds
 $$P_{final} = P_{base} \cdot K_{discipline} \cdot K_{rim} \cdot K_{casing} \cdot K_{surface}$$
@@ -241,8 +241,8 @@ Execute the automated test suite verifying Berto 15% drop mathematical accuracy,
 .\gradlew.bat testDebugUnitTest
 ```
 
-### 📲 Ready-to-Test Release APK (Ongoing Development Build)
-Even during ongoing development, a pre-compiled release APK built with full R8 optimization, resource shrinking, and baseline profiles is provided directly in the repository for immediate testing:
+### 📲 Ready-to-Test Release APK (Release v1.2)
+The official pre-compiled release APK built with full R8 optimization, resource shrinking, and baseline profiles is provided directly in the repository for immediate installation and testing:
 - **Direct APK:** [`files/TirePressure.apk`](files/TirePressure.apk)
 
 Install directly onto a connected device via ADB:

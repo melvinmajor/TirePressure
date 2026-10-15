@@ -10,10 +10,16 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.draw.rotate
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -36,6 +42,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
@@ -45,9 +53,11 @@ import com.tirepressure.app.R
 import com.tirepressure.app.core.model.PressureUnit
 import com.tirepressure.app.domain.model.*
 import com.tirepressure.app.ui.components.AddSetupDialog
-import com.tirepressure.app.ui.components.BikeCardTopoHeader
+import com.tirepressure.app.ui.components.BikeCardCategoryHeader
 import com.tirepressure.app.ui.components.EditBikeDialog
+import com.tirepressure.app.ui.components.GlassAlertDialog
 import com.tirepressure.app.ui.components.GlassCard
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import com.tirepressure.app.ui.components.PillSelector
 import com.tirepressure.app.ui.theme.ElectricLime
 import com.tirepressure.app.ui.theme.ElectricLimeContainerDark
@@ -55,7 +65,7 @@ import com.tirepressure.app.ui.theme.getCategoryColor
 import com.tirepressure.app.ui.theme.getRideStyleColor
 import com.tirepressure.app.ui.theme.pressureReading
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun OverviewScreen(
     viewModel: OverviewViewModel,
@@ -71,7 +81,18 @@ fun OverviewScreen(
     var userSelectedSimplified by rememberSaveable { mutableStateOf<Boolean?>(null) }
     val isSimplifiedView = userSelectedSimplified ?: state.defaultOverviewCompact
 
+    val isPopupActive = state.bikeToDelete != null ||
+        state.setupToDelete != null ||
+        bikeToEditInfo != null ||
+        bikeForNewSetup != null
+    val blurRadius by animateDpAsState(
+        targetValue = if (isPopupActive) 14.dp else 0.dp,
+        animationSpec = tween(250),
+        label = "OverviewDialogBlur"
+    )
+
     Scaffold(
+        modifier = Modifier.blur(blurRadius),
         topBar = {
             TopAppBar(
                 title = {
@@ -131,15 +152,24 @@ fun OverviewScreen(
                 .padding(paddingValues)
         ) {
             val columnsCount = if (maxWidth >= 600.dp) 2 else 1
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(columnsCount),
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp, start = 16.dp, end = 16.dp)
+            val horizontalPadding = 16.dp
+            val spacing = 16.dp
+            val availableWidth = maxWidth - (horizontalPadding * 2)
+            val cardWidth = if (columnsCount > 1) {
+                (availableWidth - (spacing * (columnsCount - 1))) / columnsCount
+            } else {
+                availableWidth
+            }
+            val scrollState = rememberScrollState()
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(top = 8.dp, bottom = 32.dp, start = horizontalPadding, end = horizontalPadding),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-            // Bandeau de réglages rapides : Bascule d'unité de pression instantanée
-            item(span = { GridItemSpan(maxLineSpan) }) {
+                // Bandeau de réglages rapides : Bascule d'unité de pression instantanée
                 GlassCard(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -168,11 +198,9 @@ fun OverviewScreen(
                         )
                     }
                 }
-            }
 
-            // Si aucun vélo enregistré
-            if (state.bikesWithPressures.isEmpty()) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
+                // Si aucun vélo enregistré
+                if (state.bikesWithPressures.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -210,98 +238,107 @@ fun OverviewScreen(
                             }
                         }
                     }
-                }
-            } else {
-                items(state.bikesWithPressures, key = { it.bike.id }) { bikeOverview ->
-                    val copyPressuresAction: (SetupMultiSurfaceResult) -> Unit = { setupResult ->
-                        val dryLabel = context.getString(R.string.overview_dry)
-                        val wetLabel = context.getString(R.string.overview_wet)
-                        val snowLabel = context.getString(R.string.overview_snow)
-                        val frontAbbr = context.getString(R.string.widget_front_abbr)
-                        val rearAbbr = context.getString(R.string.widget_rear_abbr)
+                } else {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        maxItemsInEachRow = columnsCount,
+                        horizontalArrangement = Arrangement.spacedBy(spacing),
+                        verticalArrangement = Arrangement.spacedBy(spacing)
+                    ) {
+                        state.bikesWithPressures.forEach { bikeOverview ->
+                            val copyPressuresAction: (SetupMultiSurfaceResult) -> Unit = { setupResult ->
+                                val dryLabel = context.getString(R.string.overview_dry)
+                                val wetLabel = context.getString(R.string.overview_wet)
+                                val snowLabel = context.getString(R.string.overview_snow)
+                                val frontAbbr = context.getString(R.string.widget_front_abbr)
+                                val rearAbbr = context.getString(R.string.widget_rear_abbr)
 
-                        val textToCopy = buildString {
-                            val effStyle = setupResult.setup.getEffectiveRideStyle(bikeOverview.bike.category)
-                            val catName = context.getString(bikeOverview.bike.category.labelRes)
-                            val styleName = context.getString(effStyle.labelRes)
-                            appendLine("🚴‍♂️ ${bikeOverview.bike.name} ($catName) - ${setupResult.setup.name} [$styleName]")
-                            appendLine("☀️ $dryLabel : $frontAbbr ${state.pressureUnit.format(setupResult.dryResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.dryResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
-                            if (state.showWetSurface) {
-                                appendLine("🌧️ $wetLabel : $frontAbbr ${state.pressureUnit.format(setupResult.wetResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.wetResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
+                                val textToCopy = buildString {
+                                    val effStyle = setupResult.setup.getEffectiveRideStyle(bikeOverview.bike.category)
+                                    val catName = context.getString(bikeOverview.bike.category.labelRes)
+                                    val styleName = context.getString(effStyle.labelRes)
+                                    appendLine("🚴‍♂️ ${bikeOverview.bike.name} ($catName) - ${setupResult.setup.name} [$styleName]")
+                                    appendLine("☀️ $dryLabel : $frontAbbr ${state.pressureUnit.format(setupResult.dryResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.dryResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
+                                    if (state.showWetSurface) {
+                                        appendLine("🌧️ $wetLabel : $frontAbbr ${state.pressureUnit.format(setupResult.wetResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.wetResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
+                                    }
+                                    if (state.showSnowSurface) {
+                                        appendLine("❄️ $snowLabel : $frontAbbr ${state.pressureUnit.format(setupResult.snowResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.snowResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
+                                    }
+                                }
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                clipboard.setPrimaryClip(ClipData.newPlainText("Pressions", textToCopy.trimEnd()))
+                                Toast.makeText(context, context.getString(R.string.overview_toast_copied), Toast.LENGTH_SHORT).show()
                             }
-                            if (state.showSnowSurface) {
-                                appendLine("❄️ $snowLabel : $frontAbbr ${state.pressureUnit.format(setupResult.snowResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.snowResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
+
+                            val copySuffix = stringResource(id = R.string.overview_duplicate_suffix)
+                            Box(
+                                modifier = if (columnsCount > 1) Modifier.width(cardWidth) else Modifier.fillMaxWidth()
+                            ) {
+                                AnimatedContent(
+                                    targetState = isSimplifiedView,
+                                    transitionSpec = {
+                                        if (targetState) {
+                                            slideInHorizontally(
+                                                initialOffsetX = { fullWidth -> fullWidth },
+                                                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                                            ) + fadeIn(tween(250)) togetherWith
+                                            slideOutOfContainer(
+                                                towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                                                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                                            ) + fadeOut(tween(200))
+                                        } else {
+                                            slideIntoContainer(
+                                                towards = AnimatedContentTransitionScope.SlideDirection.End,
+                                                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                                            ) + fadeIn(tween(250)) togetherWith
+                                            slideOutOfContainer(
+                                                towards = AnimatedContentTransitionScope.SlideDirection.End,
+                                                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                                            ) + fadeOut(tween(200))
+                                        }
+                                    },
+                                    label = "ViewModeCardTransition"
+                                ) { simplified ->
+                                    if (simplified) {
+                                        BikeOverviewCardSimplified(
+                                            bikeOverview = bikeOverview,
+                                            pressureUnit = state.pressureUnit,
+                                            showWetSurface = state.showWetSurface,
+                                            showSnowSurface = state.showSnowSurface,
+                                            onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
+                                            onEditBikeInfo = { bikeToEditInfo = bikeOverview.bike },
+                                            onToggleFavorite = { viewModel.toggleFavoriteBike(bikeOverview.bike) },
+                                            onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike, copySuffix) },
+                                            onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
+                                            onAddSetup = { bikeForNewSetup = bikeOverview.bike },
+                                            onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup, copySuffix) },
+                                            onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
+                                            onCopyPressures = copyPressuresAction
+                                        )
+                                    } else {
+                                        BikeOverviewCard(
+                                            bikeOverview = bikeOverview,
+                                            pressureUnit = state.pressureUnit,
+                                            showWetSurface = state.showWetSurface,
+                                            showSnowSurface = state.showSnowSurface,
+                                            onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
+                                            onEditBikeInfo = { bikeToEditInfo = bikeOverview.bike },
+                                            onToggleFavorite = { viewModel.toggleFavoriteBike(bikeOverview.bike) },
+                                            onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike, copySuffix) },
+                                            onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
+                                            onAddSetup = { bikeForNewSetup = bikeOverview.bike },
+                                            onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup, copySuffix) },
+                                            onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
+                                            onCopyPressures = copyPressuresAction
+                                        )
+                                    }
+                                }
                             }
                         }
-                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        clipboard.setPrimaryClip(ClipData.newPlainText("Pressions", textToCopy.trimEnd()))
-                        Toast.makeText(context, context.getString(R.string.overview_toast_copied), Toast.LENGTH_SHORT).show()
                     }
 
-                    val copySuffix = stringResource(id = R.string.overview_duplicate_suffix)
-                    AnimatedContent(
-                        targetState = isSimplifiedView,
-                        transitionSpec = {
-                            if (targetState) {
-                                slideInHorizontally(
-                                    initialOffsetX = { fullWidth -> fullWidth },
-                                    animationSpec = tween(300, easing = FastOutSlowInEasing)
-                                ) + fadeIn(tween(250)) togetherWith
-                                slideOutOfContainer(
-                                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                                    animationSpec = tween(300, easing = FastOutSlowInEasing)
-                                ) + fadeOut(tween(200))
-                            } else {
-                                slideIntoContainer(
-                                    towards = AnimatedContentTransitionScope.SlideDirection.End,
-                                    animationSpec = tween(300, easing = FastOutSlowInEasing)
-                                ) + fadeIn(tween(250)) togetherWith
-                                slideOutOfContainer(
-                                    towards = AnimatedContentTransitionScope.SlideDirection.End,
-                                    animationSpec = tween(300, easing = FastOutSlowInEasing)
-                                ) + fadeOut(tween(200))
-                            }
-                        },
-                        label = "ViewModeCardTransition"
-                    ) { simplified ->
-                        if (simplified) {
-                            BikeOverviewCardSimplified(
-                                bikeOverview = bikeOverview,
-                                pressureUnit = state.pressureUnit,
-                                showWetSurface = state.showWetSurface,
-                                showSnowSurface = state.showSnowSurface,
-                                onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
-                                onEditBikeInfo = { bikeToEditInfo = bikeOverview.bike },
-                                onToggleFavorite = { viewModel.toggleFavoriteBike(bikeOverview.bike) },
-                                onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike, copySuffix) },
-                                onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
-                                onAddSetup = { bikeForNewSetup = bikeOverview.bike },
-                                onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup, copySuffix) },
-                                onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
-                                onCopyPressures = copyPressuresAction
-                            )
-                        } else {
-                            BikeOverviewCard(
-                                bikeOverview = bikeOverview,
-                                pressureUnit = state.pressureUnit,
-                                showWetSurface = state.showWetSurface,
-                                showSnowSurface = state.showSnowSurface,
-                                onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
-                                onEditBikeInfo = { bikeToEditInfo = bikeOverview.bike },
-                                onToggleFavorite = { viewModel.toggleFavoriteBike(bikeOverview.bike) },
-                                onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike, copySuffix) },
-                                onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
-                                onAddSetup = { bikeForNewSetup = bikeOverview.bike },
-                                onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup, copySuffix) },
-                                onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
-                                onCopyPressures = copyPressuresAction
-                            )
-                        }
-                    }
-                }
-
-                // Bouton visible après la liste des vélos pour ajouter un vélo
-                item(span = { GridItemSpan(maxLineSpan) }) {
+                    // Bouton visible après la liste des vélos pour ajouter un vélo
                     Button(
                         onClick = onNavigateToAddBike,
                         modifier = Modifier
@@ -324,7 +361,7 @@ fun OverviewScreen(
 
         // Dialogue confirmation suppression vélo avec message d'avertissement
         state.bikeToDelete?.let { bike ->
-            AlertDialog(
+            GlassAlertDialog(
                 onDismissRequest = { viewModel.cancelDeleteBike() },
                 icon = {
                     Icon(
@@ -354,7 +391,7 @@ fun OverviewScreen(
 
         // Dialogue confirmation suppression profil / configuration (déclenché via le bouton '...' du profil)
         state.setupToDelete?.let { (bike, setup) ->
-            AlertDialog(
+            GlassAlertDialog(
                 onDismissRequest = { viewModel.cancelDeleteSetup() },
                 icon = {
                     Icon(
@@ -412,8 +449,8 @@ fun OverviewScreen(
             )
         }
     }
-}
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun BikeOverviewCard(
     bikeOverview: BikeOverviewData,
@@ -442,8 +479,9 @@ private fun BikeOverviewCard(
     ) {
         val headerHeight = 40.dp
 
-        // Motif lignes topographiques en en-tête du vélo
-        BikeCardTopoHeader(
+        // Motif en-tête adapté à la catégorie du vélo (MTB: topo, Route: chevrons, Gravel: micro-crampons, Commute: métro)
+        BikeCardCategoryHeader(
+            category = bike.category,
             modifier = Modifier.align(Alignment.TopCenter),
             height = headerHeight,
             shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)
@@ -588,9 +626,9 @@ private fun BikeOverviewCard(
             val bikeMeta = buildList {
                 if (bike.brand.isNotBlank() || bike.model.isNotBlank()) {
                     val bm = listOf(bike.brand, bike.model).filter { it.isNotBlank() }.joinToString(" ")
-                    val withYear = if (bike.year != null) "$bm (${bike.year})" else bm
+                    val withYear = if (bike.year != null && bike.year > 0) "$bm (${bike.year})" else bm
                     add(withYear)
-                } else if (bike.year != null) {
+                } else if (bike.year != null && bike.year > 0) {
                     add("${bike.year}")
                 }
             }.joinToString(" • ")
@@ -641,7 +679,7 @@ private fun BikeOverviewCard(
                             color = pillBg
                         ) {
                             Text(
-                                text = "${stringResource(R.string.bike_size_label)} ${bike.frameSize}",
+                                text = stringResource(R.string.overview_frame_size, bike.frameSize),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = pillTextColor,
@@ -700,20 +738,25 @@ private fun BikeOverviewCard(
                             label = "SetupChevronRotationDetailed"
                         )
 
+                        val haptic = LocalHapticFeedback.current
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(14.dp))
                                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
+                                .combinedClickable(
+                                    onClick = { isSetupExpanded = !isSetupExpanded },
+                                    onLongClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        onCopyPressures(setupResult)
+                                    }
+                                )
                                 .padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             // Titre de la configuration
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable { isSetupExpanded = !isSetupExpanded },
+                                modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -1057,6 +1100,7 @@ private fun SurfacePressureBadge(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun BikeOverviewCardSimplified(
     bikeOverview: BikeOverviewData,
@@ -1084,8 +1128,9 @@ private fun BikeOverviewCardSimplified(
     ) {
         val headerHeight = 40.dp
 
-        // Motif lignes topographiques délimitant l'en-tête du vélo
-        BikeCardTopoHeader(
+        // Motif en-tête adapté à la catégorie du vélo (MTB: topo, Route: chevrons, Gravel: micro-crampons, Commute: métro)
+        BikeCardCategoryHeader(
+            category = bike.category,
             modifier = Modifier.align(Alignment.TopCenter),
             height = headerHeight,
             shape = RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp)
@@ -1234,15 +1279,25 @@ private fun BikeOverviewCardSimplified(
                 bikeOverview.setupsWithPressures.forEach { setupResult ->
                     val setup = setupResult.setup
                     var setupMenuExpanded by remember { mutableStateOf(false) }
-                    var isSetupExpanded by rememberSaveable(setup.id) { mutableStateOf(true) }
+                    var isSetupExpanded by rememberSaveable(setup.id) { mutableStateOf(bike.isDefault) }
                     val setupChevronRotation by animateFloatAsState(
                         targetValue = if (isSetupExpanded) 180f else 0f,
                         animationSpec = tween(250, easing = FastOutSlowInEasing),
                         label = "SetupChevronRotationCompact"
                     )
 
+                    val haptic = LocalHapticFeedback.current
                     Surface(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .combinedClickable(
+                                onClick = { isSetupExpanded = !isSetupExpanded },
+                                onLongClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onCopyPressures(setupResult)
+                                }
+                            ),
                         shape = RoundedCornerShape(10.dp),
                         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
                     ) {
@@ -1254,10 +1309,7 @@ private fun BikeOverviewCardSimplified(
                         ) {
                             // En-tête profil : nom, discipline, bagages (si > 0), options & chevron
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .clickable { isSetupExpanded = !isSetupExpanded },
+                                modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {

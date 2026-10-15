@@ -53,7 +53,7 @@ fun AddSetupDialog(
 
     var styleMenuExpanded by remember { mutableStateOf(false) }
 
-    AlertDialog(
+    GlassAlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Column {

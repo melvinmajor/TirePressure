@@ -41,6 +41,7 @@ import com.tirepressure.app.core.model.MassUnit
 import com.tirepressure.app.core.model.PressureUnit
 import com.tirepressure.app.core.util.UnitConverter
 import com.tirepressure.app.ui.components.AboutAndPrivacyCard
+import com.tirepressure.app.ui.components.GlassAlertDialog
 import com.tirepressure.app.ui.components.NumberInputField
 import com.tirepressure.app.ui.components.PillSelector
 import com.tirepressure.app.ui.components.SectionCard
@@ -220,9 +221,15 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    val surfaceChipColors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                    )
+
                     FilterChip(
                         selected = true,
                         onClick = { /* Toujours obligatoire */ },
+                        colors = surfaceChipColors,
                         label = {
                             Text(
                                 text = "☀️ " + stringResource(R.string.overview_dry),
@@ -238,6 +245,7 @@ fun SettingsScreen(
                     FilterChip(
                         selected = state.showWetSurface,
                         onClick = { viewModel.setShowWetSurface(!state.showWetSurface) },
+                        colors = surfaceChipColors,
                         label = {
                             Text(
                                 text = "🌧️ " + stringResource(R.string.overview_wet),
@@ -253,6 +261,7 @@ fun SettingsScreen(
                     FilterChip(
                         selected = state.showSnowSurface,
                         onClick = { viewModel.setShowSnowSurface(!state.showSnowSurface) },
+                        colors = surfaceChipColors,
                         label = {
                             Text(
                                 text = "❄️ " + stringResource(R.string.overview_snow),
@@ -300,7 +309,8 @@ fun SettingsScreen(
                 val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     AppAccentColor.entries.forEach { accent ->
                         val isSelected = accent == state.accentColor
@@ -308,19 +318,15 @@ fun SettingsScreen(
                         val onCircleColor = accent.getOnPrimary(isDark)
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(38.dp)
                                 .clip(CircleShape)
                                 .background(circleColor)
-                                .clickable { viewModel.setAccentColor(accent) }
-                                .then(
-                                    if (isSelected) {
-                                        Modifier.border(
-                                            width = 3.dp,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            shape = CircleShape
-                                        )
-                                    } else Modifier
-                                ),
+                                .border(
+                                    width = if (isSelected) 3.dp else 1.dp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                                    shape = CircleShape
+                                )
+                                .clickable { viewModel.setAccentColor(accent) },
                             contentAlignment = Alignment.Center
                         ) {
                             if (isSelected) {
@@ -537,7 +543,7 @@ fun SettingsScreen(
 
         // Dialogue de réinitialisation
         if (state.showResetConfirmation) {
-            AlertDialog(
+            GlassAlertDialog(
                 onDismissRequest = { viewModel.cancelReset() },
                 title = { Text(stringResource(id = R.string.settings_reset_dialog_title)) },
                 text = { Text(stringResource(id = R.string.settings_reset_dialog_msg)) },
@@ -559,7 +565,7 @@ fun SettingsScreen(
 
         // Dialogue d'importation : Remplacer ou Fusionner
         state.pendingImportPayload?.let { payload ->
-            AlertDialog(
+            GlassAlertDialog(
                 onDismissRequest = { viewModel.cancelImport() },
                 title = { Text(stringResource(id = R.string.settings_import_dialog_title)) },
                 text = {

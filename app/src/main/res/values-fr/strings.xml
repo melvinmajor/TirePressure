@@ -36,7 +36,7 @@
     <string name="bike_discipline">Discipline</string>
     <string name="bike_weight">Poids du vélo</string>
     <string name="config_name_label">Nom de la configuration</string>
-    <string name="config_default_name">Paire de roues principale</string>
+    <string name="config_default_name">Configuration principale</string>
     <string name="luggage_weight">Bagages / Équipement habituel</string>
     <string name="wheel_front">Roue Avant</string>
     <string name="wheel_rear">Roue Arrière</string>
@@ -64,6 +64,8 @@
     <string name="action_confirm">Confirmer</string>
     <string name="action_copy_pressures">Copier les pressions</string>
     <string name="action_copied">Pressions copiées !</string>
+    <string name="action_clear">Effacer</string>
+    <string name="bike_year_unknown_or_pre_1980">Aucune année (inconnue / avant 1980)</string>
 
     <!-- Dialogue d'ajout de configuration -->
     <string name="add_setup_dialog_title">Nouvelle configuration</string>
@@ -85,7 +87,7 @@
     <string name="style_enduro_mtb">VTT Enduro</string>
     <string name="style_dh_mtb">VTT Descente</string>
     <string name="style_fat">Fat Bike</string>
-    <string name="style_commute">Vélotaf / Urbain</string>
+    <string name="style_commute">Urbain</string>
 
     <!-- Catégories de vélos -->
     <string name="bike_category_label">Catégorie du vélo</string>
@@ -193,7 +195,7 @@
     <string name="delete_bike_dialog_msg">Êtes-vous sûr de vouloir supprimer « %1$s » ? Tous les profils et configurations de ce vélo seront définitivement effacés.</string>
     <string name="delete_bike_button">Supprimer le vélo</string>
     <string name="delete_bike_danger_zone">Zone de danger</string>
-    <string name="delete_bike_danger_desc">Supprimer définitivement ce vélo et l\'ensemble de ses configurations de roues de votre garage.</string>
+    <string name="delete_bike_danger_desc">Supprimer définitivement ce vélo et l\'ensemble de ses configurations de votre garage.</string>
     <string name="delete_setup_dialog_title">Supprimer cette configuration ?</string>
     <string name="delete_setup_dialog_msg">Êtes-vous sûr de vouloir supprimer le profil « %1$s » ?</string>
     <string name="delete_setup_button">Supprimer la configuration</string>
@@ -201,7 +203,7 @@
     <!-- Chaînes supplémentaires Overview -->
     <string name="overview_rider_label">Cycliste :</string>
     <string name="overview_pressures_display_in">Afficher les pressions en :</string>
-    <string name="overview_bike_weight">Poids vélo : %1$s kg</string>
+    <string name="overview_bike_weight">%1$s kg</string>
     <string name="overview_config_count_one">1 config</string>
     <string name="overview_config_count_many">%1$d configs</string>
     <string name="overview_edit_bike_info">Modifier les informations du vélo</string>
@@ -222,7 +224,7 @@
     <string name="overview_subtitle">Berto 15% Drop • Multi-Surfaces</string>
     <string name="overview_view_simplified">Vue simplifiée</string>
     <string name="overview_view_detailed">Vue détaillée</string>
-    <string name="overview_luggage_weight_short">+%1$s kg équipement</string>
+    <string name="overview_luggage_weight_short">+%1$s kg</string>
     <string name="rim_tubes_short">Chambre à air</string>
     <string name="rim_tubeless_badge">Tubeless</string>
 
@@ -234,7 +236,7 @@
     <string name="bike_is_default_checkbox">Définir comme vélo favori</string>
     <string name="bike_is_favorite_checkbox">Définir comme vélo favori</string>
     <string name="bike_setups_section_title">Configurations de Roues &amp; Pneus (%1$d)</string>
-    <string name="bike_setups_section_desc">Un vélo peut posséder plusieurs configurations de roues selon vos sorties.</string>
+    <string name="bike_setups_section_desc">Un vélo peut posséder plusieurs configurations selon vos sorties.</string>
     <string name="bike_setup_name_label">Nom de cette configuration</string>
     <string name="bike_setup_style_label">Discipline / Pratique de ce profil :</string>
     <string name="bike_setup_style_default">Par défaut (%1$s : %2$s)</string>
@@ -325,8 +327,9 @@
     <string name="accent_color_blue">Bleu ciel</string>
     <string name="accent_color_orange">Orange pastel</string>
     <string name="accent_color_green">Vert émeraude</string>
+    <string name="accent_color_purple">Violet royal</string>
+    <string name="accent_color_monochrome">Monochrome</string>
 
     <!-- Défilement -->
     <string name="settings_scroll_more">Faites défiler</string>
 </resources>
-
