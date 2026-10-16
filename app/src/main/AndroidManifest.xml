@@ -98,7 +98,11 @@
             android:name=".widget.AllBikesWidgetService"
             android:permission="android.permission.BIND_REMOTEVIEWS"
             android:exported="false" />
+
+        <service
+            android:name=".widget.SingleBikeWidgetService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
     </application>
 
 </manifest>
-
