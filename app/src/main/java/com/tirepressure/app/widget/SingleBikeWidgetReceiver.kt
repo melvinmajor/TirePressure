@@ -13,10 +13,10 @@ import com.tirepressure.app.core.model.PressureUnit
 import com.tirepressure.app.data.local.AppDatabase
 import com.tirepressure.app.data.repository.PreferencesRepositoryImpl
 import com.tirepressure.app.domain.calculator.BertoTirePressureCalculator
-import com.tirepressure.app.domain.model.BikeProfile
 import com.tirepressure.app.domain.model.PressureCalculationInput
 import com.tirepressure.app.domain.model.RideStyle
 import com.tirepressure.app.domain.model.SurfaceCondition
+import com.tirepressure.app.domain.model.WheelSetup
 import com.tirepressure.app.domain.model.WheelPressureResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,6 +43,7 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
     }
 
     companion object {
+        private const val MAX_SETUPS_TO_RENDER = 3
         private val calculator = BertoTirePressureCalculator()
 
         suspend fun updateWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
@@ -115,7 +116,7 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
 
             // Populate Setups (all setups included, scrollable via ScrollView if widget is constrained)
             remoteViews.removeAllViews(R.id.widget_setups_container)
-            val setupsToShow = selectedBike.setups
+            val setupsToShow = selectSetupsForWidget(selectedBike.setups)
 
             for (setup in setupsToShow) {
                 val itemLayoutId = if (isDark) R.layout.widget_single_bike_setup_item_dark else R.layout.widget_single_bike_setup_item_light
@@ -173,6 +174,10 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
             }
 
             appWidgetManager.updateAppWidget(appWidgetId, remoteViews)
+        }
+
+        internal fun selectSetupsForWidget(setups: List<WheelSetup>): List<WheelSetup> {
+            return setups.take(MAX_SETUPS_TO_RENDER)
         }
 
         fun formatPressure(wheelResult: WheelPressureResult, unit: PressureUnit): String {

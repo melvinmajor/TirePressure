@@ -8,6 +8,7 @@ import com.tirepressure.app.domain.model.SurfaceCondition
 import com.tirepressure.app.domain.model.TireConfig
 import com.tirepressure.app.domain.model.WheelConfig
 import com.tirepressure.app.domain.model.WheelPressureResult
+import com.tirepressure.app.domain.model.WheelSetup
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -69,5 +70,21 @@ class WidgetTest {
         val rearBar = SingleBikeWidgetReceiver.formatPressure(result.rear, PressureUnit.BAR)
         assertTrue(frontBar.endsWith("bar"))
         assertTrue(rearBar.endsWith("bar"))
+    }
+
+    @Test
+    fun testSingleBikeWidgetLimitsRenderedSetups() {
+        val setups = listOf(
+            WheelSetup(name = "Setup 1"),
+            WheelSetup(name = "Setup 2"),
+            WheelSetup(name = "Setup 3"),
+            WheelSetup(name = "Setup 4")
+        )
+
+        val displayedSetups = SingleBikeWidgetReceiver.selectSetupsForWidget(setups)
+
+        assertEquals(3, displayedSetups.size)
+        assertEquals("Setup 1", displayedSetups[0].name)
+        assertEquals("Setup 3", displayedSetups[2].name)
     }
 }
