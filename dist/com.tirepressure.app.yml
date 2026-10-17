@@ -1,0 +1,45 @@
+Categories:
+  - Sports & Health
+  - Utilities
+License: MIT
+AuthorName: Melvin Campos Casares
+AuthorWebSite: https://github.com/melvinmajor
+SourceCode: https://github.com/melvinmajor/TirePressure
+IssueTracker: https://github.com/melvinmajor/TirePressure/issues
+Changelog: https://github.com/melvinmajor/TirePressure/releases
+
+AutoName: TirePressure
+Summary: Precision tire pressure calculator for Road, Gravel, MTB and Commute bikes.
+Description: |-
+  TirePressure is an offline, privacy-first tire pressure calculator based on
+  Frank Berto's 15% tire drop deflection model, modern rolling impedance research,
+  ETRTO / ISO safety standards and other tweaks to make the algorithm as accurate
+  as possible.
+
+  Features:
+  * Pre-ride dashboard with instant optimal pressures for all registered bikes
+  * Live multi-surface conditions (Dry, Rain, Snow)
+  * Full Mullet / MX mixed wheel diameter support (e.g. 29" front / 27.5" rear)
+  * Compatibility with emerging 32-inch wheels (686 mm ISO)
+  * ETRTO / ISO hookless rim safety limit warnings
+  * Clean Material 3 UI with glassmorphism design and customizable Home Screen widgets
+  * Full bilingual support (English and French)
+  * 100% offline: zero analytics, zero trackers, zero network permissions
+  * JSON backup and restore via Storage Access Framework
+
+RepoType: git
+Repo: https://github.com/melvinmajor/TirePressure.git
+
+Builds:
+  - versionName: 1.2.1.0
+    versionCode: 4
+    commit: v1.2.1.0
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version %v
+UpdateCheckMode: Tags
+CurrentVersion: 1.2.1.0
+CurrentVersionCode: 4
+

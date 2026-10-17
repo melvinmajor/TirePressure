@@ -12,13 +12,22 @@ import com.tirepressure.app.MainActivity
 import com.tirepressure.app.R
 import com.tirepressure.app.core.model.PressureUnit
 import com.tirepressure.app.data.local.AppDatabase
+import com.tirepressure.app.data.repository.PreferencesRepositoryImpl
 import com.tirepressure.app.domain.model.WheelPressureResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Locale
 
 class SingleBikeWidgetReceiver : AppWidgetProvider() {
+
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        if (intent.action == Intent.ACTION_LOCALE_CHANGED) {
+            WidgetUpdateHelper.updateAllWidgets(context)
+        }
+    }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         super.onUpdate(context, appWidgetManager, appWidgetIds)
@@ -51,6 +60,17 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
             val rootLayoutId = if (isDark) R.layout.widget_single_bike_dark else R.layout.widget_single_bike_light
             val remoteViews = RemoteViews(context.packageName, rootLayoutId)
 
+            val (locContext, targetLocale) = WidgetUpdateHelper.getWidgetLocalizedContext(context)
+
+            val prefs = PreferencesRepositoryImpl(context)
+            val accentColor = prefs.accentColorFlow.first()
+            val accentColorInt = accentColor.getPrimaryColorInt(isDark)
+
+            remoteViews.setInt(R.id.widget_bike_icon, "setColorFilter", accentColorInt)
+            remoteViews.setTextColor(R.id.widget_discipline_badge, accentColorInt)
+            remoteViews.setContentDescription(R.id.widget_bike_icon, locContext.getString(R.string.bike_name_label))
+            remoteViews.setContentDescription(R.id.widget_btn_settings, locContext.getString(R.string.widget_config_title))
+
             // Intent to open Main App
             val openAppIntent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -76,8 +96,6 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
             )
             remoteViews.setOnClickPendingIntent(R.id.widget_btn_settings, configPendingIntent)
 
-            val (locContext, targetLocale) = WidgetUpdateHelper.getWidgetLocalizedContext(context)
-
             if (selectedBike == null) {
                 // Empty state
                 remoteViews.setViewVisibility(R.id.widget_empty_view, View.VISIBLE)
@@ -85,6 +103,8 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
                 remoteViews.setTextViewText(R.id.widget_bike_name, locContext.getString(R.string.app_name))
                 remoteViews.setTextViewText(R.id.widget_discipline_badge, "")
                 remoteViews.setTextViewText(R.id.widget_bike_weight, "")
+                remoteViews.setTextViewText(R.id.widget_empty_title, locContext.getString(R.string.widget_no_bikes))
+                remoteViews.setTextViewText(R.id.widget_empty_desc, locContext.getString(R.string.widget_tap_to_open))
                 appWidgetManager.updateAppWidget(appWidgetId, remoteViews)
                 return
             }

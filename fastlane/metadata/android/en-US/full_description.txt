@@ -1,0 +1,13 @@
+TirePressure is an offline, privacy-first tire pressure companion for Road, Gravel, and Mountain Biking. It delivers laboratory-grade tire pressure recommendations based on Frank Berto's renowned 15% Tire Drop deflection model, modern rolling impedance research, and ETRTO / ISO safety standards.
+
+Features:
+• Zero-friction pre-ride dashboard: Instant optimal pressures for all your bikes and wheelset profiles at a glance.
+• Multi-surface conditions: Calculate pressures for Dry tarmac/trails, Wet/rainy roads (90% pressure for mechanical grip), or Snow/mud (55% pressure for maximum contact patch).
+• Full Mullet / MX support: Configure mixed wheel diameters (e.g. 29" front with 27.5" rear) with independent rim widths, tire widths, and casing structures.
+• Emerging 32" wheel standard: Full compatibility with modern 32-inch wheels (686 mm ISO).
+• Hookless rim safety limits: Instant safety alerts if recommended pressure exceeds Hookless straight-side thresholds (max 5.0 bar / 72.5 psi).
+• Home Screen Widgets: Sleek widgets for a single bike or your entire garage, supporting system, light, and dark modes with customizable accent colors.
+• Full bilingual support: Seamless English and French localization with in-app language switching and Android 13+ per-app language integration.
+• 100% Offline & Private: No internet permission required, zero tracking, zero analytics, zero ads.
+• JSON Backup & Restore: Easily export and restore your entire garage via Android's Storage Access Framework.
+

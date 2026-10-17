@@ -19,7 +19,7 @@ object LocaleHelper {
         return runCatching { AppLanguage.valueOf(raw) }.getOrDefault(AppLanguage.SYSTEM)
     }
 
-    fun resolveLocale(context: Context, language: AppLanguage): Locale {
+    fun resolveLocale(context: Context? = null, language: AppLanguage): Locale {
         return when (language) {
             AppLanguage.FRENCH -> Locale.FRENCH
             AppLanguage.ENGLISH -> Locale.ENGLISH

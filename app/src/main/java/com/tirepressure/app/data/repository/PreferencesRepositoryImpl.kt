@@ -166,6 +166,7 @@ class PreferencesRepositoryImpl(
         context.dataStore.edit { prefs ->
             prefs[KEY_ACCENT_COLOR] = color.name
         }
+        com.tirepressure.app.widget.WidgetUpdateHelper.updateAllWidgets(context)
     }
 
     override suspend fun clear() {

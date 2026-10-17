@@ -34,8 +34,27 @@ class AllBikesWidgetConfigureActivity : ComponentActivity() {
 
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        val locale = com.tirepressure.app.core.util.LocaleHelper.getSavedLocale(newBase)
+        super.attachBaseContext(com.tirepressure.app.core.util.LocaleHelper.wrapContext(newBase, locale))
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val locale = com.tirepressure.app.core.util.LocaleHelper.getSavedLocale(this)
+        com.tirepressure.app.core.util.LocaleHelper.applyLocale(this, locale)
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val locale = com.tirepressure.app.core.util.LocaleHelper.getSavedLocale(this)
+        com.tirepressure.app.core.util.LocaleHelper.applyLocale(this, locale)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val initialLocale = com.tirepressure.app.core.util.LocaleHelper.getSavedLocale(this)
+        com.tirepressure.app.core.util.LocaleHelper.applyLocale(this, initialLocale)
 
         setResult(Activity.RESULT_CANCELED)
 

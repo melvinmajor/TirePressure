@@ -9,8 +9,18 @@ import android.net.Uri
 import android.widget.RemoteViews
 import com.tirepressure.app.MainActivity
 import com.tirepressure.app.R
+import com.tirepressure.app.data.repository.PreferencesRepositoryImpl
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 class AllBikesWidgetReceiver : AppWidgetProvider() {
+
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        if (intent.action == Intent.ACTION_LOCALE_CHANGED) {
+            WidgetUpdateHelper.updateAllWidgets(context)
+        }
+    }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         super.onUpdate(context, appWidgetManager, appWidgetIds)
@@ -31,6 +41,20 @@ class AllBikesWidgetReceiver : AppWidgetProvider() {
             val isDark = WidgetPreferencesHelper.isDarkTheme(context, appWidgetId)
             val rootLayoutId = if (isDark) R.layout.widget_all_bikes_dark else R.layout.widget_all_bikes_light
             val remoteViews = RemoteViews(context.packageName, rootLayoutId)
+
+            val (locContext, _) = WidgetUpdateHelper.getWidgetLocalizedContext(context)
+
+            val prefs = PreferencesRepositoryImpl(context)
+            val accentColor = runBlocking { prefs.accentColorFlow.first() }
+            val accentColorInt = accentColor.getPrimaryColorInt(isDark)
+
+            remoteViews.setInt(R.id.widget_bike_icon, "setColorFilter", accentColorInt)
+            remoteViews.setTextColor(R.id.widget_title_pressure, accentColorInt)
+            remoteViews.setContentDescription(R.id.widget_bike_icon, locContext.getString(R.string.app_name))
+            remoteViews.setContentDescription(R.id.widget_btn_settings, locContext.getString(R.string.widget_config_title))
+            remoteViews.setTextViewText(R.id.widget_all_bikes_subtitle, locContext.getString(R.string.widget_all_bikes_name))
+            remoteViews.setTextViewText(R.id.widget_empty_title, locContext.getString(R.string.widget_no_bikes))
+            remoteViews.setTextViewText(R.id.widget_empty_desc, locContext.getString(R.string.widget_tap_to_open))
 
             // Service Intent for ListView
             val serviceIntent = Intent(context, AllBikesWidgetService::class.java).apply {

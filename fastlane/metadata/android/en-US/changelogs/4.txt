@@ -1,0 +1,6 @@
+v1.2.1.0:
+• Complete bilingual synchronization for Android widgets (English and French), matching in-app language preferences.
+• Dynamic accent color synchronization across both widgets for light and dark themes.
+• Visual polish and typography hierarchy alignment for widgets.
+• Rock-solid reliability fix for single-bike multi-profile widget loading.
+

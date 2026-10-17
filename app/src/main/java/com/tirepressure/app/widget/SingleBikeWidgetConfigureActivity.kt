@@ -40,8 +40,27 @@ class SingleBikeWidgetConfigureActivity : ComponentActivity() {
 
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        val locale = com.tirepressure.app.core.util.LocaleHelper.getSavedLocale(newBase)
+        super.attachBaseContext(com.tirepressure.app.core.util.LocaleHelper.wrapContext(newBase, locale))
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val locale = com.tirepressure.app.core.util.LocaleHelper.getSavedLocale(this)
+        com.tirepressure.app.core.util.LocaleHelper.applyLocale(this, locale)
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val locale = com.tirepressure.app.core.util.LocaleHelper.getSavedLocale(this)
+        com.tirepressure.app.core.util.LocaleHelper.applyLocale(this, locale)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val initialLocale = com.tirepressure.app.core.util.LocaleHelper.getSavedLocale(this)
+        com.tirepressure.app.core.util.LocaleHelper.applyLocale(this, initialLocale)
 
         // Set the result to CANCELED. This will cause the widget host to cancel
         // out of the widget placement if the user presses the back button.
@@ -231,8 +250,14 @@ private fun SingleBikeConfigContent(
                                     fontSize = 15.sp,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
+                                val catLabel = stringResource(bike.category.labelRes)
+                                val setupsCountText = if (bike.setups.size <= 1) {
+                                    stringResource(R.string.overview_config_count_one)
+                                } else {
+                                    stringResource(R.string.overview_config_count_many, bike.setups.size)
+                                }
                                 Text(
-                                    text = "${bike.category.displayName} • ${bike.setups.size} profil(s)",
+                                    text = "$catLabel • $setupsCountText",
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

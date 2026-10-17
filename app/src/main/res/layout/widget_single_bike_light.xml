@@ -65,6 +65,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
+                    android:fontFamily="sans-serif"
                     android:textColor="#64748B"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -92,6 +93,7 @@
         android:visibility="gone">
 
         <TextView
+            android:id="@+id/widget_empty_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/widget_no_bikes"
@@ -100,6 +102,7 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/widget_empty_desc"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"

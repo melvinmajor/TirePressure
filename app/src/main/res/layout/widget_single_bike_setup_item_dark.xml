@@ -73,7 +73,7 @@
                 android:background="@drawable/widget_badge_discipline_dark"
                 android:paddingHorizontal="3dp"
                 android:paddingVertical="1dp"
-                android:text="AV"
+                android:text="@string/widget_front_abbr"
                 android:textColor="#CBD5E1"
                 android:textSize="9sp"
                 android:textStyle="bold" />
@@ -82,6 +82,7 @@
                 android:id="@+id/setup_front_dry_val"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
                 android:gravity="end"
                 android:singleLine="true"
                 android:textColor="#D4FF00"
@@ -108,7 +109,7 @@
                 android:background="@drawable/widget_badge_discipline_dark"
                 android:paddingHorizontal="3dp"
                 android:paddingVertical="1dp"
-                android:text="AR"
+                android:text="@string/widget_rear_abbr"
                 android:textColor="#CBD5E1"
                 android:textSize="9sp"
                 android:textStyle="bold" />
@@ -117,6 +118,7 @@
                 android:id="@+id/setup_rear_dry_val"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
                 android:gravity="end"
                 android:singleLine="true"
                 android:textColor="#D4FF00"
@@ -131,6 +133,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="3dp"
+        android:fontFamily="sans-serif"
         android:gravity="end"
         android:textColor="#8B949E"
         android:textSize="10sp" />

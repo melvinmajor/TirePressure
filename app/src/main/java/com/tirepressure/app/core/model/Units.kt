@@ -72,6 +72,9 @@ enum class AppAccentColor(
     fun getPrimary(isDark: Boolean): androidx.compose.ui.graphics.Color =
         androidx.compose.ui.graphics.Color(if (isDark) darkPrimaryHex else lightPrimaryHex)
 
+    fun getPrimaryColorInt(isDark: Boolean): Int =
+        (if (isDark) darkPrimaryHex else lightPrimaryHex).toInt()
+
     fun getContainer(isDark: Boolean): androidx.compose.ui.graphics.Color =
         androidx.compose.ui.graphics.Color(if (isDark) darkContainerHex else lightContainerHex)
 

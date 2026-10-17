@@ -241,7 +241,7 @@ Execute the automated test suite verifying Berto 15% drop mathematical accuracy,
 .\gradlew.bat testDebugUnitTest
 ```
 
-### 📲 Ready-to-Test Release APK (Release v1.2)
+### 📲 Ready-to-Test Release APK
 The official pre-compiled release APK built with full R8 optimization, resource shrinking, and baseline profiles is provided directly in the repository for immediate installation and testing:
 - **Direct APK:** [`files/TirePressure.apk`](files/TirePressure.apk)
 

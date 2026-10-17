@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
 import com.tirepressure.app.R
+import com.tirepressure.app.core.model.AppAccentColor
 import com.tirepressure.app.core.model.PressureUnit
 import com.tirepressure.app.data.local.AppDatabase
 import com.tirepressure.app.data.repository.PreferencesRepositoryImpl
@@ -39,6 +40,7 @@ private class SingleBikeSetupsRemoteViewsFactory(
     private var setups: List<WheelSetup> = emptyList()
     private var riderWeight: Double = 75.0
     private var pressureUnit: PressureUnit = PressureUnit.BAR
+    private var accentColor: AppAccentColor = AppAccentColor.ELECTRIC_LIME
 
     override fun onCreate() {
         // Loaded in onDataSetChanged
@@ -59,6 +61,7 @@ private class SingleBikeSetupsRemoteViewsFactory(
             val prefs = PreferencesRepositoryImpl(context)
             riderWeight = prefs.riderWeightFlow.first()
             pressureUnit = prefs.pressureUnitFlow.first()
+            accentColor = prefs.accentColorFlow.first()
         }
     }
 
@@ -95,18 +98,23 @@ private class SingleBikeSetupsRemoteViewsFactory(
         val dryRes = calculator.calculate(baseInput.copy(surfaceCondition = SurfaceCondition.DRY))
         val wetRes = calculator.calculate(baseInput.copy(surfaceCondition = SurfaceCondition.WET))
 
+        val accentColorInt = accentColor.getPrimaryColorInt(isDark)
+
         views.setTextViewText(R.id.setup_item_name, setup.name)
         views.setViewVisibility(R.id.setup_item_style_badge, View.VISIBLE)
         views.setTextViewText(
             R.id.setup_item_style_badge,
             locContext.getString(effectiveStyle.labelRes).uppercase(targetLocale)
         )
+        views.setTextColor(R.id.setup_item_style_badge, accentColorInt)
         views.setViewVisibility(R.id.setup_item_warning, if (dryRes.hasHooklessWarning) View.VISIBLE else View.GONE)
 
         views.setTextViewText(R.id.setup_front_abbr, locContext.getString(R.string.widget_front_abbr))
         views.setTextViewText(R.id.setup_rear_abbr, locContext.getString(R.string.widget_rear_abbr))
         views.setTextViewText(R.id.setup_front_dry_val, SingleBikeWidgetReceiver.formatPressure(dryRes.front, pressureUnit))
+        views.setTextColor(R.id.setup_front_dry_val, accentColorInt)
         views.setTextViewText(R.id.setup_rear_dry_val, SingleBikeWidgetReceiver.formatPressure(dryRes.rear, pressureUnit))
+        views.setTextColor(R.id.setup_rear_dry_val, accentColorInt)
 
         if (setup.showWet) {
             val wetLabel = locContext.getString(R.string.overview_wet)

@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
 import com.tirepressure.app.R
+import com.tirepressure.app.core.model.AppAccentColor
 import com.tirepressure.app.core.model.PressureUnit
 import com.tirepressure.app.data.local.AppDatabase
 import com.tirepressure.app.data.repository.PreferencesRepositoryImpl
@@ -39,6 +40,7 @@ class AllBikesRemoteViewsFactory(
     private var bikes: List<BikeProfile> = emptyList()
     private var riderWeight: Double = 75.0
     private var pressureUnit: PressureUnit = PressureUnit.BAR
+    private var accentColor: AppAccentColor = AppAccentColor.ELECTRIC_LIME
 
     override fun onCreate() {
         // Will load in onDataSetChanged
@@ -53,6 +55,7 @@ class AllBikesRemoteViewsFactory(
             val prefs = PreferencesRepositoryImpl(context)
             riderWeight = prefs.riderWeightFlow.first()
             pressureUnit = prefs.pressureUnitFlow.first()
+            accentColor = prefs.accentColorFlow.first()
         }
     }
 
@@ -72,8 +75,11 @@ class AllBikesRemoteViewsFactory(
 
         val (locContext, targetLocale) = WidgetUpdateHelper.getWidgetLocalizedContext(context)
 
+        val accentColorInt = accentColor.getPrimaryColorInt(isDark)
+
         views.setTextViewText(R.id.item_bike_name, bike.name)
         views.setTextViewText(R.id.item_bike_badge, locContext.getString(bike.category.labelRes).uppercase(targetLocale))
+        views.setTextColor(R.id.item_bike_badge, accentColorInt)
         views.setTextViewText(
             R.id.item_bike_weight,
             String.format(targetLocale, "• %.1f kg", bike.bikeWeightKg)
@@ -103,6 +109,7 @@ class AllBikesRemoteViewsFactory(
             R.id.item_setup1_pressures,
             "$frontAbbr ${SingleBikeWidgetReceiver.formatPressure(dry1.front, pressureUnit)}   $rearAbbr ${SingleBikeWidgetReceiver.formatPressure(dry1.rear, pressureUnit)}"
         )
+        views.setTextColor(R.id.item_setup1_pressures, accentColorInt)
         views.setTextViewText(
             R.id.item_setup1_wet,
             "🌧️ ${SingleBikeWidgetReceiver.formatPressure(wet1.front, pressureUnit)} / ${SingleBikeWidgetReceiver.formatPressure(wet1.rear, pressureUnit)}"
@@ -132,6 +139,7 @@ class AllBikesRemoteViewsFactory(
                 R.id.item_setup2_pressures,
                 "$frontAbbr ${SingleBikeWidgetReceiver.formatPressure(dry2.front, pressureUnit)}   $rearAbbr ${SingleBikeWidgetReceiver.formatPressure(dry2.rear, pressureUnit)}"
             )
+            views.setTextColor(R.id.item_setup2_pressures, accentColorInt)
             views.setTextViewText(
                 R.id.item_setup2_wet,
                 "🌧️ ${SingleBikeWidgetReceiver.formatPressure(wet2.front, pressureUnit)} / ${SingleBikeWidgetReceiver.formatPressure(wet2.rear, pressureUnit)}"

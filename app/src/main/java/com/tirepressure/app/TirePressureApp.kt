@@ -38,5 +38,12 @@ class TirePressureApp : Application() {
         bikeRepository = BikeRepositoryImpl(database.bikeDao(), this, preferencesRepository)
         backupManager = BackupManager(bikeRepository, preferencesRepository)
     }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val locale = com.tirepressure.app.core.util.LocaleHelper.getSavedLocale(this)
+        com.tirepressure.app.core.util.LocaleHelper.applyLocale(this, locale)
+        com.tirepressure.app.widget.WidgetUpdateHelper.updateAllWidgets(this)
+    }
 }
 

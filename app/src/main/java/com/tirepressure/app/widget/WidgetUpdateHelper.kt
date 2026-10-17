@@ -21,6 +21,7 @@ object WidgetUpdateHelper {
                 for (id in singleBikeIds) {
                     SingleBikeWidgetReceiver.updateWidget(context, appWidgetManager, id)
                 }
+                appWidgetManager.notifyAppWidgetViewDataChanged(singleBikeIds, R.id.widget_setups_list)
             }
         }
 
@@ -36,8 +37,7 @@ object WidgetUpdateHelper {
     }
 
     fun getWidgetLocalizedContext(context: Context): Pair<Context, java.util.Locale> {
-        val sysLocale = android.content.res.Resources.getSystem().configuration.locales[0] ?: java.util.Locale.getDefault()
-        val targetLocale = if (sysLocale.language.startsWith("fr", ignoreCase = true)) java.util.Locale.FRENCH else java.util.Locale.ENGLISH
+        val targetLocale = com.tirepressure.app.core.util.LocaleHelper.getSavedLocale(context)
         val config = android.content.res.Configuration(context.resources.configuration).apply {
             setLocale(targetLocale)
             setLayoutDirection(targetLocale)

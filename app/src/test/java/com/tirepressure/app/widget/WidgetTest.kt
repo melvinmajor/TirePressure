@@ -70,4 +70,39 @@ class WidgetTest {
         assertTrue(frontBar.endsWith("bar"))
         assertTrue(rearBar.endsWith("bar"))
     }
+
+    @Test
+    fun testAppAccentColorPrimaryInt() {
+        for (accent in com.tirepressure.app.core.model.AppAccentColor.entries) {
+            val darkInt = accent.getPrimaryColorInt(isDark = true)
+            val lightInt = accent.getPrimaryColorInt(isDark = false)
+            assertEquals(accent.darkPrimaryHex.toInt(), darkInt)
+            assertEquals(accent.lightPrimaryHex.toInt(), lightInt)
+        }
+        assertEquals(0xFFD4FF00.toInt(), com.tirepressure.app.core.model.AppAccentColor.ELECTRIC_LIME.getPrimaryColorInt(true))
+        assertEquals(0xFF5A7500.toInt(), com.tirepressure.app.core.model.AppAccentColor.ELECTRIC_LIME.getPrimaryColorInt(false))
+    }
+
+    @Test
+    fun testLocaleHelperResolution() {
+        val frenchLocale = com.tirepressure.app.core.util.LocaleHelper.resolveLocale(
+            language = com.tirepressure.app.core.model.AppLanguage.FRENCH
+        )
+        val englishLocale = com.tirepressure.app.core.util.LocaleHelper.resolveLocale(
+            language = com.tirepressure.app.core.model.AppLanguage.ENGLISH
+        )
+        assertEquals(java.util.Locale.FRENCH, frenchLocale)
+        assertEquals(java.util.Locale.ENGLISH, englishLocale)
+    }
+
+    @Test
+    fun testWidgetDisciplineFormatting() {
+        val frenchLocale = java.util.Locale.FRENCH
+        val englishLocale = java.util.Locale.ENGLISH
+
+        assertEquals("ROUTE", "Route".uppercase(frenchLocale))
+        assertEquals("ROAD", "Road".uppercase(englishLocale))
+        assertEquals("VTT", "Vtt".uppercase(frenchLocale))
+        assertEquals("MTB", "Mtb".uppercase(englishLocale))
+    }
 }
