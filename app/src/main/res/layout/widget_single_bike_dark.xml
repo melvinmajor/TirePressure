@@ -108,21 +108,18 @@
             android:textSize="12sp" />
     </LinearLayout>
 
-    <!-- Setups Scroll Container -->
-    <ScrollView
-        android:id="@+id/widget_setups_scroll"
+    <!-- Setups List -->
+    <ListView
+        android:id="@+id/widget_setups_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="6dp"
         android:layout_weight="1"
-        android:fillViewport="true"
-        android:scrollbars="none">
-
-        <LinearLayout
-            android:id="@+id/widget_setups_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </ScrollView>
+        android:cacheColorHint="@android:color/transparent"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="6dp"
+        android:listSelector="@android:color/transparent"
+        android:overScrollMode="never"
+        android:scrollbars="none" />
 
 </LinearLayout>
