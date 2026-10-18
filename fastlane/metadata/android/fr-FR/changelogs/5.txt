@@ -1,0 +1,5 @@
+• Ajout de la somme de contrôle du wrapper Gradle pour la vérification de l'intégrité du projet.
+• Ajout de la politique de confidentialité et des métadonnées Play Store.
+• Amélioration et synchronisation des visuels de présentation.
+• Améliorations générales de stabilité.
+

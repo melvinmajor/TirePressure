@@ -1,2 +1,2 @@
-Precision tire pressure calculator for Road, Gravel and Mountain Biking
+Precision tire pressure calculator for Road, Gravel, MTB and Commute bikes.
 

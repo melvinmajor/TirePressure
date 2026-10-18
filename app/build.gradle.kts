@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -8,18 +11,47 @@ plugins {
 
 android {
     namespace = "com.tirepressure.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.tirepressure.app"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 4
-        versionName = "1.2.1.0"
+        targetSdk = 36
+        versionCode = 5
+        versionName = "1.2.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    val keystorePropertiesFile = rootProject.file("local.properties")
+    val keystoreProperties = Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    }
+
+    signingConfigs {
+        create("release") {
+            val storeFilePath = keystoreProperties.getProperty("KEYSTORE_PATH")
+                ?: System.getenv("KEYSTORE_PATH")
+            val storePass = keystoreProperties.getProperty("KEYSTORE_PASSWORD")
+                ?: System.getenv("KEYSTORE_PASSWORD")
+            val keyAl = keystoreProperties.getProperty("KEY_ALIAS")
+                ?: System.getenv("KEY_ALIAS")
+            val keyPass = keystoreProperties.getProperty("KEY_PASSWORD")
+                ?: System.getenv("KEY_PASSWORD")
+
+            if (storeFilePath != null && file(storeFilePath).exists()) {
+                storeFile = file(storeFilePath)
+                storePassword = storePass
+                keyAlias = keyAl
+                keyPassword = keyPass
+            } else {
+                // Fallback to debug signing for local/open-source builds without upload keystore
+                initWith(getByName("debug"))
+            }
         }
     }
 
@@ -33,7 +65,7 @@ android {
             isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -42,12 +74,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
 
     buildFeatures {
@@ -58,6 +90,10 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+
+    lint {
+        disable += "NullSafeMutableLiveData"
     }
 }
 

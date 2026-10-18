@@ -1,11 +1,9 @@
 <p align="center">
-  <img src="files/TirePressure.png" alt="TirePressure Logo" width="140" />
+  <img src="files/store-presentation/FeatureGraphicBanner.png" alt="TirePressure Logo" height="400" />
 </p>
 
-<h1 align="center">TirePressure</h1>
-
 <p align="center">
-  <strong>The Ultimate Native Android Tire Pressure Companion for Road, Gravel, and Mountain Biking</strong>
+  <strong>The Ultimate Native Android Tire Pressure Companion for Road, Gravel, MTB and Commute bikes.</strong>
 </p>
 
 <p align="center">
@@ -93,6 +91,7 @@ Modern cyclists swap wheels, ride mixed wheel sizes, or ride different disciplin
 
 Inspired by modern smartphone UI innovations:
 - **Electric Lime (`#D4FF00`)**: Vibrant, energetic accents highlighting primary actions, tire gauges, and key data points.
+  Used as the default accent color of the app, can be changed with multiple other options.
 - **Dark Titanium & Graphite (`#0E1217`, `#161B22`, `#212732`)**: High-contrast, battery-efficient dark theme tailored for outdoor sunlight readability and OLED screens.
 - **Dual Typeface Typography System (Hubot Sans & Inter)**:
   - **Hubot Sans** (by GitHub, SIL OFL-1.1): Expressive, industrial geometric grotesque used for brand identity, screen headers, section titles, and high-visibility numeric pressure readings.
@@ -178,17 +177,18 @@ TirePressure is engineered with cutting-edge Android development best practices:
 | Category | Technology | Badges |
 | :--- | :--- | :--- |
 | **Language** | Kotlin 2.0.21 | [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](https://kotlinlang.org/) |
-| **UI Toolkit** | Jetpack Compose (BOM 2024.10.01) | [![Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202024.10.01-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose) |
+| **UI Toolkit** | Jetpack Compose (BOM 2026.06.01) | [![Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202026.06.01-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose) |
 | **Design System** | Material Design 3 | [![Material 3](https://img.shields.io/badge/Material%20Design-3-757575?style=flat-square&logo=materialdesign&logoColor=white)](https://m3.material.io/) |
 | **Home Widgets** | Android AppWidgets & RemoteViews | [![Widgets](https://img.shields.io/badge/AppWidgets-RemoteViews%20%2B%20Service-00E5FF?style=flat-square)](https://developer.android.com/guide/topics/appwidgets) |
 | **Architecture** | MVVM + Clean Architecture | [![MVVM](https://img.shields.io/badge/Architecture-MVVM%20%2B%20Clean-009688?style=flat-square)](https://developer.android.com/topic/architecture) |
-| **Persistence** | Room Database 2.6.1 + KSP | [![Room](https://img.shields.io/badge/Room%20DB-2.6.1-4CAF50?style=flat-square&logo=sqlite&logoColor=white)](https://developer.android.com/training/data-storage/room) |
-| **Preferences** | Jetpack DataStore Preferences 1.1.1 | [![DataStore](https://img.shields.io/badge/DataStore-1.1.1-0288D1?style=flat-square)](https://developer.android.com/topic/libraries/architecture/datastore) |
-| **Concurrency** | Kotlin Coroutines & Flow 1.9.0 | [![Coroutines](https://img.shields.io/badge/Coroutines-1.9.0-673AB7?style=flat-square)](https://github.com/Kotlin/kotlinx.coroutines) |
-| **Serialization** | Kotlinx Serialization JSON 1.7.3 | [![Kotlinx Serialization](https://img.shields.io/badge/Kotlinx%20Serialization-1.7.3-E91E63?style=flat-square)](https://github.com/Kotlin/kotlinx.serialization) |
-| **Navigation** | Navigation Compose 2.8.3 | [![Navigation](https://img.shields.io/badge/Navigation%20Compose-2.8.3-FF9800?style=flat-square)](https://developer.android.com/guide/navigation) |
+| **Persistence** | Room Database 2.8.5 + KSP | [![Room](https://img.shields.io/badge/Room%20DB-2.8.5-4CAF50?style=flat-square&logo=sqlite&logoColor=white)](https://developer.android.com/training/data-storage/room) |
+| **Preferences** | Jetpack DataStore Preferences 1.2.1 | [![DataStore](https://img.shields.io/badge/DataStore-1.2.1-0288D1?style=flat-square)](https://developer.android.com/topic/libraries/architecture/datastore) |
+| **Concurrency** | Kotlin Coroutines & Flow 1.10.1 | [![Coroutines](https://img.shields.io/badge/Coroutines-1.10.1-673AB7?style=flat-square)](https://github.com/Kotlin/kotlinx.coroutines) |
+| **Serialization** | Kotlinx Serialization JSON 1.8.0 | [![Kotlinx Serialization](https://img.shields.io/badge/Kotlinx%20Serialization-1.8.0-E91E63?style=flat-square)](https://github.com/Kotlin/kotlinx.serialization) |
+| **Navigation** | Navigation Compose 2.9.8 | [![Navigation](https://img.shields.io/badge/Navigation%20Compose-2.9.8-FF9800?style=flat-square)](https://developer.android.com/guide/navigation) |
 | **Testing** | JUnit 4, Coroutines Test, Compose UI Test | [![Tests](https://img.shields.io/badge/Unit%20Tests-100%25%20Passing-brightgreen?style=flat-square&logo=junit5&logoColor=white)](https://junit.org/) |
-| **Build System** | Gradle 8.7.2 + AGP 8.7.2 | [![Gradle](https://img.shields.io/badge/Gradle-8.7.2-02303A?style=flat-square&logo=gradle&logoColor=white)](https://gradle.org/) |
+| **Build System** | Gradle 8.10.2 + AGP 8.7.2 | [![Gradle](https://img.shields.io/badge/Gradle-8.10.2-02303A?style=flat-square&logo=gradle&logoColor=white)](https://gradle.org/) |
+| **Target Platform** | Android 16 (API 36) / Min: API 26 | [![Target SDK](https://img.shields.io/badge/Target%20SDK-API%2036%20(Android%2016)-3DDC84?style=flat-square&logo=android&logoColor=white)](https://developer.android.com/about/versions/16) |
 
 ### Project Directory Layout
 
@@ -226,12 +226,12 @@ app/src/main/java/com/tirepressure/app/
 ## 🔨 Building & Testing
 
 ### Prerequisites
-- **JDK 17** (Eclipse Adoptium Temurin 17 or OpenJDK 17)
-- **Android SDK Platform 35** with **Build-Tools 35.0.0**
+- **JDK 21** (Eclipse Adoptium Temurin 21 or OpenJDK 21 LTS)
+- **Android SDK Platform 36** with **Build-Tools 36.0.0**
 
 ### Environment Setup (PowerShell)
 ```powershell
-$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot"
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.101-hotspot"
 $env:ANDROID_HOME = "C:\Android"
 ```
 
@@ -241,9 +241,10 @@ Execute the automated test suite verifying Berto 15% drop mathematical accuracy,
 .\gradlew.bat testDebugUnitTest
 ```
 
-### 📲 Ready-to-Test Release APK
-The official pre-compiled release APK built with full R8 optimization, resource shrinking, and baseline profiles is provided directly in the repository for immediate installation and testing:
+### 📲 Ready-to-Test Release Artifacts
+The official pre-compiled release artifacts built with full R8 optimization, resource shrinking, and baseline profiles are provided directly in the repository for immediate installation and testing:
 - **Direct APK:** [`files/TirePressure.apk`](files/TirePressure.apk)
+- **Play Store Bundle (AAB):** [`files/TirePressure.aab`](files/TirePressure.aab)
 
 Install directly onto a connected device via ADB:
 ```powershell

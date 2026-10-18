@@ -26,6 +26,14 @@ Captures/
 # ...EXCEPT official releases tracked in the files/ directory
 !files/*.apk
 !files/**/*.apk
+!files/*.aab
+!files/**/*.aab
+
+# ==============================================================================
+# Security & Signing Keys
+# ==============================================================================
+*.jks
+*.keystore
 
 # ==============================================================================
 # Local Environment & SDK Configuration

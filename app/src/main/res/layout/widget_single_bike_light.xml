@@ -116,13 +116,16 @@
         android:id="@+id/widget_setups_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="4dp"
         android:layout_weight="1"
         android:cacheColorHint="@android:color/transparent"
+        android:clipToPadding="false"
         android:divider="@android:color/transparent"
         android:dividerHeight="6dp"
         android:listSelector="@android:color/transparent"
         android:overScrollMode="never"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
         android:scrollbars="none" />
 
 </LinearLayout>

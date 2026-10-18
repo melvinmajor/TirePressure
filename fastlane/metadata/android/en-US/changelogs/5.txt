@@ -1,0 +1,5 @@
+• Added Gradle wrapper distribution checksum for supply-chain integrity verification.
+• Added Privacy Policy and enhanced store metadata.
+• Improved store presentation assets and metadata synchronization.
+• Maintenance and stability improvements.
+

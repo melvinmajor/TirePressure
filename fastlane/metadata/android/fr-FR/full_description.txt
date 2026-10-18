@@ -1,0 +1,14 @@
+TirePressure est un compagnon de pression de pneus hors-ligne et respectueux de votre vie privée pour vélos de route, gravel, VTT et vélos de ville. Il fournit des recommandations de pression de précision basées sur le modèle de flexion de 15% de Frank Berto, les recherches modernes sur l'impédance de roulement et les normes de sécurité ETRTO / ISO.
+
+Fonctionnalités :
+• Tableau de bord avant-sortie : Visualisez en un coup d'œil les pressions optimales de tous vos vélos et profils de roues.
+• Conditions météo en direct : Calculez les pressions pour temps sec, pluie/route mouillée (90% de pression pour maximiser l'adhérence mécanique) ou neige/boue (55% pour une surface de contact maximale).
+• Prise en charge Mullet / MX : Configurez des diamètres de roues mixtes (ex. 29" avant et 27.5" arrière) avec largeurs de jantes, largeurs de pneus et carcasses indépendantes.
+• Standard émergent 32" : Compatibilité totale avec les roues modernes de 32 pouces (686 mm ISO).
+• Alertes de sécurité jantes Hookless : Avertissements immédiats en cas de dépassement des limites de pression des jantes sans crochet (max 5,0 bar / 72,5 psi).
+• Widgets pour écran d'accueil : Widgets élégants pour un vélo ou l'ensemble de votre garage, avec modes clair, sombre ou système et couleur d'accentuation personnalisable.
+• Interface Material 3 épurée avec design neumorphique / glassmorphism et personnalisation (mode clair/sombre et couleur d'accent).
+• Bilingue intégrale : Localisation soignée en français et anglais avec sélecteur dans l'application et intégration par application Android 13+.
+• 100% hors-ligne et privé : Aucune permission Internet requise, aucun suivi, aucun traceur, aucune publicité.
+• Sauvegarde et restauration JSON : Exportez et restaurez facilement votre garage via le Storage Access Framework d'Android.
+
