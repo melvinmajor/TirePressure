@@ -14,11 +14,11 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.tirepressure.app"
+        applicationId = "com.mcc.tirepressure"
         minSdk = 26
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.2.1.1"
+        versionCode = 6
+        versionName = "1.2.1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -43,8 +43,13 @@ android {
             val keyPass = keystoreProperties.getProperty("KEY_PASSWORD")
                 ?: System.getenv("KEY_PASSWORD")
 
-            if (storeFilePath != null && file(storeFilePath).exists()) {
-                storeFile = file(storeFilePath)
+            val resolvedStoreFile = if (storeFilePath != null) {
+                val rf = rootProject.file(storeFilePath)
+                if (rf.exists()) rf else file(storeFilePath)
+            } else null
+
+            if (resolvedStoreFile != null && resolvedStoreFile.exists()) {
+                storeFile = resolvedStoreFile
                 storePassword = storePass
                 keyAlias = keyAl
                 keyPassword = keyPass

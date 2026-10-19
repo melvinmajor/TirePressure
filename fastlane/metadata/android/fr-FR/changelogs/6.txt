@@ -1,0 +1,4 @@
+• Mise à jour de l'identifiant d'application vers com.mcc.tirepressure pour le Google Play Store.
+• Correction de la coupure de la bordure supérieure des cartes de profil dans les widgets.
+• Version 1.2.1.2.
+

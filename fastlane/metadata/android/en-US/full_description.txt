@@ -1,4 +1,5 @@
-TirePressure is an offline, privacy-first tire pressure companion for Road, Gravel, Mountain Biking and Commute bikes. It delivers laboratory-grade tire pressure recommendations based on Frank Berto's renowned 15% Tire Drop deflection model, modern rolling impedance research, and ETRTO / ISO safety standards.
+TirePressure is an offline, privacy-first tire pressure companion for Road, Gravel, Mountain Biking and Commute bikes.
+It delivers laboratory-grade tire pressure recommendations based on Frank Berto's renowned 15% Tire Drop deflection model, modern rolling impedance research, algorithm optimisation based on gold standards and ETRTO / ISO safety standards.
 
 Features:
 • Zero-friction pre-ride dashboard: Instant optimal pressures for all your bikes and wheelset profiles at a glance.

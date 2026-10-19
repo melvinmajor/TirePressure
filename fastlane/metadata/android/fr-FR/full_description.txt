@@ -1,4 +1,5 @@
-TirePressure est un compagnon de pression de pneus hors-ligne et respectueux de votre vie privée pour vélos de route, gravel, VTT et vélos de ville. Il fournit des recommandations de pression de précision basées sur le modèle de flexion de 15% de Frank Berto, les recherches modernes sur l'impédance de roulement et les normes de sécurité ETRTO / ISO.
+TirePressure est un compagnon de pression de pneus hors-ligne et respectueux de votre vie privée pour vélos de route, gravel, VTT et vélos de ville.
+Il fournit des recommandations de pression de précision basées sur le modèle de flexion de 15% de Frank Berto, les recherches modernes sur l'impédance de roulement, optimisations d'algorithmes sur bases des standards du marché et les normes de sécurité ETRTO / ISO.
 
 Fonctionnalités :
 • Tableau de bord avant-sortie : Visualisez en un coup d'œil les pressions optimales de tous vos vélos et profils de roues.

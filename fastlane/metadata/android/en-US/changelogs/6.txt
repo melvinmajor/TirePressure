@@ -1,0 +1,4 @@
+• Updated application ID to com.mcc.tirepressure for Google Play Store release.
+• Fixed profile card top border clipping in home screen widgets.
+• Version 1.2.1.2 release.
+

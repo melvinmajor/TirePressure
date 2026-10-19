@@ -53,7 +53,7 @@ fun AboutAndPrivacyCard(
             )
             if (showVersion) {
                 Text(
-                    text = stringResource(id = R.string.about_version_license, "1.2.1.1"),
+                    text = stringResource(id = R.string.about_version_license, "1.2.1.2"),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold
