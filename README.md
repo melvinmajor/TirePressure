@@ -186,6 +186,7 @@ TirePressure is engineered with cutting-edge Android development best practices:
 | **Concurrency** | Kotlin Coroutines & Flow 1.10.1 | [![Coroutines](https://img.shields.io/badge/Coroutines-1.10.1-673AB7?style=flat-square)](https://github.com/Kotlin/kotlinx.coroutines) |
 | **Serialization** | Kotlinx Serialization JSON 1.8.0 | [![Kotlinx Serialization](https://img.shields.io/badge/Kotlinx%20Serialization-1.8.0-E91E63?style=flat-square)](https://github.com/Kotlin/kotlinx.serialization) |
 | **Navigation** | Navigation Compose 2.9.8 | [![Navigation](https://img.shields.io/badge/Navigation%20Compose-2.9.8-FF9800?style=flat-square)](https://developer.android.com/guide/navigation) |
+| **Window & Foldables** | AndroidX Window 1.5.0 | [![Window](https://img.shields.io/badge/AndroidX%20Window-1.5.0-3DDC84?style=flat-square)](https://developer.android.com/jetpack/androidx/releases/window) |
 | **Testing** | JUnit 4, Coroutines Test, Compose UI Test | [![Tests](https://img.shields.io/badge/Unit%20Tests-100%25%20Passing-brightgreen?style=flat-square&logo=junit5&logoColor=white)](https://junit.org/) |
 | **Build System** | Gradle 8.10.2 + AGP 8.7.2 | [![Gradle](https://img.shields.io/badge/Gradle-8.10.2-02303A?style=flat-square&logo=gradle&logoColor=white)](https://gradle.org/) |
 | **Target Platform** | Android 16 (API 36) / Min: API 26 | [![Target SDK](https://img.shields.io/badge/Target%20SDK-API%2036%20(Android%2016)-3DDC84?style=flat-square&logo=android&logoColor=white)](https://developer.android.com/about/versions/16) |
@@ -216,7 +217,7 @@ app/src/main/java/com/tirepressure/app/
 └── ui/
     ├── theme/          # Material 3 palette (Electric Lime, Titanium, Dark/Light modes)
     ├── components/     # Reusable components (SectionCard, NumberInputField, PillSelector...)
-    ├── navigation/     # AppNavigation & Screen destinations (Onboarding, Overview, BikeEdit, Settings)
+    ├── navigation/     # AppNavigation, destinations, ReactiveScreenState (foldables & posture)
     ├── onboarding/     # First-run weight prompt & swipeable tutorial (HorizontalPager)
     ├── overview/       # Main dashboard: bikes with multi-setup & multi-surface pressures
     ├── bikes/          # Bike & wheelset setup editor (calculator-style inputs with inch tags)

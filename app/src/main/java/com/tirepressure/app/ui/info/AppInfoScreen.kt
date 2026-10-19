@@ -87,7 +87,7 @@ fun AppInfoScreen(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "v1.2.1.2",
+                    text = com.tirepressure.app.core.AppVersion.DISPLAY_VERSION,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

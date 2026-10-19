@@ -73,7 +73,7 @@
     <string name="setup_default_prefix">Setup</string>
     <string name="add_setup_template_title">Starting Template</string>
     <string name="add_setup_template_default">Default for this bike (%1$s)</string>
-    <string name="add_setup_template_default_desc">Loads this bike\'s specific weight (%1$s kg) and discipline with standard wheels.</string>
+    <string name="add_setup_template_default_desc">Loads this bike\'s specific weight (%1$s %2$s) and discipline with standard wheels.</string>
     <string name="add_setup_template_existing">Use an existing setup as template</string>
     <string name="add_setup_template_existing_desc">Copy wheel dimensions, tire widths, and casing from an existing setup on this bike.</string>
     <string name="add_setup_select_existing">Select setup to copy:</string>
@@ -203,7 +203,7 @@
     <!-- Overview Extra Strings -->
     <string name="overview_rider_label">Rider:</string>
     <string name="overview_pressures_display_in">Display pressures in:</string>
-    <string name="overview_bike_weight">%1$s kg</string>
+    <string name="overview_bike_weight">%1$s %2$s</string>
     <string name="overview_config_count_one">1 setup</string>
     <string name="overview_config_count_many">%1$d setups</string>
     <string name="overview_edit_bike_info">Edit bike details</string>
@@ -224,7 +224,7 @@
     <string name="overview_subtitle">Berto 15% Drop • Multi-Surfaces</string>
     <string name="overview_view_simplified">Simplified view</string>
     <string name="overview_view_detailed">Detailed view</string>
-    <string name="overview_luggage_weight_short">+%1$s kg</string>
+    <string name="overview_luggage_weight_short">+%1$s %2$s</string>
     <string name="rim_tubes_short">Clincher</string>
     <string name="rim_tubeless_badge">Tubeless</string>
 
@@ -294,9 +294,9 @@
     <!-- Add Setup Dialog Extra Strings -->
     <string name="add_setup_discipline_title">Discipline / Practice for this profile:</string>
     <string name="add_setup_summary_title">Setup characteristics:</string>
-    <string name="add_setup_summary_rider">Reference rider weight: %1$s kg</string>
-    <string name="add_setup_summary_bike">Bike weight: %1$s kg</string>
-    <string name="add_setup_summary_luggage">Luggage weight: %1$s kg</string>
+    <string name="add_setup_summary_rider">Reference rider weight: %1$s %2$s</string>
+    <string name="add_setup_summary_bike">Bike weight: %1$s %2$s</string>
+    <string name="add_setup_summary_luggage">Luggage weight: %1$s %2$s</string>
     <string name="add_setup_summary_front_wheel">Front rim: %1$s mm (%2$s)</string>
     <string name="add_setup_summary_front_tire">Front tire: %1$s mm (%2$s)</string>
     <string name="add_setup_summary_rear_wheel">Rear rim: %1$s mm (%2$s)</string>
@@ -304,6 +304,7 @@
 
     <!-- Missing Localized Keys -->
     <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_done">Done</string>
     <string name="unit_inch_abbr">in</string>
     <string name="overview_duplicate_suffix">(copy)</string>
     <string name="settings_reset_success">All data has been reset.</string>

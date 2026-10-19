@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,6 +22,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tirepressure.app.R
+import com.tirepressure.app.core.model.MassUnit
+import com.tirepressure.app.core.util.UnitConverter
 import com.tirepressure.app.domain.model.*
 import com.tirepressure.app.domain.repository.BikeRepository
 import com.tirepressure.app.domain.repository.PreferencesRepository
@@ -51,6 +54,7 @@ fun BikeEditScreen(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val massUnit by preferencesRepository.massUnitFlow.collectAsState(initial = MassUnit.KG)
     var isLoaded by remember { mutableStateOf(false) }
 
     var currentId by remember { mutableStateOf(if (bikeId == "new") UUID.randomUUID().toString() else bikeId) }
@@ -60,7 +64,10 @@ fun BikeEditScreen(
     var yearInput by remember { mutableStateOf("") }
     var frameSize by remember { mutableStateOf("") }
     var bikeCategory by remember { mutableStateOf(BikeCategory.ROAD) }
-    var bikeWeightInput by remember { mutableStateOf("8.0") }
+    var bikeWeightInput by remember {
+        val defaultWeightInUserUnit = UnitConverter.fromKg(BikeCategory.ROAD.defaultWeightKg, massUnit)
+        mutableStateOf(String.format(java.util.Locale.US, "%.1f", defaultWeightInUserUnit))
+    }
     var isDefault by remember { mutableStateOf(false) }
 
     // Sections réductibles persistantes
@@ -90,7 +97,7 @@ fun BikeEditScreen(
 
     var nameError by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(bikeId) {
+    LaunchedEffect(bikeId, massUnit) {
         if (!isLoaded && bikeId != "new") {
             val existing = bikeRepository.getBikeById(bikeId)
             if (existing != null) {
@@ -101,7 +108,8 @@ fun BikeEditScreen(
                 yearInput = existing.year?.toString() ?: ""
                 frameSize = existing.frameSize
                 bikeCategory = existing.category
-                bikeWeightInput = existing.bikeWeightKg.toString()
+                val convertedWeight = UnitConverter.fromKg(existing.bikeWeightKg, massUnit)
+                bikeWeightInput = String.format(java.util.Locale.US, "%.1f", convertedWeight)
                 isDefault = existing.isDefault
                 setups = if (existing.setups.isNotEmpty()) existing.setups else listOf(WheelSetup(name = defaultSetupName))
                 selectedSetupIndex = 0
@@ -150,6 +158,8 @@ fun BikeEditScreen(
                                 return@IconButton
                             }
                             coroutineScope.launch {
+                                val typedBikeWeight = bikeWeightInput.toDoubleOrNull() ?: UnitConverter.fromKg(8.0, massUnit)
+                                val bikeWeightKg = UnitConverter.toKg(typedBikeWeight, massUnit)
                                 val bike = BikeProfile(
                                     id = currentId,
                                     name = name.trim(),
@@ -158,7 +168,7 @@ fun BikeEditScreen(
                                     year = yearInput.toIntOrNull(),
                                     frameSize = frameSize.trim(),
                                     category = bikeCategory,
-                                    bikeWeightKg = bikeWeightInput.toDoubleOrNull() ?: 8.0,
+                                    bikeWeightKg = bikeWeightKg,
                                     setups = setups,
                                     isDefault = isDefault,
                                     updatedAt = System.currentTimeMillis()
@@ -210,13 +220,13 @@ fun BikeEditScreen(
             item {
                 SectionCard(
                     title = stringResource(id = R.string.bike_general_info_section),
-                    icon = Icons.Default.DirectionsBike,
+                    icon = Icons.AutoMirrored.Filled.DirectionsBike,
                     isCollapsible = true,
                     isExpanded = isGeneralInfoExpanded,
                     onToggleExpand = { isGeneralInfoExpanded = !isGeneralInfoExpanded },
                     collapsedSummary = {
                         Text(
-                            text = "${name.ifBlank { "..." }} • ${stringResource(id = bikeCategory.labelRes)} • $bikeWeightInput kg",
+                            text = "${name.ifBlank { "..." }} • ${stringResource(id = bikeCategory.labelRes)} • $bikeWeightInput ${massUnit.symbol}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -329,7 +339,7 @@ fun BikeEditScreen(
                                 modifier = Modifier.weight(1f)
                             )
                             OutlinedTextField(
-                                value = "$bikeWeightInput kg",
+                                value = "$bikeWeightInput ${massUnit.symbol}",
                                 onValueChange = {},
                                 readOnly = true,
                                 enabled = false,
@@ -369,7 +379,8 @@ fun BikeEditScreen(
                             selectedItem = bikeCategory,
                             onItemSelected = { newCat ->
                                 bikeCategory = newCat
-                                bikeWeightInput = String.format(java.util.Locale.US, "%.1f", newCat.defaultWeightKg)
+                                val catWeightInUserUnit = UnitConverter.fromKg(newCat.defaultWeightKg, massUnit)
+                                bikeWeightInput = String.format(java.util.Locale.US, "%.1f", catWeightInUserUnit)
                                 val updatedSetups = setups.mapIndexed { idx, s ->
                                     if (idx == 0 && s.rideStyle == null) {
                                         val defStyle = newCat.defaultRideStyle
@@ -449,7 +460,7 @@ fun BikeEditScreen(
                             value = bikeWeightInput,
                             onValueChange = { bikeWeightInput = it },
                             label = stringResource(id = R.string.bike_weight),
-                            suffix = "kg"
+                            suffix = massUnit.symbol
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -674,13 +685,15 @@ fun BikeEditScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    var luggageWeightInput by rememberSaveable(selectedSetupIndex, activeSetup.id) {
-                        mutableStateOf(formatDecimal(activeSetup.luggageWeightKg, 2))
+                    var luggageWeightInput by rememberSaveable(selectedSetupIndex, activeSetup.id, massUnit) {
+                        val currentLuggage = UnitConverter.fromKg(activeSetup.luggageWeightKg, massUnit)
+                        mutableStateOf(formatDecimal(currentLuggage, 1))
                     }
-                    LaunchedEffect(activeSetup.luggageWeightKg) {
+                    LaunchedEffect(activeSetup.luggageWeightKg, massUnit) {
                         val typed = luggageWeightInput.toDoubleOrNull() ?: 0.0
-                        if (Math.abs(typed - activeSetup.luggageWeightKg) > 0.02) {
-                            luggageWeightInput = formatDecimal(activeSetup.luggageWeightKg, 2)
+                        val expected = UnitConverter.fromKg(activeSetup.luggageWeightKg, massUnit)
+                        if (Math.abs(typed - expected) > 0.05) {
+                            luggageWeightInput = formatDecimal(expected, 1)
                         }
                     }
 
@@ -688,13 +701,14 @@ fun BikeEditScreen(
                         value = luggageWeightInput,
                         onValueChange = { wStr ->
                             luggageWeightInput = wStr
-                            val w = wStr.toDoubleOrNull() ?: 0.0
+                            val typedVal = wStr.toDoubleOrNull() ?: 0.0
+                            val wKg = UnitConverter.toKg(typedVal, massUnit)
                             setups = setups.mapIndexed { idx, s ->
-                                if (idx == selectedSetupIndex) s.copy(luggageWeightKg = w) else s
+                                if (idx == selectedSetupIndex) s.copy(luggageWeightKg = wKg) else s
                             }
                         },
                         label = stringResource(id = R.string.luggage_weight),
-                        suffix = "kg"
+                        suffix = massUnit.symbol
                     )
                 }
             }
@@ -1092,6 +1106,8 @@ fun BikeEditScreen(
                             return@Button
                         }
                         coroutineScope.launch {
+                            val typedBikeWeight = bikeWeightInput.toDoubleOrNull() ?: UnitConverter.fromKg(8.0, massUnit)
+                            val bikeWeightKg = UnitConverter.toKg(typedBikeWeight, massUnit)
                             val bike = BikeProfile(
                                 id = currentId,
                                 name = name.trim(),
@@ -1100,7 +1116,7 @@ fun BikeEditScreen(
                                 year = yearInput.toIntOrNull(),
                                 frameSize = frameSize.trim(),
                                 category = bikeCategory,
-                                bikeWeightKg = bikeWeightInput.toDoubleOrNull() ?: 8.0,
+                                bikeWeightKg = bikeWeightKg,
                                 setups = setups,
                                 isDefault = isDefault,
                                 updatedAt = System.currentTimeMillis()
@@ -1195,11 +1211,13 @@ fun BikeEditScreen(
     }
 
     if (showAddSetupDialog) {
+        val currentBikeWeightKg = UnitConverter.toKg(bikeWeightInput.toDoubleOrNull() ?: UnitConverter.fromKg(8.0, massUnit), massUnit)
         AddSetupDialog(
             bikeName = name.ifBlank { stringResource(R.string.overview_title) },
-            bikeWeightKg = bikeWeightInput.toDoubleOrNull() ?: 8.0,
+            bikeWeightKg = currentBikeWeightKg,
             bikeCategory = bikeCategory,
             existingSetups = setups,
+            massUnit = massUnit,
             onDismiss = { showAddSetupDialog = false },
             onConfirm = { newSetupName, templateSetup, overrideRideStyle ->
                 val newSetup = if (templateSetup != null) {

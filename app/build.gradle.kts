@@ -17,8 +17,8 @@ android {
         applicationId = "com.mcc.tirepressure"
         minSdk = 26
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.2.1.2"
+        versionCode = 7
+        versionName = "1.2.1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -89,6 +89,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -107,6 +108,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.window)
 
     // Compose
     implementation(platform(libs.androidx.compose.bom))

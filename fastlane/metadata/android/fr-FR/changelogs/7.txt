@@ -1,0 +1,7 @@
+• Remplacement du bouton d'accueil par « Terminé » à la fin du tutoriel de bienvenue.
+• Harmonisation des unités de poids (kg et lb) sur l'écran d'accueil, l'édition/création de vélo et le poids des bagages.
+• Détection en direct du passage mode sombre / clair du système sans relancer l'application.
+• Disposition en maçonnerie sur 2 colonnes comblant les espaces vides lorsque les cartes s'étendent.
+• Affichage épuré des valeurs de pression pour éviter les retours à la ligne avec de grands chiffres (ex. kPa).
+• Support réactif des appareils pliables sans redémarrage et transition d'écran partagé sans scintillement.
+• Navigation plein écran systématique lorsque l'écran est plus haut que large.

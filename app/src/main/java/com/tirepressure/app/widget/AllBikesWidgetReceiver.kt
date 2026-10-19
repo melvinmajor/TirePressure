@@ -37,6 +37,7 @@ class AllBikesWidgetReceiver : AppWidgetProvider() {
     }
 
     companion object {
+        @Suppress("DEPRECATION")
         fun updateWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
             val isDark = WidgetPreferencesHelper.isDarkTheme(context, appWidgetId)
             val rootLayoutId = if (isDark) R.layout.widget_all_bikes_dark else R.layout.widget_all_bikes_light

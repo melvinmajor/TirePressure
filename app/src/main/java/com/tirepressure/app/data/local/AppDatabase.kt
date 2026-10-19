@@ -36,7 +36,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "tire_pressure.db"
                 )
                     .addMigrations(MIGRATION_2_3)
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration(dropAllTables = true)
                     .build()
                 INSTANCE = instance
                 instance

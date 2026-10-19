@@ -46,6 +46,7 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
     }
 
     companion object {
+        @Suppress("DEPRECATION")
         suspend fun updateWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
             val database = AppDatabase.getInstance(context)
             val allEntities = database.bikeDao().getAllBikesList()
@@ -114,9 +115,11 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
             remoteViews.setViewVisibility(R.id.widget_setups_list, View.VISIBLE)
             remoteViews.setTextViewText(R.id.widget_bike_name, selectedBike.name)
             remoteViews.setTextViewText(R.id.widget_discipline_badge, locContext.getString(selectedBike.category.labelRes).uppercase(targetLocale))
+            val massUnit = prefs.massUnitFlow.first()
+            val bikeWeight = com.tirepressure.app.core.util.UnitConverter.fromKg(selectedBike.bikeWeightKg, massUnit)
             remoteViews.setTextViewText(
                 R.id.widget_bike_weight,
-                String.format(targetLocale, "• %.1f kg", selectedBike.bikeWeightKg)
+                String.format(targetLocale, "• %.1f %s", bikeWeight, massUnit.symbol)
             )
 
             // Populate Setups via RemoteViewsService-backed ListView

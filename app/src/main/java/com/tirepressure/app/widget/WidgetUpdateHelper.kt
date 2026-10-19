@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 
 object WidgetUpdateHelper {
 
+    @Suppress("DEPRECATION")
     fun updateAllWidgets(context: Context) {
         val appWidgetManager = AppWidgetManager.getInstance(context) ?: return
 

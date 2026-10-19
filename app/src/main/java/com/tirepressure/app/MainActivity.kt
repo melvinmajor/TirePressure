@@ -27,11 +27,15 @@ import com.tirepressure.app.core.model.AppLanguage
 import com.tirepressure.app.core.util.LocaleHelper
 import com.tirepressure.app.ui.navigation.AppNavigation
 import com.tirepressure.app.ui.overview.OverviewViewModel
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.tirepressure.app.ui.settings.SettingsViewModel
 import com.tirepressure.app.ui.theme.TirePressureTheme
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
+
+    private var systemConfigState by mutableStateOf<Configuration?>(null)
 
     override fun attachBaseContext(newBase: android.content.Context) {
         val locale = LocaleHelper.getSavedLocale(newBase)
@@ -42,10 +46,12 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         val locale = LocaleHelper.getSavedLocale(this)
         LocaleHelper.applyLocale(this, locale)
+        systemConfigState = Configuration(resources.configuration)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        systemConfigState = Configuration(newConfig)
         val locale = LocaleHelper.getSavedLocale(this)
         LocaleHelper.applyLocale(this, locale)
     }
@@ -54,9 +60,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val initialLocale = LocaleHelper.getSavedLocale(this)
         LocaleHelper.applyLocale(this, initialLocale)
+        systemConfigState = Configuration(resources.configuration)
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+        if (android.os.Build.VERSION.SDK_INT in 29..34) {
+            @Suppress("DEPRECATION")
             window.isNavigationBarContrastEnforced = false
+            @Suppress("DEPRECATION")
             window.isStatusBarContrastEnforced = false
         }
         enableEdgeToEdge()
@@ -102,16 +111,18 @@ class MainActivity : ComponentActivity() {
                 LocaleHelper.applyLocale(this@MainActivity, currentLocale)
             }
 
-            val localConfig = LocalConfiguration.current
-            val configuration = remember(currentLocale, localConfig) {
-                Configuration(localConfig).apply {
+            val activeConfig = systemConfigState ?: LocalConfiguration.current
+            val isSystemDark = (activeConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+
+            val configuration = remember(currentLocale, activeConfig.uiMode, activeConfig.orientation, activeConfig.screenWidthDp, activeConfig.screenHeightDp) {
+                Configuration(activeConfig).apply {
                     setLocale(currentLocale)
                     setLayoutDirection(currentLocale)
                 }
             }
 
             val context = LocalContext.current
-            val localizedContext = remember(context, currentLocale) {
+            val localizedContext = remember(context, currentLocale, activeConfig.uiMode) {
                 val configCtx = context.createConfigurationContext(configuration)
                 object : android.content.ContextWrapper(context) {
                     override fun getResources(): Resources = configCtx.resources
@@ -124,7 +135,8 @@ class MainActivity : ComponentActivity() {
             ) {
                 TirePressureTheme(
                     appTheme = settingsState.theme,
-                    accentColor = settingsState.accentColor
+                    accentColor = settingsState.accentColor,
+                    isSystemDark = isSystemDark
                 ) {
                     val completed = isOnboardingCompleted
                     Surface(

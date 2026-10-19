@@ -5,7 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DirectionsBike
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,12 +16,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tirepressure.app.R
+import com.tirepressure.app.core.model.MassUnit
+import com.tirepressure.app.core.util.UnitConverter
 import com.tirepressure.app.domain.model.BikeCategory
 import com.tirepressure.app.domain.model.BikeProfile
 
 @Composable
 fun EditBikeDialog(
     bike: BikeProfile,
+    massUnit: MassUnit = MassUnit.KG,
     onDismiss: () -> Unit,
     onConfirm: (BikeProfile) -> Unit
 ) {
@@ -31,7 +34,8 @@ fun EditBikeDialog(
     var model by remember { mutableStateOf(bike.model) }
     var yearInput by remember { mutableStateOf(bike.year?.toString() ?: "") }
     var frameSize by remember { mutableStateOf(bike.frameSize) }
-    var weightInput by remember { mutableStateOf(String.format(java.util.Locale.US, "%.1f", bike.bikeWeightKg).replace(',', '.')) }
+    val initialWeightInUserUnit = UnitConverter.fromKg(bike.bikeWeightKg, massUnit)
+    var weightInput by remember { mutableStateOf(String.format(java.util.Locale.US, "%.1f", initialWeightInUserUnit).replace(',', '.')) }
     var selectedCategory by remember { mutableStateOf(bike.category) }
     var isDefault by remember { mutableStateOf(bike.isDefault) }
 
@@ -43,7 +47,7 @@ fun EditBikeDialog(
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Default.DirectionsBike,
+                    imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
@@ -150,7 +154,7 @@ fun EditBikeDialog(
                     value = weightInput,
                     onValueChange = { weightInput = it },
                     label = stringResource(id = R.string.bike_weight),
-                    suffix = "kg"
+                    suffix = massUnit.symbol
                 )
 
                 // 6. Vélo par défaut
@@ -187,7 +191,8 @@ fun EditBikeDialog(
                         nameError = nameRequiredError
                         return@Button
                     }
-                    val weight = weightInput.toDoubleOrNull() ?: bike.bikeWeightKg
+                    val enteredWeight = weightInput.toDoubleOrNull()
+                    val weightKg = if (enteredWeight != null) UnitConverter.toKg(enteredWeight, massUnit) else bike.bikeWeightKg
                     val year = yearInput.toIntOrNull()
                     val updated = bike.copy(
                         name = name.trim(),
@@ -196,7 +201,7 @@ fun EditBikeDialog(
                         year = year,
                         frameSize = frameSize.trim(),
                         category = selectedCategory,
-                        bikeWeightKg = weight,
+                        bikeWeightKg = weightKg,
                         isDefault = isDefault
                     )
                     onConfirm(updated)

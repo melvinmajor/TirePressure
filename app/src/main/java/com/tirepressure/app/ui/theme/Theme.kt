@@ -57,12 +57,13 @@ private val LightColorScheme = lightColorScheme(
 fun TirePressureTheme(
     appTheme: AppTheme = AppTheme.SYSTEM,
     accentColor: AppAccentColor = AppAccentColor.ELECTRIC_LIME,
+    isSystemDark: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     val darkTheme = when (appTheme) {
         AppTheme.LIGHT -> false
         AppTheme.DARK -> true
-        AppTheme.SYSTEM -> isSystemInDarkTheme()
+        AppTheme.SYSTEM -> isSystemDark
     }
 
     val baseColors = if (darkTheme) DarkColorScheme else LightColorScheme
@@ -118,10 +119,16 @@ fun TirePressureTheme(
         SideEffect {
             val window = (view.context as? Activity)?.window
             if (window != null) {
-                window.statusBarColor = colorScheme.background.toArgb()
-                window.navigationBarColor = colorScheme.background.toArgb()
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                if (android.os.Build.VERSION.SDK_INT < 35) {
+                    @Suppress("DEPRECATION")
+                    window.statusBarColor = colorScheme.background.toArgb()
+                    @Suppress("DEPRECATION")
+                    window.navigationBarColor = colorScheme.background.toArgb()
+                }
+                if (android.os.Build.VERSION.SDK_INT in 29..34) {
+                    @Suppress("DEPRECATION")
                     window.isNavigationBarContrastEnforced = false
+                    @Suppress("DEPRECATION")
                     window.isStatusBarContrastEnforced = false
                 }
                 val controller = WindowCompat.getInsetsController(window, view)

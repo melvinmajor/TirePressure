@@ -18,6 +18,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -201,7 +203,7 @@ fun OnboardingScreen(
                         style = MaterialTheme.typography.titleMedium
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Icon(Icons.Default.ArrowForward, contentDescription = null)
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
                 }
             }
         } else {
@@ -210,7 +212,7 @@ fun OnboardingScreen(
                 TutorialPage(
                     titleRes = R.string.onboarding_step1_title,
                     descRes = R.string.onboarding_step1_desc,
-                    icon = Icons.Default.DirectionsBike
+                    icon = Icons.AutoMirrored.Filled.DirectionsBike
                 ),
                 TutorialPage(
                     titleRes = R.string.onboarding_step2_title,
@@ -233,7 +235,8 @@ fun OnboardingScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Barre supérieure avec saut possible
+                // Barre supérieure avec saut possible ou Done/Terminé sur la dernière page
+                val isLastTutorialPage = pagerState.currentPage == tutorialPages.size - 1
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
@@ -244,7 +247,10 @@ fun OnboardingScreen(
                             onOnboardingFinished()
                         }
                     }) {
-                        Text(stringResource(id = R.string.onboarding_skip), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = stringResource(id = if (isLastTutorialPage) R.string.onboarding_done else R.string.onboarding_skip),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
 

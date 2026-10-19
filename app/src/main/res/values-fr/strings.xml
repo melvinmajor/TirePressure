@@ -73,7 +73,7 @@
     <string name="setup_default_prefix">Configuration</string>
     <string name="add_setup_template_title">Modèle de départ</string>
     <string name="add_setup_template_default">Par défaut pour ce vélo (%1$s)</string>
-    <string name="add_setup_template_default_desc">Charge le poids de ce vélo (%1$s kg) et sa discipline avec des roues standard.</string>
+    <string name="add_setup_template_default_desc">Charge le poids de ce vélo (%1$s %2$s) et sa discipline avec des roues standard.</string>
     <string name="add_setup_template_existing">Partir d\'une configuration existante comme template</string>
     <string name="add_setup_template_existing_desc">Copie les dimensions des roues, largeurs et carcasses d\'une configuration existante de ce vélo.</string>
     <string name="add_setup_select_existing">Sélectionner la configuration à copier :</string>
@@ -203,7 +203,7 @@
     <!-- Chaînes supplémentaires Overview -->
     <string name="overview_rider_label">Cycliste :</string>
     <string name="overview_pressures_display_in">Afficher les pressions en :</string>
-    <string name="overview_bike_weight">%1$s kg</string>
+    <string name="overview_bike_weight">%1$s %2$s</string>
     <string name="overview_config_count_one">1 config</string>
     <string name="overview_config_count_many">%1$d configs</string>
     <string name="overview_edit_bike_info">Modifier les informations du vélo</string>
@@ -224,7 +224,7 @@
     <string name="overview_subtitle">Berto 15% Drop • Multi-Surfaces</string>
     <string name="overview_view_simplified">Vue simplifiée</string>
     <string name="overview_view_detailed">Vue détaillée</string>
-    <string name="overview_luggage_weight_short">+%1$s kg</string>
+    <string name="overview_luggage_weight_short">+%1$s %2$s</string>
     <string name="rim_tubes_short">Chambre à air</string>
     <string name="rim_tubeless_badge">Tubeless</string>
 
@@ -294,9 +294,9 @@
     <!-- Chaînes supplémentaires Dialogue Ajout Configuration -->
     <string name="add_setup_discipline_title">Discipline / Pratique pour ce profil :</string>
     <string name="add_setup_summary_title">Caractéristiques du profil créé :</string>
-    <string name="add_setup_summary_rider">Poids cycliste de référence : %1$s kg</string>
-    <string name="add_setup_summary_bike">Poids vélo : %1$s kg</string>
-    <string name="add_setup_summary_luggage">Poids bagages : %1$s kg</string>
+    <string name="add_setup_summary_rider">Poids cycliste de référence : %1$s %2$s</string>
+    <string name="add_setup_summary_bike">Poids vélo : %1$s %2$s</string>
+    <string name="add_setup_summary_luggage">Poids bagages : %1$s %2$s</string>
     <string name="add_setup_summary_front_wheel">Jante avant : %1$s mm (%2$s)</string>
     <string name="add_setup_summary_front_tire">Pneu avant : %1$s mm (%2$s)</string>
     <string name="add_setup_summary_rear_wheel">Jante arrière : %1$s mm (%2$s)</string>
@@ -304,6 +304,7 @@
 
     <!-- Clés localisées manquantes -->
     <string name="onboarding_skip">Passer</string>
+    <string name="onboarding_done">Terminé</string>
     <string name="unit_inch_abbr">po</string>
     <string name="overview_duplicate_suffix">(copie)</string>
     <string name="settings_reset_success">Toutes les données ont été réinitialisées.</string>

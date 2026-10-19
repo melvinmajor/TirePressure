@@ -53,7 +53,7 @@ fun AboutAndPrivacyCard(
             )
             if (showVersion) {
                 Text(
-                    text = stringResource(id = R.string.about_version_license, "1.2.1.2"),
+                    text = stringResource(id = R.string.about_version_license, com.tirepressure.app.core.AppVersion.VERSION_NAME),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold

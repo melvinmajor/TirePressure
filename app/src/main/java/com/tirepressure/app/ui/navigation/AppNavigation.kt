@@ -37,8 +37,8 @@ fun AppNavigation(
     isOnboardingCompleted: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val configuration = LocalConfiguration.current
-    val isDualPaneSupported = (configuration.smallestScreenWidthDp >= 600 && configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) || configuration.screenWidthDp >= 840
+    val reactiveState = rememberReactiveScreenState()
+    val isDualPaneSupported = reactiveState.isDualPaneSupported
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -127,7 +127,11 @@ fun AppNavigation(
             navController.popBackStack()
         }
 
-        BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        BoxWithConstraints(
+            modifier = modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
             val totalWidth = maxWidth
             val halfWidth = totalWidth / 2
 
@@ -144,9 +148,11 @@ fun AppNavigation(
                 modifier = Modifier
                     .width(leftPaneWidth)
                     .fillMaxHeight()
+                    .background(MaterialTheme.colorScheme.background)
             ) {
                 OverviewScreen(
                     viewModel = overviewViewModel,
+                    isDualPane = true,
                     onNavigateToAddBike = {
                         navController.navigate(Screen.BikeEdit.createRoute("new"))
                     },
@@ -162,7 +168,7 @@ fun AppNavigation(
                 )
             }
 
-            // Right Detail Pane: Slides in from the right edge with 0 saccades
+            // Right Detail Pane: Slides in from the right edge with 0 saccades or flash
             if (isDetailRoute || detailProgress > 0.001f) {
                 val dividerAlpha by animateFloatAsState(
                     targetValue = if (isDetailRoute) 0.25f else 0.0f,
@@ -185,6 +191,7 @@ fun AppNavigation(
                         .width(halfWidth)
                         .fillMaxHeight()
                         .clipToBounds()
+                        .background(MaterialTheme.colorScheme.background)
                 ) {
                     val activeRoute = if (isDetailRoute) currentRoute else lastDetailRoute
                     val activeBikeId = if (isDetailRoute) {
@@ -196,17 +203,12 @@ fun AppNavigation(
                     AnimatedContent(
                         targetState = activeRoute to activeBikeId,
                         transitionSpec = {
-                            slideIntoContainer(
-                                towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                                animationSpec = tween(350, easing = FastOutSlowInEasing)
-                            ) + fadeIn(tween(250)) togetherWith
-                            slideOutOfContainer(
-                                towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                                animationSpec = tween(350, easing = FastOutSlowInEasing)
-                            ) + fadeOut(tween(200))
+                            fadeIn(tween(200)) togetherWith fadeOut(tween(150))
                         },
                         label = "DetailScreenTransition",
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background)
                     ) { (route, bikeId) ->
                         when (route) {
                             Screen.Settings.route -> {

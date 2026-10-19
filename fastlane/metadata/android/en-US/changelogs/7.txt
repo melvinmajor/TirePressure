@@ -1,0 +1,7 @@
+• Changed welcome screen top button to "Done" upon completing the tutorial.
+• Unified weight units (kg and lb) across overview screen, bike creation, edit popup, and luggage/gear settings.
+• Added live system dark/light mode detection without needing to restart the app.
+• Added masonry staggered 2-column layout on overview screen to eliminate blank gaps.
+• Cleaned pressure values display to prevent wrapping on larger numbers (e.g. kPa).
+• Added reactive foldable support without activity restarts and seamless zero-flash split-screen navigation.
+• Enforced single full-screen view for portrait aspect ratios (height > width).

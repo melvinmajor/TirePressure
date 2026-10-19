@@ -17,6 +17,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tirepressure.app.R
+import com.tirepressure.app.core.model.MassUnit
+import com.tirepressure.app.core.util.UnitConverter
 import com.tirepressure.app.domain.model.BikeCategory
 import com.tirepressure.app.domain.model.RideStyle
 import com.tirepressure.app.domain.model.WheelSetup
@@ -28,6 +30,7 @@ fun AddSetupDialog(
     bikeWeightKg: Double,
     bikeCategory: BikeCategory,
     existingSetups: List<WheelSetup>,
+    massUnit: MassUnit = MassUnit.KG,
     onDismiss: () -> Unit,
     onConfirm: (setupName: String, templateSetup: WheelSetup?, overrideRideStyle: RideStyle?) -> Unit
 ) {
@@ -216,9 +219,10 @@ fun AddSetupDialog(
                                 fontWeight = FontWeight.SemiBold
                             )
                             Spacer(modifier = Modifier.height(2.dp))
-                            val weightFormatted = String.format(Locale.US, "%.1f", bikeWeightKg)
+                            val convertedWeight = UnitConverter.fromKg(bikeWeightKg, massUnit)
+                            val weightFormatted = String.format(Locale.US, "%.1f", convertedWeight)
                             Text(
-                                text = stringResource(id = R.string.add_setup_template_default_desc, weightFormatted),
+                                text = stringResource(id = R.string.add_setup_template_default_desc, weightFormatted, massUnit.symbol),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
