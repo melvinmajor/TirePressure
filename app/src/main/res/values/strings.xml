@@ -65,6 +65,10 @@
     <string name="action_copy_pressures">Copy Pressures</string>
     <string name="action_copied">Pressures copied to clipboard!</string>
     <string name="action_clear">Clear</string>
+    <string name="action_more_options">More options</string>
+    <string name="action_expand">Expand</string>
+    <string name="action_collapse">Collapse</string>
+    <string name="warning_title">Warning</string>
     <string name="bike_year_unknown_or_pre_1980">No year (unknown / pre-1980)</string>
 
     <!-- Add Setup Dialog -->

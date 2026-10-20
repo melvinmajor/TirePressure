@@ -1,0 +1,6 @@
+• Migration de l'architecture vers Jetpack Navigation 3 (1.2.0) avec routage typé NavKey.
+• Affichage bord à bord natif Material 3 sur tous les écrans avec gestion dynamique des encarts.
+• Élimination complète des API de fenêtre obsolètes pour Android 15 et Android 16 (SDK 36).
+• Conservation des données saisies par l'utilisateur lors des rotations et changements d'état pliable.
+• Navigation double volet fluide et optimisations de performance pour pliables et tablettes.
+

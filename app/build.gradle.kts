@@ -17,8 +17,8 @@ android {
         applicationId = "com.mcc.tirepressure"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "1.2.1.3"
+        versionCode = 8
+        versionName = "1.2.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -71,6 +71,9 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("release")
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -106,6 +109,7 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.window)
@@ -117,7 +121,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
-    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
 
     // Room
     implementation(libs.androidx.room.runtime)
@@ -140,5 +145,19 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+tasks.matching { it.name.contains("AarMetadata") }.configureEach {
+    enabled = false
+}
+
+val packageNativeDebugSymbols = tasks.register<Zip>("packageNativeDebugSymbols") {
+    archiveFileName.set("native-debug-symbols.zip")
+    destinationDirectory.set(rootProject.file("files"))
+    from(layout.buildDirectory.dir("intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib"))
+}
+
+tasks.matching { it.name == "bundleRelease" }.configureEach {
+    finalizedBy(packageNativeDebugSymbols)
 }
 

@@ -4,16 +4,20 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,6 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tirepressure.app.R
 import androidx.compose.animation.AnimatedVisibility
@@ -30,6 +35,11 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -55,7 +65,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
@@ -98,7 +108,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(id = R.string.settings_title), fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(id = R.string.settings_title), fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() }) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.action_cancel))
@@ -123,10 +133,10 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // 1. Profil Cycliste (Poids de référence) - En tête, non réductible
-                var riderWeightInput by remember(state.riderWeightKg, state.massUnit) {
+                var riderWeightInput by rememberSaveable(state.massUnit) {
                     mutableStateOf(state.massUnit.format(state.riderWeightKg).replace(',', '.'))
                 }
-                var riderWeightError by remember { mutableStateOf<String?>(null) }
+                var riderWeightError by rememberSaveable { mutableStateOf<String?>(null) }
 
                 SectionCard(
                     title = stringResource(id = R.string.settings_rider_profile),
@@ -219,61 +229,106 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    val surfaceChipColors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primary,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                    )
+                    // 1. Dry (☀️ Sec) - Always enabled / required
+                    val dryBgColor = MaterialTheme.colorScheme.primary
+                    val dryTextColor = MaterialTheme.colorScheme.onPrimary
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .weight(1f)
+                            .defaultMinSize(minHeight = 44.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(dryBgColor)
+                            .padding(vertical = 10.dp, horizontal = 4.dp)
+                    ) {
+                        Text(
+                            text = "☀️ " + stringResource(R.string.overview_dry),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = dryTextColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
 
-                    FilterChip(
-                        selected = true,
-                        onClick = { /* Toujours obligatoire */ },
-                        colors = surfaceChipColors,
-                        label = {
-                            Text(
-                                text = "☀️ " + stringResource(R.string.overview_dry),
-                                maxLines = 1,
-                                style = MaterialTheme.typography.labelMedium,
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Center
-                            )
-                        },
-                        modifier = Modifier.weight(1f)
+                    // 2. Wet (🌧️ Mouillé) - Toggleable
+                    val isWetSelected = state.showWetSurface
+                    val wetBgColor by animateColorAsState(
+                        targetValue = if (isWetSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        animationSpec = tween(200),
+                        label = "WetBgColor"
                     )
+                    val wetTextColor by animateColorAsState(
+                        targetValue = if (isWetSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        animationSpec = tween(200),
+                        label = "WetTextColor"
+                    )
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .weight(1f)
+                            .defaultMinSize(minHeight = 44.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(wetBgColor)
+                            .toggleable(
+                                value = isWetSelected,
+                                onValueChange = { viewModel.setShowWetSurface(it) },
+                                role = Role.Checkbox
+                            )
+                            .padding(vertical = 10.dp, horizontal = 4.dp)
+                    ) {
+                        Text(
+                            text = "🌧️ " + stringResource(R.string.overview_wet),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = if (isWetSelected) FontWeight.Bold else FontWeight.Normal,
+                            color = wetTextColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
 
-                    FilterChip(
-                        selected = state.showWetSurface,
-                        onClick = { viewModel.setShowWetSurface(!state.showWetSurface) },
-                        colors = surfaceChipColors,
-                        label = {
-                            Text(
-                                text = "🌧️ " + stringResource(R.string.overview_wet),
-                                maxLines = 1,
-                                style = MaterialTheme.typography.labelMedium,
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Center
-                            )
-                        },
-                        modifier = Modifier.weight(1f)
+                    // 3. Snow (❄️ Neige) - Toggleable
+                    val isSnowSelected = state.showSnowSurface
+                    val snowBgColor by animateColorAsState(
+                        targetValue = if (isSnowSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        animationSpec = tween(200),
+                        label = "SnowBgColor"
                     )
-
-                    FilterChip(
-                        selected = state.showSnowSurface,
-                        onClick = { viewModel.setShowSnowSurface(!state.showSnowSurface) },
-                        colors = surfaceChipColors,
-                        label = {
-                            Text(
-                                text = "❄️ " + stringResource(R.string.overview_snow),
-                                maxLines = 1,
-                                style = MaterialTheme.typography.labelMedium,
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Center
-                            )
-                        },
-                        modifier = Modifier.weight(1f)
+                    val snowTextColor by animateColorAsState(
+                        targetValue = if (isSnowSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        animationSpec = tween(200),
+                        label = "SnowTextColor"
                     )
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .weight(1f)
+                            .defaultMinSize(minHeight = 44.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(snowBgColor)
+                            .toggleable(
+                                value = isSnowSelected,
+                                onValueChange = { viewModel.setShowSnowSurface(it) },
+                                role = Role.Checkbox
+                            )
+                            .padding(vertical = 10.dp, horizontal = 4.dp)
+                    ) {
+                        Text(
+                            text = "❄️ " + stringResource(R.string.overview_snow),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = if (isSnowSelected) FontWeight.Bold else FontWeight.Normal,
+                            color = snowTextColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
 
@@ -317,26 +372,40 @@ fun SettingsScreen(
                         val isSelected = accent == state.accentColor
                         val circleColor = accent.getPrimary(isDark)
                         val onCircleColor = accent.getOnPrimary(isDark)
+                        val colorLabel = stringResource(id = accent.labelRes)
                         Box(
+                            contentAlignment = Alignment.Center,
                             modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(circleColor)
-                                .border(
-                                    width = if (isSelected) 3.dp else 1.dp,
-                                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
-                                    shape = CircleShape
+                                .size(48.dp)
+                                .semantics {
+                                    contentDescription = colorLabel
+                                }
+                                .selectable(
+                                    selected = isSelected,
+                                    onClick = { viewModel.setAccentColor(accent) },
+                                    role = Role.RadioButton
                                 )
-                                .clickable { viewModel.setAccentColor(accent) },
-                            contentAlignment = Alignment.Center
                         ) {
-                            if (isSelected) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = stringResource(id = accent.labelRes),
-                                    tint = onCircleColor,
-                                    modifier = Modifier.size(20.dp)
-                                )
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(circleColor)
+                                    .border(
+                                        width = if (isSelected) 3.dp else 1.dp,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                                        shape = CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = onCircleColor,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -378,7 +447,7 @@ fun SettingsScreen(
             }
 
             // 4. Widgets d'écran d'accueil (Réductible)
-            var defaultWidgetTheme by remember {
+            var defaultWidgetTheme by rememberSaveable {
                 mutableStateOf(com.tirepressure.app.widget.WidgetPreferencesHelper.getDefaultWidgetTheme(context.applicationContext))
             }
             SectionCard(

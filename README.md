@@ -176,8 +176,9 @@ TirePressure is engineered with cutting-edge Android development best practices:
 
 | Category | Technology | Badges |
 | :--- | :--- | :--- |
-| **Language** | Kotlin 2.0.21 | [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](https://kotlinlang.org/) |
+| **Language** | Kotlin 2.1.0 + KSP 2.1.0 | [![Kotlin](https://img.shields.io/badge/Kotlin-2.1.0-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](https://kotlinlang.org/) |
 | **UI Toolkit** | Jetpack Compose (BOM 2026.06.01) | [![Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202026.06.01-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose) |
+| **Lifecycle & State** | Lifecycle Runtime Compose 2.10.0 | [![Lifecycle](https://img.shields.io/badge/Lifecycle-2.10.0-4285F4?style=flat-square)](https://developer.android.com/topic/libraries/architecture/lifecycle) |
 | **Design System** | Material Design 3 | [![Material 3](https://img.shields.io/badge/Material%20Design-3-757575?style=flat-square&logo=materialdesign&logoColor=white)](https://m3.material.io/) |
 | **Home Widgets** | Android AppWidgets & RemoteViews | [![Widgets](https://img.shields.io/badge/AppWidgets-RemoteViews%20%2B%20Service-00E5FF?style=flat-square)](https://developer.android.com/guide/topics/appwidgets) |
 | **Architecture** | MVVM + Clean Architecture | [![MVVM](https://img.shields.io/badge/Architecture-MVVM%20%2B%20Clean-009688?style=flat-square)](https://developer.android.com/topic/architecture) |
@@ -185,7 +186,7 @@ TirePressure is engineered with cutting-edge Android development best practices:
 | **Preferences** | Jetpack DataStore Preferences 1.2.1 | [![DataStore](https://img.shields.io/badge/DataStore-1.2.1-0288D1?style=flat-square)](https://developer.android.com/topic/libraries/architecture/datastore) |
 | **Concurrency** | Kotlin Coroutines & Flow 1.10.1 | [![Coroutines](https://img.shields.io/badge/Coroutines-1.10.1-673AB7?style=flat-square)](https://github.com/Kotlin/kotlinx.coroutines) |
 | **Serialization** | Kotlinx Serialization JSON 1.8.0 | [![Kotlinx Serialization](https://img.shields.io/badge/Kotlinx%20Serialization-1.8.0-E91E63?style=flat-square)](https://github.com/Kotlin/kotlinx.serialization) |
-| **Navigation** | Navigation Compose 2.9.8 | [![Navigation](https://img.shields.io/badge/Navigation%20Compose-2.9.8-FF9800?style=flat-square)](https://developer.android.com/guide/navigation) |
+| **Navigation** | Jetpack Navigation 3 (1.2.0) | [![Navigation 3](https://img.shields.io/badge/Navigation%203-1.2.0-FF9800?style=flat-square)](https://developer.android.com/guide/navigation/navigation-3) |
 | **Window & Foldables** | AndroidX Window 1.5.0 | [![Window](https://img.shields.io/badge/AndroidX%20Window-1.5.0-3DDC84?style=flat-square)](https://developer.android.com/jetpack/androidx/releases/window) |
 | **Testing** | JUnit 4, Coroutines Test, Compose UI Test | [![Tests](https://img.shields.io/badge/Unit%20Tests-100%25%20Passing-brightgreen?style=flat-square&logo=junit5&logoColor=white)](https://junit.org/) |
 | **Build System** | Gradle 8.10.2 + AGP 8.7.2 | [![Gradle](https://img.shields.io/badge/Gradle-8.10.2-02303A?style=flat-square&logo=gradle&logoColor=white)](https://gradle.org/) |
@@ -246,6 +247,7 @@ Execute the automated test suite verifying Berto 15% drop mathematical accuracy,
 The official pre-compiled release artifacts built with full R8 optimization, resource shrinking, and baseline profiles are provided directly in the repository for immediate installation and testing:
 - **Direct APK:** [`files/TirePressure.apk`](files/TirePressure.apk)
 - **Play Store Bundle (AAB):** [`files/TirePressure.aab`](files/TirePressure.aab)
+- **Native Debug Symbols:** [`files/native-debug-symbols.zip`](files/native-debug-symbols.zip)
 
 Install directly onto a connected device via ADB:
 ```powershell

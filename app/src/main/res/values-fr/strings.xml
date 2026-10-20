@@ -65,6 +65,10 @@
     <string name="action_copy_pressures">Copier les pressions</string>
     <string name="action_copied">Pressions copiées !</string>
     <string name="action_clear">Effacer</string>
+    <string name="action_more_options">Plus d\'options</string>
+    <string name="action_expand">Développer</string>
+    <string name="action_collapse">Réduire</string>
+    <string name="warning_title">Avertissement</string>
     <string name="bike_year_unknown_or_pre_1980">Aucune année (inconnue / avant 1980)</string>
 
     <!-- Dialogue d'ajout de configuration -->

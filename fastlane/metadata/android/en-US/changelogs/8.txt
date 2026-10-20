@@ -1,0 +1,6 @@
+• Migrated navigation architecture to Jetpack Navigation 3 (1.2.0) with type-safe NavKey routes.
+• Native Material 3 Edge-to-Edge compliance across all screens with dynamic safe drawing insets.
+• Purged deprecated window color and layout cutout APIs for Android 15 & Android 16 (SDK 36).
+• Retained user input data persistence across orientation changes and foldable transitions.
+• Seamless fluid dual-pane navigation and performance optimizations for foldables and tablets.
+

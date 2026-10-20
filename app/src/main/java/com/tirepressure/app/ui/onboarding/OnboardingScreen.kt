@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,11 +50,11 @@ fun OnboardingScreen(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    var currentStep by remember { mutableStateOf(1) } // Step 1: Weight, Step 2: Tutorial
+    var currentStep by rememberSaveable { mutableStateOf(1) } // Step 1: Weight, Step 2: Tutorial
 
-    var weightInput by remember { mutableStateOf("75.0") }
-    var selectedUnit by remember { mutableStateOf(MassUnit.KG) }
-    var weightError by remember { mutableStateOf<String?>(null) }
+    var weightInput by rememberSaveable { mutableStateOf("75.0") }
+    var selectedUnit by rememberSaveable { mutableStateOf(MassUnit.KG) }
+    var weightError by rememberSaveable { mutableStateOf<String?>(null) }
     val scrollState = rememberScrollState()
 
     Surface(
@@ -84,7 +85,11 @@ fun OnboardingScreen(
                 }
             },
             label = "OnboardingStepTransition",
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .displayCutoutPadding()
         ) { step ->
             if (step == 1) {
             // Étape 1 : Saisie initiale du poids du cycliste
@@ -104,7 +109,7 @@ fun OnboardingScreen(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.app_logo),
-                        contentDescription = "Logo",
+                        contentDescription = null,
                         modifier = Modifier
                             .size(100.dp)
                             .clip(RoundedCornerShape(22.dp))

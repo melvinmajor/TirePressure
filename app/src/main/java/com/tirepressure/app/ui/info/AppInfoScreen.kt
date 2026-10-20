@@ -22,6 +22,9 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -41,7 +44,7 @@ fun AppInfoScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(id = R.string.app_info_title), fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(id = R.string.app_info_title), fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() }) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.action_cancel))
@@ -63,7 +66,7 @@ fun AppInfoScreen(
             // Logo agrandi
             Image(
                 painter = painterResource(id = R.drawable.app_logo),
-                contentDescription = "Logo",
+                contentDescription = null,
                 modifier = Modifier
                     .size(96.dp)
                     .clip(RoundedCornerShape(22.dp))
@@ -97,7 +100,7 @@ fun AppInfoScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable {
+                    .clickable(role = Role.Button) {
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/melvinmajor/TirePressure"))
                         context.startActivity(intent)
                     },

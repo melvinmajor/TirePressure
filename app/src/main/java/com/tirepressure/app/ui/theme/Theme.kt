@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.tirepressure.app.core.model.AppAccentColor
@@ -119,18 +118,6 @@ fun TirePressureTheme(
         SideEffect {
             val window = (view.context as? Activity)?.window
             if (window != null) {
-                if (android.os.Build.VERSION.SDK_INT < 35) {
-                    @Suppress("DEPRECATION")
-                    window.statusBarColor = colorScheme.background.toArgb()
-                    @Suppress("DEPRECATION")
-                    window.navigationBarColor = colorScheme.background.toArgb()
-                }
-                if (android.os.Build.VERSION.SDK_INT in 29..34) {
-                    @Suppress("DEPRECATION")
-                    window.isNavigationBarContrastEnforced = false
-                    @Suppress("DEPRECATION")
-                    window.isStatusBarContrastEnforced = false
-                }
                 val controller = WindowCompat.getInsetsController(window, view)
                 controller.isAppearanceLightStatusBars = !darkTheme
                 controller.isAppearanceLightNavigationBars = !darkTheme

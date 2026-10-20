@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tirepressure.app.core.model.MassUnit
 import com.tirepressure.app.core.model.PressureUnit
+import com.tirepressure.app.core.util.UnitConverter
 import com.tirepressure.app.domain.calculator.BertoTirePressureCalculator
 import com.tirepressure.app.domain.calculator.TirePressureCalculator
 import com.tirepressure.app.domain.model.*
@@ -12,6 +13,30 @@ import com.tirepressure.app.domain.repository.PreferencesRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.UUID
+
+data class EditBikeDraft(
+    val bikeId: String,
+    val name: String,
+    val brand: String = "",
+    val model: String = "",
+    val yearInput: String = "",
+    val frameSize: String = "",
+    val weightInput: String = "",
+    val category: BikeCategory = BikeCategory.ROAD,
+    val isDefault: Boolean = false,
+    val nameError: String? = null
+)
+
+data class AddSetupDraft(
+    val bikeId: String,
+    val bikeName: String,
+    val bikeWeightKg: Double = 8.0,
+    val bikeCategory: BikeCategory = BikeCategory.ROAD,
+    val setupName: String = "",
+    val useExistingTemplate: Boolean = true,
+    val selectedTemplateIndex: Int = 0,
+    val setupRideStyle: RideStyle? = null
+)
 
 data class OverviewUiState(
     val bikesWithPressures: List<BikeOverviewData> = emptyList(),
@@ -23,7 +48,9 @@ data class OverviewUiState(
     val defaultOverviewCompact: Boolean = false,
     val isLoading: Boolean = false,
     val bikeToDelete: BikeProfile? = null,
-    val setupToDelete: Pair<BikeProfile, WheelSetup>? = null
+    val setupToDelete: Pair<BikeProfile, WheelSetup>? = null,
+    val editingBikeDraft: EditBikeDraft? = null,
+    val addSetupDraft: AddSetupDraft? = null
 )
 
 class OverviewViewModel(
@@ -81,19 +108,81 @@ class OverviewViewModel(
                     )
                 }
 
-                OverviewUiState(
-                    bikesWithPressures = list,
-                    riderWeightKg = riderWeight,
-                    massUnit = massUnit,
-                    pressureUnit = pressureUnit,
-                    showWetSurface = showWet,
-                    showSnowSurface = showSnow,
-                    defaultOverviewCompact = defaultCompact
-                )
-            }.collect { state ->
-                _uiState.value = state
-            }
+                _uiState.update { current ->
+                    current.copy(
+                        bikesWithPressures = list,
+                        riderWeightKg = riderWeight,
+                        massUnit = massUnit,
+                        pressureUnit = pressureUnit,
+                        showWetSurface = showWet,
+                        showSnowSurface = showSnow,
+                        defaultOverviewCompact = defaultCompact,
+                        isLoading = false
+                    )
+                }
+            }.collect()
         }
+    }
+
+    fun startEditBikeInfo(bike: BikeProfile, massUnit: MassUnit) {
+        val initialWeightInUserUnit = UnitConverter.fromKg(bike.bikeWeightKg, massUnit)
+        val weightStr = String.format(java.util.Locale.US, "%.1f", initialWeightInUserUnit).replace(',', '.')
+        _uiState.update {
+            it.copy(
+                editingBikeDraft = EditBikeDraft(
+                    bikeId = bike.id,
+                    name = bike.name,
+                    brand = bike.brand,
+                    model = bike.model,
+                    yearInput = bike.year?.toString() ?: "",
+                    frameSize = bike.frameSize,
+                    weightInput = weightStr,
+                    category = bike.category,
+                    isDefault = bike.isDefault
+                )
+            )
+        }
+    }
+
+    fun updateEditBikeDraft(draft: EditBikeDraft) {
+        _uiState.update { it.copy(editingBikeDraft = draft) }
+    }
+
+    fun cancelEditBikeInfo() {
+        _uiState.update { it.copy(editingBikeDraft = null) }
+    }
+
+    fun confirmEditBikeInfo(updatedBike: BikeProfile) {
+        viewModelScope.launch {
+            bikeRepository.updateBike(updatedBike)
+            _uiState.update { it.copy(editingBikeDraft = null) }
+        }
+    }
+
+    fun startAddSetup(bike: BikeProfile, defaultSetupPrefix: String) {
+        _uiState.update {
+            it.copy(
+                addSetupDraft = AddSetupDraft(
+                    bikeId = bike.id,
+                    bikeName = bike.name,
+                    bikeWeightKg = bike.bikeWeightKg,
+                    bikeCategory = bike.category,
+                    setupName = "$defaultSetupPrefix ${bike.setups.size + 1}",
+                    useExistingTemplate = bike.setups.isNotEmpty(),
+                    selectedTemplateIndex = 0,
+                    setupRideStyle = if (bike.setups.isNotEmpty()) bike.setups[0].getEffectiveRideStyle(bike.category)
+                    else bike.category.defaultRideStyle
+                )
+            )
+        }
+    }
+
+    fun updateAddSetupDraft(draft: AddSetupDraft) {
+        _uiState.update { it.copy(addSetupDraft = draft) }
+    }
+
+    fun cancelAddSetup() {
+        _uiState.update { it.copy(addSetupDraft = null) }
     }
 
     fun setPressureUnit(unit: PressureUnit) {
