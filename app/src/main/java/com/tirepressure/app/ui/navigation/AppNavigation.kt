@@ -1,6 +1,5 @@
 package com.tirepressure.app.ui.navigation
 
-import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -12,14 +11,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.*
-import androidx.navigation.createGraph
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
 import com.tirepressure.app.domain.repository.BikeRepository
 import com.tirepressure.app.domain.repository.PreferencesRepository
 import com.tirepressure.app.ui.bikes.BikeEditScreen
+import com.tirepressure.app.ui.bikes.BikeEditViewModel
 import com.tirepressure.app.ui.info.AppInfoScreen
 import com.tirepressure.app.ui.onboarding.OnboardingScreen
 import com.tirepressure.app.ui.overview.OverviewScreen
@@ -29,9 +28,9 @@ import com.tirepressure.app.ui.settings.SettingsViewModel
 
 @Composable
 fun AppNavigation(
-    navController: NavHostController,
     overviewViewModel: OverviewViewModel,
     settingsViewModel: SettingsViewModel,
+    bikeEditViewModel: BikeEditViewModel,
     bikeRepository: BikeRepository,
     preferencesRepository: PreferencesRepository,
     isOnboardingCompleted: Boolean,
@@ -40,96 +39,38 @@ fun AppNavigation(
     val reactiveState = rememberReactiveScreenState()
     val isDualPaneSupported = reactiveState.isDualPaneSupported
 
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-    val isDetailRoute = isDualPaneSupported && isOnboardingCompleted && currentRoute != null && currentRoute != Screen.Overview.route && currentRoute != Screen.Onboarding.route
+    val backStack = rememberNavBackStack(
+        if (isOnboardingCompleted) Screen.Overview else Screen.Onboarding
+    )
 
-    val startDestination = if (isOnboardingCompleted) Screen.Overview.route else Screen.Onboarding.route
+    val currentScreen: Screen = (backStack.lastOrNull() as? Screen) ?: Screen.Overview
+    val isDetailRoute = isDualPaneSupported &&
+        isOnboardingCompleted &&
+        currentScreen !is Screen.Overview &&
+        currentScreen !is Screen.Onboarding
 
-    // Create persistent NavGraph shared across configurations
-    val navGraph = remember(navController, startDestination) {
-        navController.createGraph(startDestination = startDestination) {
-            composable(Screen.Onboarding.route) {
-                OnboardingScreen(
-                    preferencesRepository = preferencesRepository,
-                    onOnboardingFinished = {
-                        navController.navigate(Screen.Overview.route) {
-                            popUpTo(Screen.Onboarding.route) { inclusive = true }
-                        }
-                    }
-                )
-            }
-
-            composable(Screen.Overview.route) {
-                OverviewScreen(
-                    viewModel = overviewViewModel,
-                    onNavigateToAddBike = {
-                        navController.navigate(Screen.BikeEdit.createRoute("new"))
-                    },
-                    onNavigateToEditBike = { bikeId ->
-                        navController.navigate(Screen.BikeEdit.createRoute(bikeId))
-                    },
-                    onNavigateToSettings = {
-                        navController.navigate(Screen.Settings.route)
-                    },
-                    onNavigateToAppInfo = {
-                        navController.navigate(Screen.AppInfo.route)
-                    }
-                )
-            }
-
-            composable(Screen.BikeEdit.route) { backStackEntry ->
-                val bikeId = backStackEntry.arguments?.getString("bikeId") ?: "new"
-                BikeEditScreen(
-                    bikeId = bikeId,
-                    bikeRepository = bikeRepository,
-                    preferencesRepository = preferencesRepository,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
-
-            composable(Screen.Settings.route) {
-                SettingsScreen(
-                    viewModel = settingsViewModel,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
-
-            composable(Screen.AppInfo.route) {
-                AppInfoScreen(
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
-        }
-    }
-
-    LaunchedEffect(navGraph) {
-        if (navController.currentDestination == null) {
-            navController.graph = navGraph
-        }
-    }
-
-    // Keep track of the last detail route and args so exit animations render real content instead of popping to blank
-    var lastDetailRoute by remember { mutableStateOf<String?>(null) }
-    var lastDetailBikeId by remember { mutableStateOf("new") }
-
-    LaunchedEffect(currentRoute, navBackStackEntry) {
+    // Garde une trace du dernier écran de détail pour les transitions animées de fermeture
+    var lastDetailScreen by remember { mutableStateOf<Screen?>(null) }
+    LaunchedEffect(currentScreen) {
         if (isDetailRoute) {
-            lastDetailRoute = currentRoute
-            if (currentRoute == Screen.BikeEdit.route) {
-                lastDetailBikeId = navBackStackEntry?.arguments?.getString("bikeId") ?: "new"
-            }
+            lastDetailScreen = currentScreen
         }
     }
 
     if (isDualPaneSupported && isOnboardingCompleted) {
         BackHandler(enabled = isDetailRoute) {
-            navController.popBackStack()
+            if (backStack.size > 1) {
+                if (currentScreen is Screen.BikeEdit) {
+                    bikeEditViewModel.reset()
+                }
+                backStack.removeAt(backStack.size - 1)
+            }
         }
 
         BoxWithConstraints(
             modifier = modifier
                 .fillMaxSize()
+                .displayCutoutPadding()
                 .background(MaterialTheme.colorScheme.background)
         ) {
             val totalWidth = maxWidth
@@ -143,7 +84,7 @@ fun AppNavigation(
 
             val leftPaneWidth = totalWidth - (halfWidth * detailProgress)
 
-            // Left Master Pane: Overview (fluidly animated from 100% to 50%)
+            // Volet Maître Gauche : Aperçu (animé fluidement de 100% à 50%)
             Box(
                 modifier = Modifier
                     .width(leftPaneWidth)
@@ -154,21 +95,21 @@ fun AppNavigation(
                     viewModel = overviewViewModel,
                     isDualPane = true,
                     onNavigateToAddBike = {
-                        navController.navigate(Screen.BikeEdit.createRoute("new"))
+                        backStack.add(Screen.BikeEdit("new"))
                     },
                     onNavigateToEditBike = { bikeId ->
-                        navController.navigate(Screen.BikeEdit.createRoute(bikeId))
+                        backStack.add(Screen.BikeEdit(bikeId))
                     },
                     onNavigateToSettings = {
-                        navController.navigate(Screen.Settings.route)
+                        backStack.add(Screen.Settings)
                     },
                     onNavigateToAppInfo = {
-                        navController.navigate(Screen.AppInfo.route)
+                        backStack.add(Screen.AppInfo)
                     }
                 )
             }
 
-            // Right Detail Pane: Slides in from the right edge with 0 saccades or flash
+            // Volet Détail Droit : Glisse depuis la droite sans saccade ni clignotement
             if (isDetailRoute || detailProgress > 0.001f) {
                 val dividerAlpha by animateFloatAsState(
                     targetValue = if (isDetailRoute) 0.25f else 0.0f,
@@ -193,15 +134,10 @@ fun AppNavigation(
                         .clipToBounds()
                         .background(MaterialTheme.colorScheme.background)
                 ) {
-                    val activeRoute = if (isDetailRoute) currentRoute else lastDetailRoute
-                    val activeBikeId = if (isDetailRoute) {
-                        navBackStackEntry?.arguments?.getString("bikeId") ?: lastDetailBikeId
-                    } else {
-                        lastDetailBikeId
-                    }
+                    val activeDetail = if (isDetailRoute) currentScreen else lastDetailScreen
 
                     AnimatedContent(
-                        targetState = activeRoute to activeBikeId,
+                        targetState = activeDetail,
                         transitionSpec = {
                             fadeIn(tween(200)) togetherWith fadeOut(tween(150))
                         },
@@ -209,25 +145,32 @@ fun AppNavigation(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(MaterialTheme.colorScheme.background)
-                    ) { (route, bikeId) ->
-                        when (route) {
-                            Screen.Settings.route -> {
+                    ) { targetScreen ->
+                        when (targetScreen) {
+                            is Screen.Settings -> {
                                 SettingsScreen(
                                     viewModel = settingsViewModel,
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = {
+                                        if (backStack.size > 1) backStack.removeAt(backStack.size - 1)
+                                    }
                                 )
                             }
-                            Screen.AppInfo.route -> {
+                            is Screen.AppInfo -> {
                                 AppInfoScreen(
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = {
+                                        if (backStack.size > 1) backStack.removeAt(backStack.size - 1)
+                                    }
                                 )
                             }
-                            Screen.BikeEdit.route -> {
+                            is Screen.BikeEdit -> {
                                 BikeEditScreen(
-                                    bikeId = bikeId,
-                                    bikeRepository = bikeRepository,
+                                    bikeId = targetScreen.bikeId,
+                                    viewModel = bikeEditViewModel,
                                     preferencesRepository = preferencesRepository,
-                                    onNavigateBack = { navController.popBackStack() }
+                                    onNavigateBack = {
+                                        bikeEditViewModel.reset()
+                                        if (backStack.size > 1) backStack.removeAt(backStack.size - 1)
+                                    }
                                 )
                             }
                             else -> Unit
@@ -237,34 +180,63 @@ fun AppNavigation(
             }
         }
     } else {
-        // Single pane (Phone portrait / Foldable folded / First-time onboarding)
-        NavHost(
-            navController = navController,
-            graph = navGraph,
+        // Mode volet unique (Smartphone portrait / Pliable plié / Premier onboarding)
+        NavDisplay(
+            backStack = backStack,
             modifier = modifier.fillMaxSize(),
-            enterTransition = {
-                slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = tween(350, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(250))
-            },
-            exitTransition = {
-                slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                    animationSpec = tween(350, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(200))
-            },
-            popEnterTransition = {
-                slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = tween(350, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(250))
-            },
-            popExitTransition = {
-                slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.End,
-                    animationSpec = tween(350, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(200))
+            entryProvider = entryProvider {
+                entry<Screen.Onboarding> {
+                    OnboardingScreen(
+                        preferencesRepository = preferencesRepository,
+                        onOnboardingFinished = {
+                            backStack.clear()
+                            backStack.add(Screen.Overview)
+                        }
+                    )
+                }
+                entry<Screen.Overview> {
+                    OverviewScreen(
+                        viewModel = overviewViewModel,
+                        onNavigateToAddBike = {
+                            backStack.add(Screen.BikeEdit("new"))
+                        },
+                        onNavigateToEditBike = { bikeId ->
+                            backStack.add(Screen.BikeEdit(bikeId))
+                        },
+                        onNavigateToSettings = {
+                            backStack.add(Screen.Settings)
+                        },
+                        onNavigateToAppInfo = {
+                            backStack.add(Screen.AppInfo)
+                        }
+                    )
+                }
+                entry<Screen.BikeEdit> { key ->
+                    BikeEditScreen(
+                        bikeId = key.bikeId,
+                        viewModel = bikeEditViewModel,
+                        preferencesRepository = preferencesRepository,
+                        onNavigateBack = {
+                            bikeEditViewModel.reset()
+                            if (backStack.size > 1) backStack.removeAt(backStack.size - 1)
+                        }
+                    )
+                }
+                entry<Screen.Settings> {
+                    SettingsScreen(
+                        viewModel = settingsViewModel,
+                        onNavigateBack = {
+                            if (backStack.size > 1) backStack.removeAt(backStack.size - 1)
+                        }
+                    )
+                }
+                entry<Screen.AppInfo> {
+                    AppInfoScreen(
+                        onNavigateBack = {
+                            if (backStack.size > 1) backStack.removeAt(backStack.size - 1)
+                        }
+                    )
+                }
             }
         )
     }

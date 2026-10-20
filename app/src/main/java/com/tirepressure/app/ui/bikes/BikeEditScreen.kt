@@ -1,5 +1,6 @@
 package com.tirepressure.app.ui.bikes
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -14,11 +15,17 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tirepressure.app.R
@@ -43,88 +50,85 @@ import com.tirepressure.app.ui.theme.getCategoryColor
 import com.tirepressure.app.ui.theme.getRideStyleColor
 import kotlinx.coroutines.launch
 import java.util.UUID
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
+import com.tirepressure.app.ui.overview.AddSetupDraft
+
+private class VmState<T>(
+    private val getter: () -> T,
+    private val setter: (T) -> Unit
+) : MutableState<T> {
+    override var value: T
+        get() = getter()
+        set(v) = setter(v)
+    override fun component1(): T = getter()
+    override fun component2(): (T) -> Unit = setter
+}
+
+private fun <T> vmState(getter: () -> T, setter: (T) -> Unit): MutableState<T> =
+    VmState(getter, setter)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BikeEditScreen(
     bikeId: String,
-    bikeRepository: BikeRepository,
+    viewModel: BikeEditViewModel,
     preferencesRepository: PreferencesRepository,
     onNavigateBack: () -> Unit
 ) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val massUnit by preferencesRepository.massUnitFlow.collectAsState(initial = MassUnit.KG)
-    var isLoaded by remember { mutableStateOf(false) }
+    val massUnit by preferencesRepository.massUnitFlow.collectAsStateWithLifecycle(initialValue = MassUnit.KG)
 
-    var currentId by remember { mutableStateOf(if (bikeId == "new") UUID.randomUUID().toString() else bikeId) }
-    var name by remember { mutableStateOf("") }
-    var brand by remember { mutableStateOf("") }
-    var model by remember { mutableStateOf("") }
-    var yearInput by remember { mutableStateOf("") }
-    var frameSize by remember { mutableStateOf("") }
-    var bikeCategory by remember { mutableStateOf(BikeCategory.ROAD) }
-    var bikeWeightInput by remember {
-        val defaultWeightInUserUnit = UnitConverter.fromKg(BikeCategory.ROAD.defaultWeightKg, massUnit)
-        mutableStateOf(String.format(java.util.Locale.US, "%.1f", defaultWeightInUserUnit))
-    }
-    var isDefault by remember { mutableStateOf(false) }
-
-    // Sections réductibles persistantes
-    var isGeneralInfoExpanded by rememberSaveable(bikeId) { mutableStateOf(bikeId == "new") }
-    var isSetupsExpanded by rememberSaveable { mutableStateOf(true) }
-    var isDiameterExpanded by rememberSaveable { mutableStateOf(true) }
-    var isFrontWheelExpanded by rememberSaveable { mutableStateOf(true) }
-    var isRearWheelExpanded by rememberSaveable { mutableStateOf(true) }
-
-    // Liste des configurations du vélo
     val defaultSetupName = stringResource(id = R.string.config_default_name)
     val defaultSetupPrefix = stringResource(id = R.string.setup_default_prefix)
-    var setups by remember {
-        mutableStateOf(
-            listOf(
-                WheelSetup(
-                    name = defaultSetupName,
-                    isDefault = true
-                )
-            )
-        )
-    }
-    var selectedSetupIndex by remember { mutableIntStateOf(0) }
-    var showAddSetupDialog by remember { mutableStateOf(false) }
-    var showDeleteBikeConfirmation by remember { mutableStateOf(false) }
-    var setupToDeleteConfirmation by remember { mutableStateOf<WheelSetup?>(null) }
-
-    var nameError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(bikeId, massUnit) {
-        if (!isLoaded && bikeId != "new") {
-            val existing = bikeRepository.getBikeById(bikeId)
-            if (existing != null) {
-                currentId = existing.id
-                name = existing.name
-                brand = existing.brand
-                model = existing.model
-                yearInput = existing.year?.toString() ?: ""
-                frameSize = existing.frameSize
-                bikeCategory = existing.category
-                val convertedWeight = UnitConverter.fromKg(existing.bikeWeightKg, massUnit)
-                bikeWeightInput = String.format(java.util.Locale.US, "%.1f", convertedWeight)
-                isDefault = existing.isDefault
-                setups = if (existing.setups.isNotEmpty()) existing.setups else listOf(WheelSetup(name = defaultSetupName))
-                selectedSetupIndex = 0
-            }
-        }
-        isLoaded = true
+        viewModel.loadBikeIfNeeded(bikeId, massUnit, defaultSetupName)
     }
 
+    val isLoaded = state.isLoaded
+    val currentId = state.currentId
+
+    var name by remember(state, viewModel) { vmState({ state.name }, { viewModel.setName(it) }) }
+    var brand by remember(state, viewModel) { vmState({ state.brand }, { viewModel.setBrand(it) }) }
+    var model by remember(state, viewModel) { vmState({ state.model }, { viewModel.setModel(it) }) }
+    var yearInput by remember(state, viewModel) { vmState({ state.yearInput }, { viewModel.setYearInput(it) }) }
+    var frameSize by remember(state, viewModel) { vmState({ state.frameSize }, { viewModel.setFrameSize(it) }) }
+    var bikeCategory by remember(state, viewModel) { vmState({ state.bikeCategory }, { viewModel.setBikeCategory(it) }) }
+    var bikeWeightInput by remember(state, viewModel) { vmState({ state.bikeWeightInput }, { viewModel.setBikeWeightInput(it) }) }
+    var isDefault by remember(state, viewModel) { vmState({ state.isDefault }, { viewModel.setIsDefault(it) }) }
+
+    var isGeneralInfoExpanded by remember(state, viewModel) { vmState({ state.isGeneralInfoExpanded }, { viewModel.toggleGeneralInfoExpanded() }) }
+    var isSetupsExpanded by remember(state, viewModel) { vmState({ state.isSetupsExpanded }, { viewModel.toggleSetupsExpanded() }) }
+    var isDiameterExpanded by remember(state, viewModel) { vmState({ state.isDiameterExpanded }, { viewModel.toggleDiameterExpanded() }) }
+    var isFrontWheelExpanded by remember(state, viewModel) { vmState({ state.isFrontWheelExpanded }, { viewModel.toggleFrontWheelExpanded() }) }
+    var isRearWheelExpanded by remember(state, viewModel) { vmState({ state.isRearWheelExpanded }, { viewModel.toggleRearWheelExpanded() }) }
+
+    var setups by remember(state, viewModel) { vmState({ state.setups }, { viewModel.updateSetups(it) }) }
+    var selectedSetupIndex by remember(state, viewModel) { vmState({ state.selectedSetupIndex }, { viewModel.setSelectedSetupIndex(it) }) }
+    var isSameWheels by remember(state, viewModel) { vmState({ state.isSameWheels }, { viewModel.setIsSameWheels(it) }) }
+
+    var showAddSetupDialog by remember(state, viewModel) { vmState({ state.showAddSetupDialog }, { viewModel.setShowAddSetupDialog(it) }) }
+    var showDeleteBikeConfirmation by remember(state, viewModel) { vmState({ state.showDeleteBikeConfirmation }, { viewModel.setShowDeleteBikeConfirmation(it) }) }
+    var setupToDeleteId by remember(state, viewModel) { vmState({ state.setupToDeleteId }, { viewModel.setSetupToDeleteId(it) }) }
+    val setupToDeleteConfirmation = setups.find { it.id == setupToDeleteId }
+
+    var nameError by remember(state, viewModel) { vmState({ state.nameError }, { viewModel.setNameError(it) }) }
+
     val nameRequiredErrorMsg = stringResource(id = R.string.bike_name_required_error)
-    val isDeleteDialogOpen = showDeleteBikeConfirmation || setupToDeleteConfirmation != null
+    val isDeleteDialogOpen = showDeleteBikeConfirmation || setupToDeleteConfirmation != null || showAddSetupDialog
     val blurRadius by animateDpAsState(
         targetValue = if (isDeleteDialogOpen) 14.dp else 0.dp,
         animationSpec = tween(250),
         label = "EditScreenDialogBlur"
     )
+
+    BackHandler(enabled = !isDeleteDialogOpen) {
+        viewModel.reset()
+        onNavigateBack()
+    }
 
     Scaffold(
         modifier = Modifier.blur(blurRadius),
@@ -133,7 +137,8 @@ fun BikeEditScreen(
                 title = {
                     Text(
                         text = stringResource(if (bikeId == "new") R.string.bike_edit_title_new else R.string.bike_edit_title_edit),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.semantics { heading() }
                     )
                 },
                 navigationIcon = {
@@ -157,30 +162,11 @@ fun BikeEditScreen(
                                 nameError = nameRequiredErrorMsg
                                 return@IconButton
                             }
-                            coroutineScope.launch {
-                                val typedBikeWeight = bikeWeightInput.toDoubleOrNull() ?: UnitConverter.fromKg(8.0, massUnit)
-                                val bikeWeightKg = UnitConverter.toKg(typedBikeWeight, massUnit)
-                                val bike = BikeProfile(
-                                    id = currentId,
-                                    name = name.trim(),
-                                    brand = brand.trim(),
-                                    model = model.trim(),
-                                    year = yearInput.toIntOrNull(),
-                                    frameSize = frameSize.trim(),
-                                    category = bikeCategory,
-                                    bikeWeightKg = bikeWeightKg,
-                                    setups = setups,
-                                    isDefault = isDefault,
-                                    updatedAt = System.currentTimeMillis()
-                                )
-                                val existing = bikeRepository.getBikeById(bike.id)
-                                if (existing == null) {
-                                    bikeRepository.insertBike(bike)
-                                } else {
-                                    bikeRepository.updateBike(bike)
-                                }
-                                onNavigateBack()
-                            }
+                            viewModel.saveBike(
+                                massUnit = massUnit,
+                                nameRequiredError = nameRequiredErrorMsg,
+                                onSaved = onNavigateBack
+                            )
                         }
                     ) {
                         Icon(Icons.Default.Check, contentDescription = stringResource(id = R.string.action_save))
@@ -198,15 +184,6 @@ fun BikeEditScreen(
         }
 
         val activeSetup = setups.getOrNull(selectedSetupIndex) ?: setups.first()
-        var isSameWheels by remember(selectedSetupIndex, activeSetup.id) {
-            mutableStateOf(
-                activeSetup.frontWheel.diameter == activeSetup.rearWheel.diameter &&
-                activeSetup.frontWheel.innerRimWidthMm == activeSetup.rearWheel.innerRimWidthMm &&
-                activeSetup.frontWheel.rimType == activeSetup.rearWheel.rimType &&
-                activeSetup.frontTire.widthMm == activeSetup.rearTire.widthMm &&
-                activeSetup.frontTire.casing == activeSetup.rearTire.casing
-            )
-        }
 
         LazyColumn(
             modifier = Modifier
@@ -551,7 +528,7 @@ fun BikeEditScreen(
 
                         if (setups.size > 1) {
                             OutlinedButton(
-                                onClick = { setupToDeleteConfirmation = activeSetup },
+                                onClick = { setupToDeleteId = activeSetup.id },
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(10.dp),
                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
@@ -1105,30 +1082,11 @@ fun BikeEditScreen(
                             nameError = nameRequiredErrorMsg
                             return@Button
                         }
-                        coroutineScope.launch {
-                            val typedBikeWeight = bikeWeightInput.toDoubleOrNull() ?: UnitConverter.fromKg(8.0, massUnit)
-                            val bikeWeightKg = UnitConverter.toKg(typedBikeWeight, massUnit)
-                            val bike = BikeProfile(
-                                id = currentId,
-                                name = name.trim(),
-                                brand = brand.trim(),
-                                model = model.trim(),
-                                year = yearInput.toIntOrNull(),
-                                frameSize = frameSize.trim(),
-                                category = bikeCategory,
-                                bikeWeightKg = bikeWeightKg,
-                                setups = setups,
-                                isDefault = isDefault,
-                                updatedAt = System.currentTimeMillis()
-                            )
-                            val existing = bikeRepository.getBikeById(bike.id)
-                            if (existing == null) {
-                                bikeRepository.insertBike(bike)
-                            } else {
-                                bikeRepository.updateBike(bike)
-                            }
-                            onNavigateBack()
-                        }
+                        viewModel.saveBike(
+                            massUnit = massUnit,
+                            nameRequiredError = nameRequiredErrorMsg,
+                            onSaved = onNavigateBack
+                        )
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
@@ -1157,11 +1115,7 @@ fun BikeEditScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        coroutineScope.launch {
-                            bikeRepository.deleteBike(currentId)
-                            showDeleteBikeConfirmation = false
-                            onNavigateBack()
-                        }
+                        viewModel.deleteBike(onNavigateBack)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
@@ -1178,7 +1132,7 @@ fun BikeEditScreen(
 
     setupToDeleteConfirmation?.let { setupToDel ->
         GlassAlertDialog(
-            onDismissRequest = { setupToDeleteConfirmation = null },
+            onDismissRequest = { setupToDeleteId = null },
             icon = {
                 Icon(
                     imageVector = Icons.Default.Warning,
@@ -1192,10 +1146,7 @@ fun BikeEditScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        val updated = setups.filter { it.id != setupToDel.id }
-                        setups = updated
-                        selectedSetupIndex = 0
-                        setupToDeleteConfirmation = null
+                        viewModel.confirmDeleteSetup()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
@@ -1203,7 +1154,7 @@ fun BikeEditScreen(
                 }
             },
             dismissButton = {
-                OutlinedButton(onClick = { setupToDeleteConfirmation = null }) {
+                OutlinedButton(onClick = { setupToDeleteId = null }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             }
@@ -1212,56 +1163,51 @@ fun BikeEditScreen(
 
     if (showAddSetupDialog) {
         val currentBikeWeightKg = UnitConverter.toKg(bikeWeightInput.toDoubleOrNull() ?: UnitConverter.fromKg(8.0, massUnit), massUnit)
-        AddSetupDialog(
+        val draft = state.addSetupDraft ?: AddSetupDraft(
+            bikeId = currentId,
             bikeName = name.ifBlank { stringResource(R.string.overview_title) },
             bikeWeightKg = currentBikeWeightKg,
             bikeCategory = bikeCategory,
+            setupName = "$defaultSetupPrefix ${setups.size + 1}",
+            useExistingTemplate = setups.isNotEmpty(),
+            selectedTemplateIndex = 0,
+            setupRideStyle = if (setups.isNotEmpty()) setups[0].getEffectiveRideStyle(bikeCategory) else bikeCategory.defaultRideStyle
+        )
+        AddSetupDialog(
+            draft = draft,
             existingSetups = setups,
             massUnit = massUnit,
-            onDismiss = { showAddSetupDialog = false },
+            onDraftChange = { viewModel.updateAddSetupDraft(it) },
+            onDismiss = { viewModel.cancelAddSetup() },
             onConfirm = { newSetupName, templateSetup, overrideRideStyle ->
-                val newSetup = if (templateSetup != null) {
-                    templateSetup.copy(
-                        id = UUID.randomUUID().toString(),
-                        name = newSetupName.ifBlank { "$defaultSetupPrefix ${setups.size + 1}" },
-                        rideStyle = overrideRideStyle ?: templateSetup.rideStyle ?: bikeCategory.defaultRideStyle,
-                        isDefault = false
-                    )
-                } else {
-                    val targetStyle = overrideRideStyle ?: bikeCategory.defaultRideStyle
-                    val validDiameters = WheelDiameter.getOptionsForStyle(targetStyle)
-                    WheelSetup(
-                        id = UUID.randomUUID().toString(),
-                        name = newSetupName.ifBlank { "$defaultSetupPrefix ${setups.size + 1}" },
-                        rideStyle = targetStyle,
-                        frontTire = TireConfig(
-                            widthMm = targetStyle.defaultTireWidthMm,
-                            casing = targetStyle.defaultTireCasing
-                        ),
-                        rearTire = TireConfig(
-                            widthMm = targetStyle.defaultTireWidthMm,
-                            casing = targetStyle.defaultTireCasing
-                        ),
-                        frontWheel = WheelConfig(
-                            diameter = validDiameters.first(),
-                            innerRimWidthMm = targetStyle.defaultInnerRimWidthMm,
-                            rimType = targetStyle.defaultRimType
-                        ),
-                        rearWheel = WheelConfig(
-                            diameter = validDiameters.first(),
-                            innerRimWidthMm = targetStyle.defaultInnerRimWidthMm,
-                            rimType = targetStyle.defaultRimType
-                        ),
-                        luggageWeightKg = 0.0,
-                        isDefault = false
-                    )
-                }
-                setups = setups + newSetup
-                selectedSetupIndex = setups.size - 1
-                showAddSetupDialog = false
+                viewModel.confirmAddSetup(newSetupName, templateSetup, overrideRideStyle, defaultSetupPrefix)
             }
         )
     }
+}
+
+@Composable
+fun BikeEditScreen(
+    bikeId: String,
+    bikeRepository: com.tirepressure.app.domain.repository.BikeRepository,
+    preferencesRepository: PreferencesRepository,
+    onNavigateBack: () -> Unit
+) {
+    val viewModel: BikeEditViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        key = "BikeEditViewModel_$bikeId",
+        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                return BikeEditViewModel(bikeRepository) as T
+            }
+        }
+    )
+    BikeEditScreen(
+        bikeId = bikeId,
+        viewModel = viewModel,
+        preferencesRepository = preferencesRepository,
+        onNavigateBack = onNavigateBack
+    )
 }
 
 @Composable

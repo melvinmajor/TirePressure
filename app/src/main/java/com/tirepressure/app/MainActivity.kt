@@ -9,24 +9,23 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.rememberNavController
 import com.tirepressure.app.core.model.AppLanguage
 import com.tirepressure.app.core.util.LocaleHelper
 import com.tirepressure.app.ui.navigation.AppNavigation
 import com.tirepressure.app.ui.overview.OverviewViewModel
+import com.tirepressure.app.ui.bikes.BikeEditViewModel
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.tirepressure.app.ui.settings.SettingsViewModel
@@ -62,12 +61,6 @@ class MainActivity : ComponentActivity() {
         LocaleHelper.applyLocale(this, initialLocale)
         systemConfigState = Configuration(resources.configuration)
 
-        if (android.os.Build.VERSION.SDK_INT in 29..34) {
-            @Suppress("DEPRECATION")
-            window.isNavigationBarContrastEnforced = false
-            @Suppress("DEPRECATION")
-            window.isStatusBarContrastEnforced = false
-        }
         enableEdgeToEdge()
 
         val app = application as TirePressureApp
@@ -99,8 +92,19 @@ class MainActivity : ComponentActivity() {
                 }
             )
 
-            val settingsState by settingsViewModel.uiState.collectAsState()
-            val isOnboardingCompleted by app.preferencesRepository.isOnboardingCompletedFlow.collectAsState(initial = null)
+            val bikeEditViewModel: BikeEditViewModel = viewModel(
+                factory = object : ViewModelProvider.Factory {
+                    @Suppress("UNCHECKED_CAST")
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        return BikeEditViewModel(
+                            bikeRepository = app.bikeRepository
+                        ) as T
+                    }
+                }
+            )
+
+            val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+            val isOnboardingCompleted by app.preferencesRepository.isOnboardingCompletedFlow.collectAsStateWithLifecycle(initialValue = null)
 
             // Résolution dynamique de la locale pour le support bilingue (EN / FR)
             val currentLocale = remember(settingsState.language) {
@@ -144,16 +148,13 @@ class MainActivity : ComponentActivity() {
                         color = MaterialTheme.colorScheme.background
                     ) {
                         if (completed != null) {
-                            val navController = rememberNavController()
                             Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .safeDrawingPadding()
+                                modifier = Modifier.fillMaxSize()
                             ) {
                                 AppNavigation(
-                                    navController = navController,
                                     overviewViewModel = overviewViewModel,
                                     settingsViewModel = settingsViewModel,
+                                    bikeEditViewModel = bikeEditViewModel,
                                     bikeRepository = app.bikeRepository,
                                     preferencesRepository = app.preferencesRepository,
                                     isOnboardingCompleted = completed

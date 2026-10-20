@@ -24,6 +24,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -34,6 +39,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
@@ -78,17 +87,15 @@ fun OverviewScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToAppInfo: () -> Unit
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    var bikeForNewSetup by remember { mutableStateOf<BikeProfile?>(null) }
-    var bikeToEditInfo by remember { mutableStateOf<BikeProfile?>(null) }
     var userSelectedSimplified by rememberSaveable { mutableStateOf<Boolean?>(null) }
     val isSimplifiedView = userSelectedSimplified ?: state.defaultOverviewCompact
 
     val isPopupActive = state.bikeToDelete != null ||
         state.setupToDelete != null ||
-        bikeToEditInfo != null ||
-        bikeForNewSetup != null
+        state.editingBikeDraft != null ||
+        state.addSetupDraft != null
     val blurRadius by animateDpAsState(
         targetValue = if (isPopupActive) 14.dp else 0.dp,
         animationSpec = tween(250),
@@ -124,7 +131,8 @@ fun OverviewScreen(
                                 }
                             },
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.semantics { heading() }
                         )
                     }
                 },
@@ -155,216 +163,193 @@ fun OverviewScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            val columnsCount = if (!isDualPane && maxWidth >= 600.dp) 2 else 1
+            val columnsCount = if (!isDualPane && (maxWidth > maxHeight || maxWidth >= 600.dp)) 2 else 1
             val horizontalPadding = 16.dp
             val spacing = 16.dp
-            val scrollState = rememberScrollState()
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .padding(top = 8.dp, bottom = 32.dp, start = horizontalPadding, end = horizontalPadding),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            val copySuffix = stringResource(id = R.string.overview_duplicate_suffix)
+            val copyPressuresAction: (BikeOverviewData, SetupMultiSurfaceResult) -> Unit = { bikeOverview, setupResult ->
+                val dryLabel = context.getString(R.string.overview_dry)
+                val wetLabel = context.getString(R.string.overview_wet)
+                val snowLabel = context.getString(R.string.overview_snow)
+                val frontAbbr = context.getString(R.string.widget_front_abbr)
+                val rearAbbr = context.getString(R.string.widget_rear_abbr)
+
+                val textToCopy = buildString {
+                    val effStyle = setupResult.setup.getEffectiveRideStyle(bikeOverview.bike.category)
+                    val catName = context.getString(bikeOverview.bike.category.labelRes)
+                    val styleName = context.getString(effStyle.labelRes)
+                    appendLine("🚴‍♂️ ${bikeOverview.bike.name} ($catName) - ${setupResult.setup.name} [$styleName]")
+                    appendLine("☀️ $dryLabel : $frontAbbr ${state.pressureUnit.format(setupResult.dryResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.dryResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
+                    if (state.showWetSurface) {
+                        appendLine("🌧️ $wetLabel : $frontAbbr ${state.pressureUnit.format(setupResult.wetResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.wetResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
+                    }
+                    if (state.showSnowSurface) {
+                        appendLine("❄️ $snowLabel : $frontAbbr ${state.pressureUnit.format(setupResult.snowResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.snowResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
+                    }
+                }
+                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(ClipData.newPlainText("Pressions", textToCopy.trimEnd()))
+                Toast.makeText(context, context.getString(R.string.overview_toast_copied), Toast.LENGTH_SHORT).show()
+            }
+
+            @Composable
+            fun RenderBikeCard(bikeOverview: BikeOverviewData) {
+                AnimatedContent(
+                    targetState = isSimplifiedView,
+                    transitionSpec = {
+                        if (targetState) {
+                            slideInHorizontally(
+                                initialOffsetX = { fullWidth -> fullWidth },
+                                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                            ) + fadeIn(tween(250)) togetherWith
+                            slideOutOfContainer(
+                                towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                            ) + fadeOut(tween(200))
+                        } else {
+                            slideIntoContainer(
+                                towards = AnimatedContentTransitionScope.SlideDirection.End,
+                                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                            ) + fadeIn(tween(250)) togetherWith
+                            slideOutOfContainer(
+                                towards = AnimatedContentTransitionScope.SlideDirection.End,
+                                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                            ) + fadeOut(tween(200))
+                        }
+                    },
+                    label = "ViewModeCardTransition"
+                ) { simplified ->
+                    val defaultPrefix = stringResource(id = R.string.setup_default_prefix)
+                    if (simplified) {
+                        BikeOverviewCardSimplified(
+                            bikeOverview = bikeOverview,
+                            massUnit = state.massUnit,
+                            pressureUnit = state.pressureUnit,
+                            showWetSurface = state.showWetSurface,
+                            showSnowSurface = state.showSnowSurface,
+                            onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
+                            onEditBikeInfo = { viewModel.startEditBikeInfo(bikeOverview.bike, state.massUnit) },
+                            onToggleFavorite = { viewModel.toggleFavoriteBike(bikeOverview.bike) },
+                            onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike, copySuffix) },
+                            onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
+                            onAddSetup = { viewModel.startAddSetup(bikeOverview.bike, defaultPrefix) },
+                            onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup, copySuffix) },
+                            onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
+                            onCopyPressures = { setupResult -> copyPressuresAction(bikeOverview, setupResult) }
+                        )
+                    } else {
+                        BikeOverviewCard(
+                            bikeOverview = bikeOverview,
+                            massUnit = state.massUnit,
+                            pressureUnit = state.pressureUnit,
+                            showWetSurface = state.showWetSurface,
+                            showSnowSurface = state.showSnowSurface,
+                            onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
+                            onEditBikeInfo = { viewModel.startEditBikeInfo(bikeOverview.bike, state.massUnit) },
+                            onToggleFavorite = { viewModel.toggleFavoriteBike(bikeOverview.bike) },
+                            onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike, copySuffix) },
+                            onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
+                            onAddSetup = { viewModel.startAddSetup(bikeOverview.bike, defaultPrefix) },
+                            onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup, copySuffix) },
+                            onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
+                            onCopyPressures = { setupResult -> copyPressuresAction(bikeOverview, setupResult) }
+                        )
+                    }
+                }
+            }
+
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Fixed(columnsCount),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp, start = horizontalPadding, end = horizontalPadding),
+                horizontalArrangement = Arrangement.spacedBy(spacing),
+                verticalItemSpacing = spacing
             ) {
                 // Bandeau de réglages rapides : Bascule d'unité de pression instantanée
-                GlassCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = 4.dp
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                item(span = StaggeredGridItemSpan.FullLine) {
+                    GlassCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = 4.dp
                     ) {
-                        Text(
-                            text = stringResource(id = R.string.overview_pressures_display_in),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.overview_pressures_display_in),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
 
-                        PillSelector(
-                            items = PressureUnit.entries,
-                            selectedItem = state.pressureUnit,
-                            onItemSelected = { viewModel.setPressureUnit(it) },
-                            labelProvider = { it.symbol },
-                            modifier = Modifier.width(140.dp)
-                        )
+                            PillSelector(
+                                items = PressureUnit.entries,
+                                selectedItem = state.pressureUnit,
+                                onItemSelected = { viewModel.setPressureUnit(it) },
+                                labelProvider = { it.symbol },
+                                modifier = Modifier.width(140.dp)
+                            )
+                        }
                     }
                 }
 
                 // Si aucun vélo enregistré
                 if (state.bikesWithPressures.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 40.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                    item(span = StaggeredGridItemSpan.FullLine) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 40.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                            )
-                            Text(
-                                text = stringResource(id = R.string.overview_no_bikes),
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = stringResource(id = R.string.overview_no_bikes_desc),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
-                            Button(
-                                onClick = onNavigateToAddBike,
-                                shape = RoundedCornerShape(12.dp)
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                Icon(Icons.Default.Add, contentDescription = null)
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(stringResource(id = R.string.overview_add_bike))
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(64.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                )
+                                Text(
+                                    text = stringResource(id = R.string.overview_no_bikes),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = stringResource(id = R.string.overview_no_bikes_desc),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+                                Button(
+                                    onClick = onNavigateToAddBike,
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(stringResource(id = R.string.overview_add_bike))
+                                }
                             }
                         }
                     }
                 } else {
-                    val copySuffix = stringResource(id = R.string.overview_duplicate_suffix)
-                    val copyPressuresAction: (BikeOverviewData, SetupMultiSurfaceResult) -> Unit = { bikeOverview, setupResult ->
-                        val dryLabel = context.getString(R.string.overview_dry)
-                        val wetLabel = context.getString(R.string.overview_wet)
-                        val snowLabel = context.getString(R.string.overview_snow)
-                        val frontAbbr = context.getString(R.string.widget_front_abbr)
-                        val rearAbbr = context.getString(R.string.widget_rear_abbr)
-
-                        val textToCopy = buildString {
-                            val effStyle = setupResult.setup.getEffectiveRideStyle(bikeOverview.bike.category)
-                            val catName = context.getString(bikeOverview.bike.category.labelRes)
-                            val styleName = context.getString(effStyle.labelRes)
-                            appendLine("🚴‍♂️ ${bikeOverview.bike.name} ($catName) - ${setupResult.setup.name} [$styleName]")
-                            appendLine("☀️ $dryLabel : $frontAbbr ${state.pressureUnit.format(setupResult.dryResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.dryResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
-                            if (state.showWetSurface) {
-                                appendLine("🌧️ $wetLabel : $frontAbbr ${state.pressureUnit.format(setupResult.wetResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.wetResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
-                            }
-                            if (state.showSnowSurface) {
-                                appendLine("❄️ $snowLabel : $frontAbbr ${state.pressureUnit.format(setupResult.snowResult.front.pressureMbar)} / $rearAbbr ${state.pressureUnit.format(setupResult.snowResult.rear.pressureMbar)} ${state.pressureUnit.symbol}")
-                            }
-                        }
-                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        clipboard.setPrimaryClip(ClipData.newPlainText("Pressions", textToCopy.trimEnd()))
-                        Toast.makeText(context, context.getString(R.string.overview_toast_copied), Toast.LENGTH_SHORT).show()
-                    }
-
-                    @Composable
-                    fun RenderBikeCard(bikeOverview: BikeOverviewData) {
-                        AnimatedContent(
-                            targetState = isSimplifiedView,
-                            transitionSpec = {
-                                if (targetState) {
-                                    slideInHorizontally(
-                                        initialOffsetX = { fullWidth -> fullWidth },
-                                        animationSpec = tween(300, easing = FastOutSlowInEasing)
-                                    ) + fadeIn(tween(250)) togetherWith
-                                    slideOutOfContainer(
-                                        towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                                        animationSpec = tween(300, easing = FastOutSlowInEasing)
-                                    ) + fadeOut(tween(200))
-                                } else {
-                                    slideIntoContainer(
-                                        towards = AnimatedContentTransitionScope.SlideDirection.End,
-                                        animationSpec = tween(300, easing = FastOutSlowInEasing)
-                                    ) + fadeIn(tween(250)) togetherWith
-                                    slideOutOfContainer(
-                                        towards = AnimatedContentTransitionScope.SlideDirection.End,
-                                        animationSpec = tween(300, easing = FastOutSlowInEasing)
-                                    ) + fadeOut(tween(200))
-                                }
-                            },
-                            label = "ViewModeCardTransition"
-                        ) { simplified ->
-                            if (simplified) {
-                                BikeOverviewCardSimplified(
-                                    bikeOverview = bikeOverview,
-                                    massUnit = state.massUnit,
-                                    pressureUnit = state.pressureUnit,
-                                    showWetSurface = state.showWetSurface,
-                                    showSnowSurface = state.showSnowSurface,
-                                    onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
-                                    onEditBikeInfo = { bikeToEditInfo = bikeOverview.bike },
-                                    onToggleFavorite = { viewModel.toggleFavoriteBike(bikeOverview.bike) },
-                                    onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike, copySuffix) },
-                                    onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
-                                    onAddSetup = { bikeForNewSetup = bikeOverview.bike },
-                                    onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup, copySuffix) },
-                                    onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
-                                    onCopyPressures = { setupResult -> copyPressuresAction(bikeOverview, setupResult) }
-                                )
-                            } else {
-                                BikeOverviewCard(
-                                    bikeOverview = bikeOverview,
-                                    massUnit = state.massUnit,
-                                    pressureUnit = state.pressureUnit,
-                                    showWetSurface = state.showWetSurface,
-                                    showSnowSurface = state.showSnowSurface,
-                                    onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
-                                    onEditBikeInfo = { bikeToEditInfo = bikeOverview.bike },
-                                    onToggleFavorite = { viewModel.toggleFavoriteBike(bikeOverview.bike) },
-                                    onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike, copySuffix) },
-                                    onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
-                                    onAddSetup = { bikeForNewSetup = bikeOverview.bike },
-                                    onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup, copySuffix) },
-                                    onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
-                                    onCopyPressures = { setupResult -> copyPressuresAction(bikeOverview, setupResult) }
-                                )
-                            }
-                        }
-                    }
-
-                    if (columnsCount > 1) {
-                        val col1Bikes = state.bikesWithPressures.filterIndexed { index, _ -> index % 2 == 0 }
-                        val col2Bikes = state.bikesWithPressures.filterIndexed { index, _ -> index % 2 == 1 }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(spacing)
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(spacing)
-                            ) {
-                                col1Bikes.forEach { bikeOverview ->
-                                    RenderBikeCard(bikeOverview)
-                                }
-                            }
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(spacing)
-                            ) {
-                                col2Bikes.forEach { bikeOverview ->
-                                    RenderBikeCard(bikeOverview)
-                                }
-                            }
-                        }
-                    } else {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(spacing)
-                        ) {
-                            state.bikesWithPressures.forEach { bikeOverview ->
-                                RenderBikeCard(bikeOverview)
-                            }
-                        }
+                    items(
+                        items = state.bikesWithPressures,
+                        key = { it.bike.id }
+                    ) { bikeOverview ->
+                        RenderBikeCard(bikeOverview)
                     }
                 }
 
-                    // Bouton visible après la liste des vélos pour ajouter un vélo
+                // Bouton visible après la liste des vélos pour ajouter un vélo
+                item(span = StaggeredGridItemSpan.FullLine) {
                     Button(
                         onClick = onNavigateToAddBike,
                         modifier = Modifier
@@ -381,6 +366,7 @@ fun OverviewScreen(
                         )
                     }
                 }
+            }
             }
         }
 
@@ -445,35 +431,41 @@ fun OverviewScreen(
         }
 
         // Dialogue d'ajout de configuration avec sélection de template et discipline
-        bikeForNewSetup?.let { bike ->
-            AddSetupDialog(
-                bikeName = bike.name,
-                bikeWeightKg = bike.bikeWeightKg,
-                bikeCategory = bike.category,
-                existingSetups = bike.setups,
-                massUnit = state.massUnit,
-                onDismiss = { bikeForNewSetup = null },
-                onConfirm = { setupName, templateSetup, overrideRideStyle ->
-                    val defaultSetupPrefix = context.getString(R.string.setup_default_prefix)
-                    viewModel.addSetupToBike(bike, setupName, templateSetup, overrideRideStyle, defaultSetupPrefix)
-                    bikeForNewSetup = null
-                    Toast.makeText(context, context.getString(R.string.overview_toast_setup_created, setupName), Toast.LENGTH_SHORT).show()
-                }
-            )
+        state.addSetupDraft?.let { draft ->
+            val bike = state.bikesWithPressures.find { it.bike.id == draft.bikeId }?.bike
+            if (bike != null) {
+                AddSetupDialog(
+                    draft = draft,
+                    existingSetups = bike.setups,
+                    massUnit = state.massUnit,
+                    onDraftChange = { viewModel.updateAddSetupDraft(it) },
+                    onDismiss = { viewModel.cancelAddSetup() },
+                    onConfirm = { setupName, templateSetup, overrideRideStyle ->
+                        val defaultSetupPrefix = context.getString(R.string.setup_default_prefix)
+                        viewModel.addSetupToBike(bike, setupName, templateSetup, overrideRideStyle, defaultSetupPrefix)
+                        viewModel.cancelAddSetup()
+                        Toast.makeText(context, context.getString(R.string.overview_toast_setup_created, setupName), Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
         }
 
         // Dialogue d'édition des informations du vélo (nom, marque, modèle, année, taille, poids)
-        bikeToEditInfo?.let { bike ->
-            EditBikeDialog(
-                bike = bike,
-                massUnit = state.massUnit,
-                onDismiss = { bikeToEditInfo = null },
-                onConfirm = { updatedBike ->
-                    viewModel.updateBike(updatedBike)
-                    bikeToEditInfo = null
-                    Toast.makeText(context, context.getString(R.string.overview_toast_bike_updated), Toast.LENGTH_SHORT).show()
-                }
-            )
+        state.editingBikeDraft?.let { draft ->
+            val bike = state.bikesWithPressures.find { it.bike.id == draft.bikeId }?.bike
+            if (bike != null) {
+                EditBikeDialog(
+                    draft = draft,
+                    originalBike = bike,
+                    massUnit = state.massUnit,
+                    onDraftChange = { viewModel.updateEditBikeDraft(it) },
+                    onDismiss = { viewModel.cancelEditBikeInfo() },
+                    onConfirm = { updatedBike ->
+                        viewModel.confirmEditBikeInfo(updatedBike)
+                        Toast.makeText(context, context.getString(R.string.overview_toast_bike_updated), Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
         }
     }
 
@@ -533,11 +525,16 @@ private fun BikeOverviewCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                val collapseBikeDesc = stringResource(id = R.string.overview_collapse_bike)
+                val expandBikeDesc = stringResource(id = R.string.overview_expand_bike)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { isExpanded = !isExpanded }
+                        .semantics {
+                            stateDescription = if (isExpanded) collapseBikeDesc else expandBikeDesc
+                        }
+                        .clickable(role = Role.Button) { isExpanded = !isExpanded }
                 ) {
                     Text(
                         text = bike.name,
@@ -545,7 +542,9 @@ private fun BikeOverviewCard(
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .semantics { heading() }
                     )
                 }
 
@@ -556,10 +555,13 @@ private fun BikeOverviewCard(
                 ) {
                     Box {
                         IconButton(
-                            onClick = { bikeMenuExpanded = true },
-                            modifier = Modifier.size(28.dp)
+                            onClick = { bikeMenuExpanded = true }
                         ) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "Options", modifier = Modifier.size(18.dp))
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = stringResource(id = R.string.action_more_options),
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                         DropdownMenu(
                             expanded = bikeMenuExpanded,
@@ -827,10 +829,9 @@ private fun BikeOverviewCard(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Box {
                                         IconButton(
-                                            onClick = { setupMenuExpanded = true },
-                                            modifier = Modifier.size(28.dp)
+                                            onClick = { setupMenuExpanded = true }
                                         ) {
-                                            Icon(Icons.Default.MoreHoriz, contentDescription = "Options", modifier = Modifier.size(18.dp))
+                                            Icon(Icons.Default.MoreHoriz, contentDescription = stringResource(id = R.string.action_more_options), modifier = Modifier.size(20.dp))
                                         }
                                         DropdownMenu(
                                             expanded = setupMenuExpanded,
@@ -874,15 +875,14 @@ private fun BikeOverviewCard(
                                     }
 
                                     IconButton(
-                                        onClick = { isSetupExpanded = !isSetupExpanded },
-                                        modifier = Modifier.size(28.dp)
+                                        onClick = { isSetupExpanded = !isSetupExpanded }
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.KeyboardArrowDown,
-                                            contentDescription = null,
+                                            contentDescription = if (isSetupExpanded) stringResource(id = R.string.action_collapse) else stringResource(id = R.string.action_expand),
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier
-                                                .size(18.dp)
+                                                .size(20.dp)
                                                 .rotate(setupChevronRotation)
                                         )
                                     }
@@ -1219,13 +1219,12 @@ private fun BikeOverviewCardSimplified(
 
                 Box(modifier = Modifier.padding(end = if (bike.isDefault) 24.dp else 0.dp)) {
                     IconButton(
-                        onClick = { bikeMenuExpanded = true },
-                        modifier = Modifier.size(28.dp)
+                        onClick = { bikeMenuExpanded = true }
                     ) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Options",
-                            modifier = Modifier.size(18.dp)
+                            contentDescription = stringResource(id = R.string.action_more_options),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                     DropdownMenu(
@@ -1391,13 +1390,12 @@ private fun BikeOverviewCardSimplified(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Box {
                                         IconButton(
-                                            onClick = { setupMenuExpanded = true },
-                                            modifier = Modifier.size(24.dp)
+                                            onClick = { setupMenuExpanded = true }
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.MoreHoriz,
-                                                contentDescription = "Options",
-                                                modifier = Modifier.size(16.dp)
+                                                contentDescription = stringResource(id = R.string.action_more_options),
+                                                modifier = Modifier.size(20.dp)
                                             )
                                         }
                                         DropdownMenu(
@@ -1442,14 +1440,14 @@ private fun BikeOverviewCardSimplified(
                                     }
 
                                     IconButton(
-                                        onClick = { isSetupExpanded = !isSetupExpanded },
-                                        modifier = Modifier.size(24.dp)
+                                        onClick = { isSetupExpanded = !isSetupExpanded }
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.KeyboardArrowDown,
-                                            contentDescription = null,
+                                            contentDescription = if (isSetupExpanded) stringResource(id = R.string.action_collapse) else stringResource(id = R.string.action_expand),
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier
+                                                .size(20.dp)
                                                 .size(16.dp)
                                                 .rotate(setupChevronRotation)
                                         )

@@ -1,12 +1,22 @@
 package com.tirepressure.app.ui.navigation
 
-sealed class Screen(val route: String) {
-    object Onboarding : Screen("onboarding")
-    object Overview : Screen("overview")
-    object BikeEdit : Screen("bike_edit/{bikeId}") {
-        fun createRoute(bikeId: String? = "new") = "bike_edit/$bikeId"
-    }
-    object Settings : Screen("settings")
-    object AppInfo : Screen("app_info")
-}
+import androidx.navigation3.runtime.NavKey
+import kotlinx.serialization.Serializable
 
+@Serializable
+sealed interface Screen : NavKey {
+    @Serializable
+    data object Onboarding : Screen
+
+    @Serializable
+    data object Overview : Screen
+
+    @Serializable
+    data class BikeEdit(val bikeId: String = "new") : Screen
+
+    @Serializable
+    data object Settings : Screen
+
+    @Serializable
+    data object AppInfo : Screen
+}

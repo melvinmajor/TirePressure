@@ -58,8 +58,7 @@ fun YearInputField(
                 ) {
                     if (value.isNotBlank()) {
                         IconButton(
-                            onClick = { onValueChange("") },
-                            modifier = Modifier.size(28.dp)
+                            onClick = { onValueChange("") }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
@@ -70,8 +69,7 @@ fun YearInputField(
                         }
                     }
                     IconButton(
-                        onClick = { showDialog = true },
-                        modifier = Modifier.size(28.dp)
+                        onClick = { showDialog = true }
                     ) {
                         Icon(
                             imageVector = Icons.Default.DateRange,

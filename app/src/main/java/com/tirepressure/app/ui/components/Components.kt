@@ -3,6 +3,13 @@ package com.tirepressure.app.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import com.tirepressure.app.R
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -653,6 +660,8 @@ fun SectionCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            val collapseDesc = stringResource(id = R.string.bike_collapse_section)
+            val expandDesc = stringResource(id = R.string.bike_expand_section)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -660,7 +669,11 @@ fun SectionCard(
                     .fillMaxWidth()
                     .then(
                         if (isCollapsible && onToggleExpand != null) {
-                            Modifier.clickable { onToggleExpand() }
+                            Modifier
+                                .semantics {
+                                    stateDescription = if (isExpanded) collapseDesc else expandDesc
+                                }
+                                .clickable(role = Role.Button) { onToggleExpand() }
                         } else Modifier
                     )
             ) {
@@ -682,18 +695,18 @@ fun SectionCard(
                         text = title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.semantics { heading() }
                     )
                 }
 
                 if (isCollapsible && onToggleExpand != null) {
                     IconButton(
-                        onClick = onToggleExpand,
-                        modifier = Modifier.size(28.dp)
+                        onClick = onToggleExpand
                     ) {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = null,
+                            contentDescription = if (isExpanded) collapseDesc else expandDesc,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.rotate(arrowRotation)
                         )
@@ -832,10 +845,15 @@ fun <T> PillSelector(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .weight(1f)
+                    .defaultMinSize(minHeight = 44.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(bgColor)
-                    .clickable { onItemSelected(item) }
-                    .padding(vertical = 8.dp, horizontal = 4.dp)
+                    .selectable(
+                        selected = isSelected,
+                        onClick = { onItemSelected(item) },
+                        role = Role.RadioButton
+                    )
+                    .padding(vertical = 10.dp, horizontal = 4.dp)
             ) {
                 Text(
                     text = labelProvider(item),
@@ -872,7 +890,7 @@ fun WarningCard(
         ) {
             Icon(
                 imageVector = Icons.Default.Warning,
-                contentDescription = "Avertissement",
+                contentDescription = stringResource(id = R.string.warning_title),
                 tint = WarningAmber,
                 modifier = Modifier
                     .size(24.dp)

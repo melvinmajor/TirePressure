@@ -9,6 +9,8 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,26 +22,29 @@ import com.tirepressure.app.core.model.MassUnit
 import com.tirepressure.app.core.util.UnitConverter
 import com.tirepressure.app.domain.model.BikeCategory
 import com.tirepressure.app.domain.model.BikeProfile
+import com.tirepressure.app.ui.overview.EditBikeDraft
+
+private val BikeCategorySaver: Saver<BikeCategory, String> = Saver(
+    save = { it.name },
+    restore = {
+        try {
+            BikeCategory.valueOf(it)
+        } catch (_: Exception) {
+            BikeCategory.ROAD
+        }
+    }
+)
 
 @Composable
 fun EditBikeDialog(
-    bike: BikeProfile,
+    draft: EditBikeDraft,
+    originalBike: BikeProfile,
     massUnit: MassUnit = MassUnit.KG,
+    onDraftChange: (EditBikeDraft) -> Unit,
     onDismiss: () -> Unit,
     onConfirm: (BikeProfile) -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    var name by remember { mutableStateOf(bike.name) }
-    var brand by remember { mutableStateOf(bike.brand) }
-    var model by remember { mutableStateOf(bike.model) }
-    var yearInput by remember { mutableStateOf(bike.year?.toString() ?: "") }
-    var frameSize by remember { mutableStateOf(bike.frameSize) }
-    val initialWeightInUserUnit = UnitConverter.fromKg(bike.bikeWeightKg, massUnit)
-    var weightInput by remember { mutableStateOf(String.format(java.util.Locale.US, "%.1f", initialWeightInUserUnit).replace(',', '.')) }
-    var selectedCategory by remember { mutableStateOf(bike.category) }
-    var isDefault by remember { mutableStateOf(bike.isDefault) }
-
-    var nameError by remember { mutableStateOf<String?>(null) }
     val scrollState = rememberScrollState()
 
     GlassAlertDialog(
@@ -76,15 +81,14 @@ fun EditBikeDialog(
             ) {
                 // 1. Nom du vélo (Obligatoire)
                 OutlinedTextField(
-                    value = name,
+                    value = draft.name,
                     onValueChange = {
-                        name = it
-                        nameError = null
+                        onDraftChange(draft.copy(name = it, nameError = null))
                     },
                     label = { Text(stringResource(id = R.string.bike_name_label)) },
                     placeholder = { Text(stringResource(id = R.string.bike_name_placeholder)) },
-                    isError = nameError != null,
-                    supportingText = { nameError?.let { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    isError = draft.nameError != null,
+                    supportingText = { draft.nameError?.let { Text(it, color = MaterialTheme.colorScheme.error) } },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -96,8 +100,8 @@ fun EditBikeDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedTextField(
-                        value = brand,
-                        onValueChange = { brand = it },
+                        value = draft.brand,
+                        onValueChange = { onDraftChange(draft.copy(brand = it)) },
                         label = { Text(stringResource(id = R.string.bike_brand_label)) },
                         placeholder = { Text(stringResource(id = R.string.bike_brand_placeholder)) },
                         singleLine = true,
@@ -105,8 +109,8 @@ fun EditBikeDialog(
                         modifier = Modifier.weight(1f)
                     )
                     OutlinedTextField(
-                        value = model,
-                        onValueChange = { model = it },
+                        value = draft.model,
+                        onValueChange = { onDraftChange(draft.copy(model = it)) },
                         label = { Text(stringResource(id = R.string.bike_model_label)) },
                         placeholder = { Text(stringResource(id = R.string.bike_model_placeholder)) },
                         singleLine = true,
@@ -121,13 +125,13 @@ fun EditBikeDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     YearInputField(
-                        value = yearInput,
-                        onValueChange = { yearInput = it },
+                        value = draft.yearInput,
+                        onValueChange = { onDraftChange(draft.copy(yearInput = it)) },
                         modifier = Modifier.weight(1f)
                     )
                     OutlinedTextField(
-                        value = frameSize,
-                        onValueChange = { frameSize = it },
+                        value = draft.frameSize,
+                        onValueChange = { onDraftChange(draft.copy(frameSize = it)) },
                         label = { Text(stringResource(id = R.string.bike_size_label)) },
                         placeholder = { Text(stringResource(id = R.string.bike_size_placeholder)) },
                         singleLine = true,
@@ -144,15 +148,15 @@ fun EditBikeDialog(
                 )
                 PillSelector(
                     items = BikeCategory.entries,
-                    selectedItem = selectedCategory,
-                    onItemSelected = { selectedCategory = it },
+                    selectedItem = draft.category,
+                    onItemSelected = { onDraftChange(draft.copy(category = it)) },
                     labelProvider = { context.getString(it.labelRes) }
                 )
 
                 // 5. Poids du vélo
                 NumberInputField(
-                    value = weightInput,
-                    onValueChange = { weightInput = it },
+                    value = draft.weightInput,
+                    onValueChange = { onDraftChange(draft.copy(weightInput = it)) },
                     label = stringResource(id = R.string.bike_weight),
                     suffix = massUnit.symbol
                 )
@@ -163,15 +167,15 @@ fun EditBikeDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Checkbox(
-                        checked = isDefault,
-                        onCheckedChange = { isDefault = it }
+                        checked = draft.isDefault,
+                        onCheckedChange = { onDraftChange(draft.copy(isDefault = it)) }
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = stringResource(id = R.string.bike_is_default_checkbox),
                         style = MaterialTheme.typography.bodyMedium
                     )
-                    if (isDefault) {
+                    if (draft.isDefault) {
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
                             imageVector = Icons.Filled.Star,
@@ -187,22 +191,22 @@ fun EditBikeDialog(
             val nameRequiredError = stringResource(id = R.string.bike_name_required_error)
             Button(
                 onClick = {
-                    if (name.isBlank()) {
-                        nameError = nameRequiredError
+                    if (draft.name.isBlank()) {
+                        onDraftChange(draft.copy(nameError = nameRequiredError))
                         return@Button
                     }
-                    val enteredWeight = weightInput.toDoubleOrNull()
-                    val weightKg = if (enteredWeight != null) UnitConverter.toKg(enteredWeight, massUnit) else bike.bikeWeightKg
-                    val year = yearInput.toIntOrNull()
-                    val updated = bike.copy(
-                        name = name.trim(),
-                        brand = brand.trim(),
-                        model = model.trim(),
+                    val enteredWeight = draft.weightInput.toDoubleOrNull()
+                    val weightKg = if (enteredWeight != null) UnitConverter.toKg(enteredWeight, massUnit) else originalBike.bikeWeightKg
+                    val year = draft.yearInput.toIntOrNull()
+                    val updated = originalBike.copy(
+                        name = draft.name.trim(),
+                        brand = draft.brand.trim(),
+                        model = draft.model.trim(),
                         year = year,
-                        frameSize = frameSize.trim(),
-                        category = selectedCategory,
+                        frameSize = draft.frameSize.trim(),
+                        category = draft.category,
                         bikeWeightKg = weightKg,
-                        isDefault = isDefault
+                        isDefault = draft.isDefault
                     )
                     onConfirm(updated)
                 },
@@ -216,5 +220,39 @@ fun EditBikeDialog(
                 Text(stringResource(id = R.string.action_cancel))
             }
         }
+    )
+}
+
+@Composable
+fun EditBikeDialog(
+    bike: BikeProfile,
+    massUnit: MassUnit = MassUnit.KG,
+    onDismiss: () -> Unit,
+    onConfirm: (BikeProfile) -> Unit
+) {
+    val initialWeightInUserUnit = UnitConverter.fromKg(bike.bikeWeightKg, massUnit)
+    val weightStr = String.format(java.util.Locale.US, "%.1f", initialWeightInUserUnit).replace(',', '.')
+    var localDraft by remember(bike.id) {
+        mutableStateOf(
+            EditBikeDraft(
+                bikeId = bike.id,
+                name = bike.name,
+                brand = bike.brand,
+                model = bike.model,
+                yearInput = bike.year?.toString() ?: "",
+                frameSize = bike.frameSize,
+                weightInput = weightStr,
+                category = bike.category,
+                isDefault = bike.isDefault
+            )
+        )
+    }
+    EditBikeDialog(
+        draft = localDraft,
+        originalBike = bike,
+        massUnit = massUnit,
+        onDraftChange = { localDraft = it },
+        onDismiss = onDismiss,
+        onConfirm = onConfirm
     )
 }

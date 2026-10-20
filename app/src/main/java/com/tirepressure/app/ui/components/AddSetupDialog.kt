@@ -10,6 +10,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,37 +24,36 @@ import com.tirepressure.app.core.util.UnitConverter
 import com.tirepressure.app.domain.model.BikeCategory
 import com.tirepressure.app.domain.model.RideStyle
 import com.tirepressure.app.domain.model.WheelSetup
+import com.tirepressure.app.ui.overview.AddSetupDraft
 import java.util.Locale
+
+private val RideStyleSaver: Saver<RideStyle, String> = Saver(
+    save = { it.name },
+    restore = {
+        try {
+            RideStyle.valueOf(it)
+        } catch (_: Exception) {
+            RideStyle.ROAD
+        }
+    }
+)
 
 @Composable
 fun AddSetupDialog(
-    bikeName: String,
-    bikeWeightKg: Double,
-    bikeCategory: BikeCategory,
+    draft: AddSetupDraft,
     existingSetups: List<WheelSetup>,
     massUnit: MassUnit = MassUnit.KG,
+    onDraftChange: (AddSetupDraft) -> Unit,
     onDismiss: () -> Unit,
     onConfirm: (setupName: String, templateSetup: WheelSetup?, overrideRideStyle: RideStyle?) -> Unit
 ) {
-    val defaultPrefix = stringResource(id = R.string.setup_default_prefix)
-    var setupName by remember {
-        mutableStateOf("$defaultPrefix ${existingSetups.size + 1}")
-    }
-    // true = copier un setup existant, false = repartir des valeurs par défaut pour ce vélo
-    var useExistingTemplate by remember {
-        mutableStateOf(existingSetups.isNotEmpty())
-    }
-    var selectedTemplateIndex by remember {
-        mutableIntStateOf(0)
-    }
-
-    // Discipline / Usage spécifique pour ce profil (par défaut, celle de la catégorie du vélo ou du template choisi)
-    var setupRideStyle by remember {
-        mutableStateOf(
-            if (existingSetups.isNotEmpty()) existingSetups[0].getEffectiveRideStyle(bikeCategory)
-            else bikeCategory.defaultRideStyle
-        )
-    }
+    val bikeName = draft.bikeName
+    val bikeWeightKg = draft.bikeWeightKg
+    val bikeCategory = draft.bikeCategory
+    val setupName = draft.setupName
+    val useExistingTemplate = draft.useExistingTemplate
+    val selectedTemplateIndex = draft.selectedTemplateIndex
+    val setupRideStyle = draft.setupRideStyle ?: bikeCategory.defaultRideStyle
 
     var styleMenuExpanded by remember { mutableStateOf(false) }
 
@@ -83,7 +84,7 @@ fun AddSetupDialog(
                 // Nom de la configuration
                 OutlinedTextField(
                     value = setupName,
-                    onValueChange = { setupName = it },
+                    onValueChange = { onDraftChange(draft.copy(setupName = it)) },
                     label = { Text(stringResource(id = R.string.add_setup_name_label)) },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
@@ -164,7 +165,7 @@ fun AddSetupDialog(
                                     }
                                 },
                                 onClick = {
-                                    setupRideStyle = style
+                                    onDraftChange(draft.copy(setupRideStyle = style))
                                     styleMenuExpanded = false
                                 }
                             )
@@ -184,8 +185,12 @@ fun AddSetupDialog(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
                         .clickable {
-                            useExistingTemplate = false
-                            setupRideStyle = bikeCategory.defaultRideStyle
+                            onDraftChange(
+                                draft.copy(
+                                    useExistingTemplate = false,
+                                    setupRideStyle = bikeCategory.defaultRideStyle
+                                )
+                            )
                         },
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(
@@ -207,8 +212,12 @@ fun AddSetupDialog(
                         RadioButton(
                             selected = !useExistingTemplate,
                             onClick = {
-                                useExistingTemplate = false
-                                setupRideStyle = bikeCategory.defaultRideStyle
+                                onDraftChange(
+                                    draft.copy(
+                                        useExistingTemplate = false,
+                                        setupRideStyle = bikeCategory.defaultRideStyle
+                                    )
+                                )
                             }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -237,11 +246,14 @@ fun AddSetupDialog(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .clickable {
-                                useExistingTemplate = true
                                 val chosen = existingSetups.getOrNull(selectedTemplateIndex)
-                                if (chosen != null) {
-                                    setupRideStyle = chosen.getEffectiveRideStyle(bikeCategory)
-                                }
+                                val style = chosen?.getEffectiveRideStyle(bikeCategory) ?: setupRideStyle
+                                onDraftChange(
+                                    draft.copy(
+                                        useExistingTemplate = true,
+                                        setupRideStyle = style
+                                    )
+                                )
                             },
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(
@@ -266,11 +278,14 @@ fun AddSetupDialog(
                                 RadioButton(
                                     selected = useExistingTemplate,
                                     onClick = {
-                                        useExistingTemplate = true
                                         val chosen = existingSetups.getOrNull(selectedTemplateIndex)
-                                        if (chosen != null) {
-                                            setupRideStyle = chosen.getEffectiveRideStyle(bikeCategory)
-                                        }
+                                        val style = chosen?.getEffectiveRideStyle(bikeCategory) ?: setupRideStyle
+                                        onDraftChange(
+                                            draft.copy(
+                                                useExistingTemplate = true,
+                                                setupRideStyle = style
+                                            )
+                                        )
                                     }
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -308,8 +323,12 @@ fun AddSetupDialog(
                                                 .fillMaxWidth()
                                                 .clip(RoundedCornerShape(8.dp))
                                                 .clickable {
-                                                    selectedTemplateIndex = index
-                                                    setupRideStyle = setup.getEffectiveRideStyle(bikeCategory)
+                                                    onDraftChange(
+                                                        draft.copy(
+                                                            selectedTemplateIndex = index,
+                                                            setupRideStyle = setup.getEffectiveRideStyle(bikeCategory)
+                                                        )
+                                                    )
                                                 },
                                             shape = RoundedCornerShape(8.dp),
                                             color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
@@ -329,8 +348,12 @@ fun AddSetupDialog(
                                                 RadioButton(
                                                     selected = isSelected,
                                                     onClick = {
-                                                        selectedTemplateIndex = index
-                                                        setupRideStyle = setup.getEffectiveRideStyle(bikeCategory)
+                                                        onDraftChange(
+                                                            draft.copy(
+                                                                selectedTemplateIndex = index,
+                                                                setupRideStyle = setup.getEffectiveRideStyle(bikeCategory)
+                                                            )
+                                                        )
                                                     },
                                                     modifier = Modifier.size(24.dp)
                                                 )
@@ -380,5 +403,41 @@ fun AddSetupDialog(
                 Text(stringResource(id = R.string.action_cancel))
             }
         }
+    )
+}
+
+@Composable
+fun AddSetupDialog(
+    bikeName: String,
+    bikeWeightKg: Double,
+    bikeCategory: BikeCategory,
+    existingSetups: List<WheelSetup>,
+    massUnit: MassUnit = MassUnit.KG,
+    onDismiss: () -> Unit,
+    onConfirm: (setupName: String, templateSetup: WheelSetup?, overrideRideStyle: RideStyle?) -> Unit
+) {
+    val defaultPrefix = stringResource(id = R.string.setup_default_prefix)
+    var localDraft by remember(bikeName, existingSetups.size) {
+        mutableStateOf(
+            AddSetupDraft(
+                bikeId = "",
+                bikeName = bikeName,
+                bikeWeightKg = bikeWeightKg,
+                bikeCategory = bikeCategory,
+                setupName = "$defaultPrefix ${existingSetups.size + 1}",
+                useExistingTemplate = existingSetups.isNotEmpty(),
+                selectedTemplateIndex = 0,
+                setupRideStyle = if (existingSetups.isNotEmpty()) existingSetups[0].getEffectiveRideStyle(bikeCategory)
+                else bikeCategory.defaultRideStyle
+            )
+        )
+    }
+    AddSetupDialog(
+        draft = localDraft,
+        existingSetups = existingSetups,
+        massUnit = massUnit,
+        onDraftChange = { localDraft = it },
+        onDismiss = onDismiss,
+        onConfirm = onConfirm
     )
 }
