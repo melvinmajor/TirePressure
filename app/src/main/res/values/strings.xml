@@ -18,6 +18,8 @@
     <string name="onboarding_step2_desc">Check recommended pressures for any riding condition at a glance: dry roads, wet asphalt, or snow/sand.</string>
     <string name="onboarding_step3_title">Safety &amp; ETRTO Standards</string>
     <string name="onboarding_step3_desc">Get immediate safety warnings if recommended pressure exceeds Hookless straight-side limits (max 5.0 bar / 72.5 psi).</string>
+    <string name="onboarding_step4_title">Personalized Appearance</string>
+    <string name="onboarding_step4_desc">Choose your favorite accent color and dark/light theme.</string>
     <string name="onboarding_get_started">Get Started</string>
     
     <!-- Overview Screen (Home) -->
@@ -228,6 +230,7 @@
     <string name="overview_subtitle">Berto 15% Drop • Multi-Surfaces</string>
     <string name="overview_view_simplified">Simplified view</string>
     <string name="overview_view_detailed">Detailed view</string>
+    <string name="bike_edit_live_preview_title">Live Calculated Pressures</string>
     <string name="overview_luggage_weight_short">+%1$s %2$s</string>
     <string name="rim_tubes_short">Clincher</string>
     <string name="rim_tubeless_badge">Tubeless</string>

@@ -1,9 +1,23 @@
 package com.tirepressure.app.ui.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
+import io.github.angelomarzocchi.lumen.rememberBounceHaptics
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -11,8 +25,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import com.tirepressure.app.R
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.unit.Dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Warning
@@ -35,6 +51,19 @@ import com.tirepressure.app.ui.theme.WarningAmber
 import com.tirepressure.app.ui.theme.WarningAmberBg
 import com.tirepressure.app.ui.theme.WarningAmberBgDark
 
+import io.github.angelomarzocchi.glass.GlassBackdrop
+import io.github.angelomarzocchi.glass.GlassMaterial
+import io.github.angelomarzocchi.glass.glassLampFollowsFinger
+import io.github.angelomarzocchi.glass.glassPosition
+import io.github.angelomarzocchi.glass.rememberGlassLamp
+import io.github.angelomarzocchi.glass.rememberGlassPainter
+import io.github.angelomarzocchi.glass.rememberTiltKeyLight
+import io.github.angelomarzocchi.lumen.GlossCardColors
+import io.github.angelomarzocchi.lumen.GlossCardDefaults
+import io.github.angelomarzocchi.lumen.LightTab
+import io.github.angelomarzocchi.lumen.LightTabs
+import io.github.angelomarzocchi.lumen.LumenDefaults
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -54,6 +83,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -83,6 +113,39 @@ fun formatDecimal(value: Double, maxDecimals: Int = 2): String {
 }
 
 /**
+ * Shared adaptive colors provider for GlossCard components.
+ * Seamlessly adapts surface, highlight, slab border, and shadow between Dark and Light themes.
+ */
+@Composable
+fun appGlossCardColors(
+    base: Color = MaterialTheme.colorScheme.surface,
+    content: Color = MaterialTheme.colorScheme.onSurface,
+    isDark: Boolean = MaterialTheme.colorScheme.background.luminance() < 0.5f
+): GlossCardColors {
+    return if (isDark) {
+        GlossCardColors(
+            top = Color(0xFF181920),
+            middle = base,
+            bottom = Color(0xFF121318),
+            slab = Color.White.copy(alpha = 0.08f),
+            content = content,
+            shadow = Color.Black.copy(alpha = 0.60f),
+            contactShadow = Color.Black.copy(alpha = 0.30f)
+        )
+    } else {
+        GlossCardColors(
+            top = Color.White,
+            middle = Color.White,
+            bottom = Color.White,
+            slab = Color(0xFFE2E8F0),
+            content = content,
+            shadow = Color(0xFF0F172A).copy(alpha = 0.08f),
+            contactShadow = Color(0xFF0F172A).copy(alpha = 0.04f)
+        )
+    }
+}
+
+/**
  * Reusable Glassmorphic 3D Card with translucent gradient surface, specular highlight border,
  * and soft ambient/spot depth shadow.
  */
@@ -90,47 +153,47 @@ fun formatDecimal(value: Double, maxDecimals: Int = 2): String {
 fun GlassCard(
     modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(16.dp),
-    elevation: androidx.compose.ui.unit.Dp = 8.dp,
+    elevation: androidx.compose.ui.unit.Dp = 4.dp,
     content: @Composable BoxScope.() -> Unit
 ) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
-    // 3D volume shadow with enhanced ambient & spot diffusion
-    val shadowColor = if (isDark) Color.Black.copy(alpha = 0.60f) else Color(0xFF475569).copy(alpha = 0.18f)
-    val ambientColor = if (isDark) Color.Black.copy(alpha = 0.35f) else Color(0xFF475569).copy(alpha = 0.10f)
+    // 3D volume shadow with enhanced ambient & spot diffusion - softened in light mode
+    val shadowColor = if (isDark) Color.Black.copy(alpha = 0.60f) else Color(0xFF0F172A).copy(alpha = 0.08f)
+    val ambientColor = if (isDark) Color.Black.copy(alpha = 0.30f) else Color(0xFF0F172A).copy(alpha = 0.04f)
 
-    // Frosted glass gradient background with enhanced translucency
+    // Frosted glass gradient background with subtle dark slate cards (#121318 to #181920) or pure white in light mode
     val glassBrush = if (isDark) {
         Brush.verticalGradient(
             colors = listOf(
-                Color(0xFF222C3D).copy(alpha = 0.72f),
-                Color(0xFF131924).copy(alpha = 0.78f)
-            )
-        )
-    } else {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color.White.copy(alpha = 0.82f),
-                Color(0xFFF1F5F9).copy(alpha = 0.74f)
-            )
-        )
-    }
-
-    // Frosted specular rim border gradient
-    val borderBrush = if (isDark) {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color.White.copy(alpha = 0.28f),
-                Color.White.copy(alpha = 0.10f),
-                Color.White.copy(alpha = 0.04f)
+                Color(0xFF181920).copy(alpha = 0.85f),
+                Color(0xFF121318).copy(alpha = 0.80f)
             )
         )
     } else {
         Brush.verticalGradient(
             colors = listOf(
                 Color.White.copy(alpha = 0.95f),
-                Color(0xFFCBD5E1).copy(alpha = 0.45f),
-                Color(0xFF94A3B8).copy(alpha = 0.20f)
+                Color.White.copy(alpha = 0.90f)
+            )
+        )
+    }
+
+    // Frosted specular rim border gradient (#E2E8F0 in light theme, soft white rim in dark theme)
+    val borderBrush = if (isDark) {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color.White.copy(alpha = 0.16f),
+                Color.White.copy(alpha = 0.06f),
+                Color.White.copy(alpha = 0.02f)
+            )
+        )
+    } else {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color(0xFFE2E8F0),
+                Color(0xFFE2E8F0).copy(alpha = 0.85f),
+                Color(0xFFE2E8F0).copy(alpha = 0.60f)
             )
         )
     }
@@ -151,9 +214,12 @@ fun GlassCard(
     }
 }
 
+val LocalGlassBackdrop = androidx.compose.runtime.compositionLocalOf<GlassBackdrop?> { null }
+
 /**
  * Reusable Frosted Glass Alert Dialog with translucent surface, specular rim border,
  * soft ambient/spot depth shadow, and 24.dp rounded corners.
+ * Powered by compose-glass AGSL frosted material when LocalGlassBackdrop is available.
  */
 @Composable
 fun GlassAlertDialog(
@@ -168,6 +234,10 @@ fun GlassAlertDialog(
     properties: DialogProperties = DialogProperties()
 ) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val backdrop = LocalGlassBackdrop.current
+    val painter = rememberGlassPainter()
+    val glassLamp = rememberGlassLamp()
+    val roomLight = rememberTiltKeyLight()
 
     // Window blur-behind for Android 12+ (API 31+) to blur content beneath the dialog
     val view = LocalView.current
@@ -190,15 +260,15 @@ fun GlassAlertDialog(
     val glassBrush = if (isDark) {
         Brush.verticalGradient(
             colors = listOf(
-                Color(0xFF222C3D).copy(alpha = 0.85f),
-                Color(0xFF131924).copy(alpha = 0.90f)
+                Color(0xFF181920).copy(alpha = 0.90f),
+                Color(0xFF121318).copy(alpha = 0.95f)
             )
         )
     } else {
         Brush.verticalGradient(
             colors = listOf(
-                Color.White.copy(alpha = 0.92f),
-                Color(0xFFF1F5F9).copy(alpha = 0.86f)
+                Color.White.copy(alpha = 0.96f),
+                Color.White.copy(alpha = 0.92f)
             )
         )
     }
@@ -206,22 +276,52 @@ fun GlassAlertDialog(
     val borderBrush = if (isDark) {
         Brush.verticalGradient(
             colors = listOf(
-                Color.White.copy(alpha = 0.32f),
-                Color.White.copy(alpha = 0.12f),
-                Color.White.copy(alpha = 0.05f)
+                Color.White.copy(alpha = 0.20f),
+                Color.White.copy(alpha = 0.08f),
+                Color.White.copy(alpha = 0.03f)
             )
         )
     } else {
         Brush.verticalGradient(
             colors = listOf(
-                Color.White,
-                Color(0xFFCBD5E1).copy(alpha = 0.65f),
-                Color(0xFF94A3B8).copy(alpha = 0.30f)
+                Color(0xFFE2E8F0),
+                Color(0xFFE2E8F0).copy(alpha = 0.85f),
+                Color(0xFFE2E8F0).copy(alpha = 0.60f)
             )
         )
     }
 
     val shadowColor = if (isDark) Color.Black.copy(alpha = 0.65f) else Color(0xFF475569).copy(alpha = 0.22f)
+
+    val dialogModifier = if (backdrop != null) {
+        modifier
+            .shadow(24.dp, shape, ambientColor = shadowColor, spotColor = shadowColor)
+            .glassPosition(painter)
+            .drawBehind {
+                val radius = 24.dp.toPx()
+                painter.light {
+                    lamp = androidx.compose.ui.geometry.Offset(glassLamp.x.value, glassLamp.y.value)
+                    lampOn = glassLamp.on.value
+                    keyLight = roomLight()
+                }
+                with(painter) {
+                    this@drawBehind.drawBody(
+                        backdrop = backdrop,
+                        material = GlassMaterial.frosted(isDark),
+                        shape = androidx.compose.ui.geometry.Rect(androidx.compose.ui.geometry.Offset.Zero, this@drawBehind.size),
+                        radius = radius,
+                        dark = isDark
+                    )
+                }
+            }
+            .glassLampFollowsFinger(glassLamp)
+            .border(BorderStroke(1.dp, borderBrush), shape)
+    } else {
+        modifier
+            .shadow(24.dp, shape, ambientColor = shadowColor, spotColor = shadowColor)
+            .background(glassBrush, shape)
+            .border(BorderStroke(1.dp, borderBrush), shape)
+    }
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -234,10 +334,7 @@ fun GlassAlertDialog(
         containerColor = Color.Transparent,
         tonalElevation = 0.dp,
         properties = properties,
-        modifier = modifier
-            .shadow(24.dp, shape, ambientColor = shadowColor, spotColor = shadowColor)
-            .background(glassBrush, shape)
-            .border(BorderStroke(1.dp, borderBrush), shape)
+        modifier = dialogModifier
     )
 }
 
@@ -821,52 +918,31 @@ fun <T> PillSelector(
     labelProvider: (T) -> String,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        items.forEach { item ->
-            val isSelected = item == selectedItem
-            val bgColor by animateColorAsState(
-                targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                animationSpec = tween(200),
-                label = "PillBgColor"
+    val tabs = androidx.compose.runtime.remember(items, labelProvider) {
+        items.mapIndexed { index, item ->
+            LightTab(
+                id = index,
+                title = labelProvider(item),
+                description = labelProvider(item)
             )
-            val textColor by animateColorAsState(
-                targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                animationSpec = tween(200),
-                label = "PillTextColor"
-            )
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .weight(1f)
-                    .defaultMinSize(minHeight = 44.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(bgColor)
-                    .selectable(
-                        selected = isSelected,
-                        onClick = { onItemSelected(item) },
-                        role = Role.RadioButton
-                    )
-                    .padding(vertical = 10.dp, horizontal = 4.dp)
-            ) {
-                Text(
-                    text = labelProvider(item),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                    color = textColor,
-                    maxLines = 1,
-                    softWrap = false,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
         }
     }
+    val selectedIndex = items.indexOf(selectedItem).coerceAtLeast(0)
+
+    LightTabs(
+        tabs = tabs,
+        selectedId = selectedIndex,
+        onSelect = { id ->
+            val index = id as? Int ?: return@LightTabs
+            if (index in items.indices) {
+                onItemSelected(items[index])
+            }
+        },
+        fillWidth = true,
+        height = 44.dp,
+        modifier = modifier.fillMaxWidth(),
+        haptics = true
+    )
 }
 
 @Composable
@@ -903,6 +979,256 @@ fun WarningCard(
                 fontWeight = FontWeight.Medium
             )
         }
+    }
+}
+
+/**
+ * Smooth top edge gradient fade indicating more content above during scroll.
+ */
+@Composable
+fun BoxScope.ScrollTopFade(
+    visible: Boolean,
+    height: Dp = 20.dp,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(animationSpec = tween(200)),
+        exit = fadeOut(animationSpec = tween(200)),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+            .align(Alignment.TopCenter)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.background,
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+    }
+}
+
+/**
+ * Smooth bottom edge gradient fade indicating more content below during scroll.
+ * Optionally displays a floating "scroll for more" indicator pill if showIndicator = true.
+ */
+@Composable
+fun BoxScope.ScrollBottomFade(
+    visible: Boolean,
+    height: Dp = 48.dp,
+    modifier: Modifier = Modifier,
+    showIndicator: Boolean = false,
+    indicatorText: String? = null
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(animationSpec = tween(200)),
+        exit = fadeOut(animationSpec = tween(200)),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+            .align(Alignment.BottomCenter)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            MaterialTheme.colorScheme.background
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (showIndicator && indicatorText != null) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.92f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                    shadowElevation = 4.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = indicatorText,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Interactive Tire Pressure App Icon with Option B "Double Onde Sonique de Gonflage" (Double Concentric Sonic Pressure Wave).
+ * A short tap triggers a punchy inflation pulse (expanding visibly to 1.20x like a high-pressure pump burst)
+ * accompanied by two concentric circular shockwaves in dynamic accent color that burst outwards into the background,
+ * synchronized with tactile bounce haptics.
+ */
+@Composable
+fun TirePressurePulseLogo(
+    modifier: Modifier = Modifier,
+    size: Dp = 96.dp,
+    shape: Shape = RoundedCornerShape(22.dp),
+    imageModifier: Modifier = Modifier,
+    contentDescription: String? = null
+) {
+    val haptics = rememberBounceHaptics()
+    val primaryColor = MaterialTheme.colorScheme.primary
+
+    var pulseTrigger by remember { mutableIntStateOf(0) }
+    val logoScale = remember { Animatable(1f) }
+    val wave1Scale = remember { Animatable(1f) }
+    val wave1Alpha = remember { Animatable(0f) }
+    val wave2Scale = remember { Animatable(1f) }
+    val wave2Alpha = remember { Animatable(0f) }
+
+    LaunchedEffect(pulseTrigger) {
+        if (pulseTrigger > 0) {
+            // Punchy logo inflation pulse - expanding visibly to 1.20x and bouncing back
+            launch {
+                logoScale.snapTo(1f)
+                logoScale.animateTo(
+                    targetValue = 1.20f,
+                    animationSpec = tween(durationMillis = 110, easing = FastOutSlowInEasing)
+                )
+                logoScale.animateTo(
+                    targetValue = 1.0f,
+                    animationSpec = spring(
+                        dampingRatio = 0.38f,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                )
+            }
+            // Wave 1: First concentric circular sonic pressure wave
+            launch {
+                wave1Scale.snapTo(1.0f)
+                wave1Alpha.snapTo(0.90f)
+                launch {
+                    wave1Scale.animateTo(
+                        targetValue = 2.2f,
+                        animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing)
+                    )
+                }
+                launch {
+                    wave1Alpha.animateTo(
+                        targetValue = 0f,
+                        animationSpec = tween(durationMillis = 520, easing = LinearOutSlowInEasing)
+                    )
+                }
+            }
+            // Wave 2: Second concentric circular wave, delayed by ~60ms and expanding to 2.8x
+            launch {
+                delay(60)
+                wave2Scale.snapTo(1.0f)
+                wave2Alpha.snapTo(0.70f)
+                launch {
+                    wave2Scale.animateTo(
+                        targetValue = 2.8f,
+                        animationSpec = tween(durationMillis = 580, easing = FastOutSlowInEasing)
+                    )
+                }
+                launch {
+                    wave2Alpha.animateTo(
+                        targetValue = 0f,
+                        animationSpec = tween(durationMillis = 580, easing = LinearOutSlowInEasing)
+                    )
+                }
+            }
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .size(size)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                haptics.bounce(1f, true)
+                pulseTrigger++
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        // Wave 2: Second outer concentric circular wave
+        if (wave2Alpha.value > 0.01f) {
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .graphicsLayer {
+                        scaleX = wave2Scale.value
+                        scaleY = wave2Scale.value
+                        alpha = wave2Alpha.value
+                        clip = false
+                    }
+                    .border(
+                        width = 3.dp,
+                        color = primaryColor,
+                        shape = CircleShape
+                    )
+                    .background(
+                        color = primaryColor.copy(alpha = 0.12f),
+                        shape = CircleShape
+                    )
+            )
+        }
+
+        // Wave 1: First inner concentric circular wave
+        if (wave1Alpha.value > 0.01f) {
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .graphicsLayer {
+                        scaleX = wave1Scale.value
+                        scaleY = wave1Scale.value
+                        alpha = wave1Alpha.value
+                        clip = false
+                    }
+                    .border(
+                        width = 4.dp,
+                        color = primaryColor,
+                        shape = CircleShape
+                    )
+                    .background(
+                        color = primaryColor.copy(alpha = 0.20f),
+                        shape = CircleShape
+                    )
+            )
+        }
+
+        // App logo with Flight shared-element anchor and interactive tactile bounce
+        Image(
+            painter = painterResource(id = R.drawable.app_logo),
+            contentDescription = contentDescription,
+            modifier = Modifier
+                .size(size)
+                .then(imageModifier)
+                .clip(shape)
+                .graphicsLayer {
+                    scaleX = logoScale.value
+                    scaleY = logoScale.value
+                }
+        )
     }
 }
 

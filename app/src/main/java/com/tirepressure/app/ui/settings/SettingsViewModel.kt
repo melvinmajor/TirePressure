@@ -190,7 +190,7 @@ class SettingsViewModel(
         _uiState.update { it.copy(showResetConfirmation = false) }
     }
 
-    fun confirmReset() {
+    fun confirmReset(onResetCompleted: (() -> Unit)? = null) {
         viewModelScope.launch {
             bikeRepository.clearAll()
             preferencesRepository.clear()
@@ -200,6 +200,7 @@ class SettingsViewModel(
                     statusMessage = UiText(resId = R.string.settings_reset_success)
                 )
             }
+            onResetCompleted?.invoke()
         }
     }
 

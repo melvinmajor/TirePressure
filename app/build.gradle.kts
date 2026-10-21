@@ -17,8 +17,8 @@ android {
         applicationId = "com.mcc.tirepressure"
         minSdk = 26
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.2.2.0"
+        versionCode = 9
+        versionName = "1.3.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -88,6 +88,7 @@ android {
 
     kotlinOptions {
         jvmTarget = "21"
+        freeCompilerArgs += listOf("-Xskip-metadata-version-check")
     }
 
     buildFeatures {
@@ -112,7 +113,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.window)
 
     // Compose
     implementation(platform(libs.androidx.compose.bom))
@@ -123,6 +123,12 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
+    implementation(libs.androidx.compose.material3.adaptive)
+    implementation(libs.androidx.compose.material3.adaptive.layout)
+    implementation(libs.androidx.compose.material3.adaptive.navigation3)
+    implementation(libs.compose.lumen)
+    implementation(libs.compose.glass)
+    implementation(libs.compose.flight)
 
     // Room
     implementation(libs.androidx.room.runtime)

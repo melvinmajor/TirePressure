@@ -10,21 +10,21 @@ val ElectricLimeContainerDark = Color(0xFF263300)
 val ElectricLimeDeep = Color(0xFF5A7500) // Vert lisible sur fond blanc
 val ElectricLimeContainerLight = Color(0xFFEAF8B5)
 
-// Nuances sombres (Graphite profond / Titanium)
-val BackgroundDark = Color(0xFF0E1217)
-val SurfaceDark = Color(0xFF161B22)
-val SurfaceVariantDark = Color(0xFF212732)
+// Nuances sombres (True OLED Pitch Black & Dark Slate Cards)
+val BackgroundDark = Color(0xFF000000) // Pitch Black True OLED (100% pixel shutoff & deep contrast)
+val SurfaceDark = Color(0xFF121318) // Subtle dark slate card base
+val SurfaceVariantDark = Color(0xFF181920) // Elevated dark slate surface
 val TextPrimaryDark = Color(0xFFF0F4F8)
 val TextSecondaryDark = Color(0xFF8B949E)
-val OutlineDark = Color(0xFF303846)
+val OutlineDark = Color(0xFF272A34)
 
-// Nuances claires (Épuré & Minimaliste)
-val BackgroundLight = Color(0xFFF7F9FB)
-val SurfaceLight = Color(0xFFFFFFFF)
-val SurfaceVariantLight = Color(0xFFEDF1F6)
+// Nuances claires (Soft Canvas & Elevated Pure White Glass)
+val BackgroundLight = Color(0xFFF4F5F8) // Soft Cool Mist / Off-White Slate canvas
+val SurfaceLight = Color(0xFFFFFFFF) // Pure White
+val SurfaceVariantLight = Color(0xFFF6F8FA) // Delicate elevated surface
 val TextPrimaryLight = Color(0xFF0E1217)
 val TextSecondaryLight = Color(0xFF57606A)
-val OutlineLight = Color(0xFFD0D7DE)
+val OutlineLight = Color(0xFFE2E8F0) // Delicate 10-15% border stroke
 
 // Alertes de sécurité (ISO/ETRTO)
 val WarningAmber = Color(0xFFF59E0B)

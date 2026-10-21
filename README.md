@@ -9,7 +9,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-D4FF00?style=for-the-badge&labelColor=0E1217" alt="MIT License" /></a>
   <img src="https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026%2B)-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android" />
-  <img src="https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white" alt="Kotlin" />
+  <img src="https://img.shields.io/badge/Kotlin-2.1.0-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white" alt="Kotlin" />
   <img src="https://img.shields.io/badge/UI-Jetpack%20Compose%20%26%20Material%203-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white" alt="Compose" />
   <img src="https://img.shields.io/badge/Widgets-YES-22C55E?style=for-the-badge" alt="Widgets" />
   <img src="https://img.shields.io/badge/Privacy-100%25%20Offline%20(Zero%20Network)-22C55E?style=for-the-badge" alt="Offline" />
@@ -180,6 +180,9 @@ TirePressure is engineered with cutting-edge Android development best practices:
 | **UI Toolkit** | Jetpack Compose (BOM 2026.06.01) | [![Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202026.06.01-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose) |
 | **Lifecycle & State** | Lifecycle Runtime Compose 2.10.0 | [![Lifecycle](https://img.shields.io/badge/Lifecycle-2.10.0-4285F4?style=flat-square)](https://developer.android.com/topic/libraries/architecture/lifecycle) |
 | **Design System** | Material Design 3 | [![Material 3](https://img.shields.io/badge/Material%20Design-3-757575?style=flat-square&logo=materialdesign&logoColor=white)](https://m3.material.io/) |
+| **Tactile Components** | Compose Lumen (0.1.1) | [![Lumen](https://img.shields.io/badge/Lumen-0.1.1-E040FB?style=flat-square)](https://github.com/angelomarzocchi/compose-lumen) |
+| **AGSL Shaders** | Compose Glass (0.1.0) | [![Glass](https://img.shields.io/badge/Glass-0.1.0-00E5FF?style=flat-square)](https://github.com/angelomarzocchi/compose-glass) |
+| **Hero Flights** | Compose Flight (0.1.0) | [![Flight](https://img.shields.io/badge/Flight-0.1.0-FF4081?style=flat-square)](https://github.com/angelomarzocchi/compose-flight) |
 | **Home Widgets** | Android AppWidgets & RemoteViews | [![Widgets](https://img.shields.io/badge/AppWidgets-RemoteViews%20%2B%20Service-00E5FF?style=flat-square)](https://developer.android.com/guide/topics/appwidgets) |
 | **Architecture** | MVVM + Clean Architecture | [![MVVM](https://img.shields.io/badge/Architecture-MVVM%20%2B%20Clean-009688?style=flat-square)](https://developer.android.com/topic/architecture) |
 | **Persistence** | Room Database 2.8.5 + KSP | [![Room](https://img.shields.io/badge/Room%20DB-2.8.5-4CAF50?style=flat-square&logo=sqlite&logoColor=white)](https://developer.android.com/training/data-storage/room) |
@@ -187,7 +190,7 @@ TirePressure is engineered with cutting-edge Android development best practices:
 | **Concurrency** | Kotlin Coroutines & Flow 1.10.1 | [![Coroutines](https://img.shields.io/badge/Coroutines-1.10.1-673AB7?style=flat-square)](https://github.com/Kotlin/kotlinx.coroutines) |
 | **Serialization** | Kotlinx Serialization JSON 1.8.0 | [![Kotlinx Serialization](https://img.shields.io/badge/Kotlinx%20Serialization-1.8.0-E91E63?style=flat-square)](https://github.com/Kotlin/kotlinx.serialization) |
 | **Navigation** | Jetpack Navigation 3 (1.2.0) | [![Navigation 3](https://img.shields.io/badge/Navigation%203-1.2.0-FF9800?style=flat-square)](https://developer.android.com/guide/navigation/navigation-3) |
-| **Window & Foldables** | AndroidX Window 1.5.0 | [![Window](https://img.shields.io/badge/AndroidX%20Window-1.5.0-3DDC84?style=flat-square)](https://developer.android.com/jetpack/androidx/releases/window) |
+| **Adaptive & Foldables** | Material 3 Adaptive 1.3.0 (Layout & Window Metrics) | [![Adaptive](https://img.shields.io/badge/M3%20Adaptive-1.3.0-4285F4?style=flat-square)](https://developer.android.com/jetpack/androidx/releases/compose-material3-adaptive) |
 | **Testing** | JUnit 4, Coroutines Test, Compose UI Test | [![Tests](https://img.shields.io/badge/Unit%20Tests-100%25%20Passing-brightgreen?style=flat-square&logo=junit5&logoColor=white)](https://junit.org/) |
 | **Build System** | Gradle 8.10.2 + AGP 8.7.2 | [![Gradle](https://img.shields.io/badge/Gradle-8.10.2-02303A?style=flat-square&logo=gradle&logoColor=white)](https://gradle.org/) |
 | **Target Platform** | Android 16 (API 36) / Min: API 26 | [![Target SDK](https://img.shields.io/badge/Target%20SDK-API%2036%20(Android%2016)-3DDC84?style=flat-square&logo=android&logoColor=white)](https://developer.android.com/about/versions/16) |
@@ -218,7 +221,7 @@ app/src/main/java/com/tirepressure/app/
 └── ui/
     ├── theme/          # Material 3 palette (Electric Lime, Titanium, Dark/Light modes)
     ├── components/     # Reusable components (SectionCard, NumberInputField, PillSelector...)
-    ├── navigation/     # AppNavigation, destinations, ReactiveScreenState (foldables & posture)
+    ├── navigation/     # AppNavigation, destinations, ListDetailSceneStrategy (Material 3 Adaptive)
     ├── onboarding/     # First-run weight prompt & swipeable tutorial (HorizontalPager)
     ├── overview/       # Main dashboard: bikes with multi-setup & multi-surface pressures
     ├── bikes/          # Bike & wheelset setup editor (calculator-style inputs with inch tags)

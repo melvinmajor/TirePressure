@@ -56,6 +56,12 @@ import com.tirepressure.app.ui.components.GlassAlertDialog
 import com.tirepressure.app.ui.components.NumberInputField
 import com.tirepressure.app.ui.components.PillSelector
 import com.tirepressure.app.ui.components.SectionCard
+import com.tirepressure.app.ui.components.ScrollTopFade
+import com.tirepressure.app.ui.components.ScrollBottomFade
+import com.tirepressure.app.ui.components.appGlossCardColors
+import io.github.angelomarzocchi.lumen.GlossCard
+import io.github.angelomarzocchi.lumen.GlossCardDefaults
+import io.github.angelomarzocchi.lumen.rememberBounceHaptics
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -63,11 +69,13 @@ import java.util.*
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToOnboarding: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val haptics = rememberBounceHaptics()
 
     // Gestion SAF : Export JSON
     val exportLauncher = rememberLauncherForActivityResult(
@@ -132,40 +140,77 @@ fun SettingsScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // 1. Profil Cycliste (Poids de référence) - En tête, non réductible
+                // 1. Profil Cycliste (Poids de référence) - En tête, non réductible (Option 3B GlossCard)
                 var riderWeightInput by rememberSaveable(state.massUnit) {
                     mutableStateOf(state.massUnit.format(state.riderWeightKg).replace(',', '.'))
                 }
                 var riderWeightError by rememberSaveable { mutableStateOf<String?>(null) }
 
-                SectionCard(
-                    title = stringResource(id = R.string.settings_rider_profile),
-                    icon = Icons.Default.Person,
-                    subtitle = stringResource(id = R.string.onboarding_weight_desc),
-                    isCollapsible = false
+                val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                val riderGlossColors = appGlossCardColors(
+                    base = if (isDark) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
+                    content = MaterialTheme.colorScheme.onSurface,
+                    isDark = isDark
+                )
+                GlossCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = riderGlossColors,
+                    tiltOnTouch = true
                 ) {
-                    NumberInputField(
-                        value = riderWeightInput,
-                        onValueChange = { input ->
-                            riderWeightInput = input
-                            val num = input.toDoubleOrNull()
-                            if (num != null) {
-                                val kg = UnitConverter.toKg(num, state.massUnit)
-                                if (kg in 30.0..250.0) {
-                                    riderWeightError = null
-                                    viewModel.setRiderWeight(kg)
-                                } else {
-                                    riderWeightError = "30 - 250 kg"
-                                }
-                            } else {
-                                riderWeightError = "..."
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = stringResource(id = R.string.settings_rider_profile),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = stringResource(id = R.string.onboarding_weight_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
-                        },
-                        label = stringResource(id = R.string.settings_rider_weight),
-                        suffix = state.massUnit.symbol,
-                        isError = riderWeightError != null,
-                        errorMessage = riderWeightError
-                    )
+                        }
+                        Spacer(modifier = Modifier.height(14.dp))
+                        NumberInputField(
+                            value = riderWeightInput,
+                            onValueChange = { input ->
+                                riderWeightInput = input
+                                val num = input.toDoubleOrNull()
+                                if (num != null) {
+                                    val kg = UnitConverter.toKg(num, state.massUnit)
+                                    if (kg in 30.0..250.0) {
+                                        riderWeightError = null
+                                        viewModel.setRiderWeight(kg)
+                                    } else {
+                                        riderWeightError = "30 - 250 kg"
+                                    }
+                                } else {
+                                    riderWeightError = "..."
+                                }
+                            },
+                            label = stringResource(id = R.string.settings_rider_weight),
+                            suffix = state.massUnit.symbol,
+                            isError = riderWeightError != null,
+                            errorMessage = riderWeightError
+                        )
+                    }
                 }
 
                 // 2. Vélos favoris (Non réductible, juste après Profil Cycliste)
@@ -246,6 +291,7 @@ fun SettingsScreen(
                             .defaultMinSize(minHeight = 44.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(dryBgColor)
+                            .clickable { haptics.press() }
                             .padding(vertical = 10.dp, horizontal = 4.dp)
                     ) {
                         Text(
@@ -279,7 +325,10 @@ fun SettingsScreen(
                             .background(wetBgColor)
                             .toggleable(
                                 value = isWetSelected,
-                                onValueChange = { viewModel.setShowWetSurface(it) },
+                                onValueChange = {
+                                    haptics.bounce(0.8f, true)
+                                    viewModel.setShowWetSurface(it)
+                                },
                                 role = Role.Checkbox
                             )
                             .padding(vertical = 10.dp, horizontal = 4.dp)
@@ -315,7 +364,10 @@ fun SettingsScreen(
                             .background(snowBgColor)
                             .toggleable(
                                 value = isSnowSelected,
-                                onValueChange = { viewModel.setShowSnowSurface(it) },
+                                onValueChange = {
+                                    haptics.bounce(0.8f, true)
+                                    viewModel.setShowSnowSurface(it)
+                                },
                                 role = Role.Checkbox
                             )
                             .padding(vertical = 10.dp, horizontal = 4.dp)
@@ -485,7 +537,7 @@ fun SettingsScreen(
                 )
             }
 
-            // 5. Sauvegarde et Données (Réductible)
+            // 5. Sauvegarde et Données (Réductible, replié par défaut)
             SectionCard(
                 title = stringResource(id = R.string.settings_backup),
                 icon = Icons.Default.SaveAlt,
@@ -500,6 +552,7 @@ fun SettingsScreen(
                 ) {
                     OutlinedButton(
                         onClick = {
+                            haptics.press()
                             val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
                             val filename = "bike-pressure-backup-${dateFormat.format(Date())}.json"
                             exportLauncher.launch(filename)
@@ -513,7 +566,10 @@ fun SettingsScreen(
                     }
 
                     OutlinedButton(
-                        onClick = { importLauncher.launch(arrayOf("application/json")) },
+                        onClick = {
+                            haptics.press()
+                            importLauncher.launch(arrayOf("application/json"))
+                        },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -542,73 +598,13 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(32.dp))
         }
 
-        // Estompage supérieur lors du défilement vers le bas
-        if (scrollState.canScrollBackward) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(20.dp)
-                    .align(Alignment.TopCenter)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.background,
-                                Color.Transparent
-                            )
-                        )
-                    )
-            )
-        }
-
-        // Estompage inférieur et indicateur flottant si du contenu supplémentaire existe
-        AnimatedVisibility(
+        // Estompage supérieur et inférieur fluide avec indicateur de défilement
+        ScrollTopFade(visible = scrollState.canScrollBackward)
+        ScrollBottomFade(
             visible = scrollState.canScrollForward,
-            enter = fadeIn(animationSpec = tween(200)),
-            exit = fadeOut(animationSpec = tween(200)),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .align(Alignment.BottomCenter)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                MaterialTheme.colorScheme.background
-                            )
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.92f),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-                    shadowElevation = 4.dp
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = stringResource(id = R.string.settings_scroll_more),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-        }
+            showIndicator = true,
+            indicatorText = stringResource(id = R.string.settings_scroll_more)
+        )
     }
 
         // Dialogue de réinitialisation
@@ -619,7 +615,7 @@ fun SettingsScreen(
                 text = { Text(stringResource(id = R.string.settings_reset_dialog_msg)) },
                 confirmButton = {
                     TextButton(
-                        onClick = { viewModel.confirmReset() },
+                        onClick = { viewModel.confirmReset(onResetCompleted = onNavigateToOnboarding) },
                         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                     ) {
                         Text(stringResource(id = R.string.settings_reset_all_data))

@@ -1,0 +1,6 @@
+• Port AndroidX Material 3 Adaptive complet (adaptive-layout & navigation3).
+• Interface tactile : compose-lumen (inclinaison 3D), compose-glass (verre AGSL) & compose-flight (animations héro).
+• Icône interactive avec Option B de double onde sonique concentrique & haptique.
+• Pressions en direct en bas d'écran avec verre d'accentuation & effet spéculaire.
+• Accueil en 2 étapes avec carte thème/accent, vol du logo & retour arrière.
+• Thèmes OLED noir absolu & ardoise claire.

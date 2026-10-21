@@ -18,6 +18,8 @@
     <string name="onboarding_step2_desc">Visualisez instantanément vos pressions recommandées pour chaque condition : route sèche, sol mouillé ou conditions glissantes/neige.</string>
     <string name="onboarding_step3_title">Sécurité &amp; Normes ETRTO</string>
     <string name="onboarding_step3_desc">L\'application vous alerte immédiatement si une pression dépasse la limite de sécurité pour les jantes Hookless sans crochets (max 5.0 bar).</string>
+    <string name="onboarding_step4_title">Apparence personnalisée</string>
+    <string name="onboarding_step4_desc">Choisissez votre couleur d\'accentuation et votre thème sombre/clair.</string>
     <string name="onboarding_get_started">Commencer</string>
     
     <!-- Vue Overview (Accueil) -->
@@ -228,6 +230,7 @@
     <string name="overview_subtitle">Berto 15% Drop • Multi-Surfaces</string>
     <string name="overview_view_simplified">Vue simplifiée</string>
     <string name="overview_view_detailed">Vue détaillée</string>
+    <string name="bike_edit_live_preview_title">Pressions calculées en direct</string>
     <string name="overview_luggage_weight_short">+%1$s %2$s</string>
     <string name="rim_tubes_short">Chambre à air</string>
     <string name="rim_tubeless_badge">Tubeless</string>

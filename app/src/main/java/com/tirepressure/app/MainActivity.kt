@@ -117,16 +117,33 @@ class MainActivity : ComponentActivity() {
 
             val activeConfig = systemConfigState ?: LocalConfiguration.current
             val isSystemDark = (activeConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+            val isAppDark = when (settingsState.theme) {
+                com.tirepressure.app.core.model.AppTheme.LIGHT -> false
+                com.tirepressure.app.core.model.AppTheme.DARK -> true
+                com.tirepressure.app.core.model.AppTheme.SYSTEM -> isSystemDark
+            }
 
-            val configuration = remember(currentLocale, activeConfig.uiMode, activeConfig.orientation, activeConfig.screenWidthDp, activeConfig.screenHeightDp) {
+            val configuration = remember(
+                currentLocale,
+                activeConfig.uiMode,
+                isAppDark,
+                activeConfig.orientation,
+                activeConfig.screenWidthDp,
+                activeConfig.screenHeightDp,
+                activeConfig.smallestScreenWidthDp,
+                activeConfig.screenLayout,
+                activeConfig.densityDpi
+            ) {
                 Configuration(activeConfig).apply {
                     setLocale(currentLocale)
                     setLayoutDirection(currentLocale)
+                    val nightMask = if (isAppDark) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO
+                    uiMode = (uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or nightMask
                 }
             }
 
             val context = LocalContext.current
-            val localizedContext = remember(context, currentLocale, activeConfig.uiMode) {
+            val localizedContext = remember(context, configuration) {
                 val configCtx = context.createConfigurationContext(configuration)
                 object : android.content.ContextWrapper(context) {
                     override fun getResources(): Resources = configCtx.resources

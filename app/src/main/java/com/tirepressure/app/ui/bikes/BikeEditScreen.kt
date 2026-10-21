@@ -8,6 +8,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.tirepressure.app.ui.components.ScrollTopFade
+import com.tirepressure.app.ui.components.ScrollBottomFade
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -30,10 +33,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tirepressure.app.R
 import com.tirepressure.app.core.model.MassUnit
+import com.tirepressure.app.core.model.PressureUnit
 import com.tirepressure.app.core.util.UnitConverter
+import com.tirepressure.app.domain.calculator.BertoTirePressureCalculator
 import com.tirepressure.app.domain.model.*
 import com.tirepressure.app.domain.repository.BikeRepository
 import com.tirepressure.app.domain.repository.PreferencesRepository
+import com.tirepressure.app.ui.components.LocalGlassBackdrop
+import io.github.angelomarzocchi.glass.glassBackdrop
+import io.github.angelomarzocchi.glass.rememberGlassBackdrop
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Brush
+import io.github.angelomarzocchi.flight.rememberFlightAnchor
+import io.github.angelomarzocchi.flight.recordedFlightAnchor
+import io.github.angelomarzocchi.flight.RecordedPaint
+import io.github.angelomarzocchi.lumen.GlossCard
+import io.github.angelomarzocchi.lumen.GlossCardColors
+import io.github.angelomarzocchi.lumen.GlossCardDefaults
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import com.tirepressure.app.ui.components.AddSetupDialog
 import com.tirepressure.app.ui.components.GlassAlertDialog
 import com.tirepressure.app.ui.components.NumberInputField
@@ -83,6 +101,8 @@ fun BikeEditScreen(
 
     val defaultSetupName = stringResource(id = R.string.config_default_name)
     val defaultSetupPrefix = stringResource(id = R.string.setup_default_prefix)
+    val riderWeightKg by preferencesRepository.riderWeightFlow.collectAsStateWithLifecycle(initialValue = 75.0)
+    val pressureUnit by preferencesRepository.pressureUnitFlow.collectAsStateWithLifecycle(initialValue = PressureUnit.BAR)
 
     LaunchedEffect(bikeId, massUnit) {
         viewModel.loadBikeIfNeeded(bikeId, massUnit, defaultSetupName)
@@ -130,19 +150,60 @@ fun BikeEditScreen(
         onNavigateBack()
     }
 
-    Scaffold(
-        modifier = Modifier.blur(blurRadius),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(if (bikeId == "new") R.string.bike_edit_title_new else R.string.bike_edit_title_edit),
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.semantics { heading() }
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+    val glassBackdrop = rememberGlassBackdrop()
+    val bikeHeroAnchor = rememberFlightAnchor(
+        key = "bike_hero_${bikeId}",
+        paint = remember { RecordedPaint(single = false) }
+    )
+
+    val activeSetup = setups.getOrNull(selectedSetupIndex) ?: setups.firstOrNull() ?: WheelSetup(id = "default", name = "Default")
+    val calculator = remember { BertoTirePressureCalculator() }
+    val liveCalculationResult = remember(bikeCategory, bikeWeightInput, massUnit, activeSetup, riderWeightKg) {
+        try {
+            val weightKg = UnitConverter.toKg(bikeWeightInput.toDoubleOrNull() ?: 10.0, massUnit)
+            val effectiveStyle = activeSetup.getEffectiveRideStyle(bikeCategory)
+            val input = PressureCalculationInput(
+                riderWeightKg = riderWeightKg,
+                bikeWeightKg = weightKg,
+                luggageWeightKg = activeSetup.luggageWeightKg,
+                rideStyle = effectiveStyle,
+                frontTire = activeSetup.frontTire,
+                rearTire = activeSetup.rearTire,
+                frontWheel = activeSetup.frontWheel,
+                rearWheel = activeSetup.rearWheel,
+                surfaceCondition = SurfaceCondition.DRY
+            )
+            calculator.calculate(input)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    CompositionLocalProvider(LocalGlassBackdrop provides glassBackdrop) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            Scaffold(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .glassBackdrop(glassBackdrop)
+                    .background(MaterialTheme.colorScheme.background)
+                    .blur(blurRadius),
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text = stringResource(if (bikeId == "new") R.string.bike_edit_title_new else R.string.bike_edit_title_edit),
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .recordedFlightAnchor(bikeHeroAnchor)
+                                    .semantics { heading() }
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.action_cancel))
                     }
                 },
@@ -174,6 +235,107 @@ fun BikeEditScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
+        },
+        bottomBar = {
+            if (isLoaded) {
+                liveCalculationResult?.let { result ->
+                    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                    val primaryColor = MaterialTheme.colorScheme.primary
+                    val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
+
+                    val accentGlossColors = GlossCardColors(
+                        top = primaryColor,
+                        middle = primaryColor,
+                        bottom = primaryColor.copy(alpha = if (isDark) 0.88f else 0.82f),
+                        slab = Color.White.copy(alpha = if (isDark) 0.35f else 0.50f),
+                        content = onPrimaryColor,
+                        shadow = primaryColor.copy(alpha = if (isDark) 0.45f else 0.25f),
+                        contactShadow = Color.Black.copy(alpha = if (isDark) 0.30f else 0.15f)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        GlossCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(
+                                    width = 1.dp,
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.White.copy(alpha = if (isDark) 0.40f else 0.55f),
+                                            Color.White.copy(alpha = if (isDark) 0.15f else 0.20f),
+                                            Color.Transparent
+                                        )
+                                    ),
+                                    shape = RoundedCornerShape(20.dp)
+                                ),
+                            shape = RoundedCornerShape(20.dp),
+                            colors = accentGlossColors,
+                            tiltOnTouch = true
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(id = R.string.bike_edit_live_preview_title),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = onPrimaryColor.copy(alpha = 0.82f),
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = "${activeSetup.name} • ☀️ ${stringResource(R.string.overview_dry)}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = onPrimaryColor,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(
+                                            text = stringResource(R.string.widget_front_abbr),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = onPrimaryColor.copy(alpha = 0.82f),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "${pressureUnit.format(result.front.pressureMbar)} ${pressureUnit.symbol}",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = onPrimaryColor,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(
+                                            text = stringResource(R.string.widget_rear_abbr),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = onPrimaryColor.copy(alpha = 0.82f),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "${pressureUnit.format(result.rear.pressureMbar)} ${pressureUnit.symbol}",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = onPrimaryColor,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     ) { paddingValues ->
         if (!isLoaded) {
@@ -183,16 +345,20 @@ fun BikeEditScreen(
             return@Scaffold
         }
 
-        val activeSetup = setups.getOrNull(selectedSetupIndex) ?: setups.first()
-
-        LazyColumn(
+        val listState = rememberLazyListState()
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(top = 8.dp, bottom = 48.dp)
         ) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp)
+            ) {
             // 1. Informations Générales (Réductible par défaut et non éditable pour un vélo existant)
             item {
                 SectionCard(
@@ -477,38 +643,14 @@ fun BikeEditScreen(
                         )
                     }
                 ) {
-                    // Onglets de sélection de configuration
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        setups.forEachIndexed { index, setup ->
-                            val isSelected = index == selectedSetupIndex
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isSelected) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent)
-                                    .clickable { selectedSetupIndex = index }
-                                    .padding(vertical = 8.dp, horizontal = 6.dp)
-                            ) {
-                                Text(
-                                    text = setup.name,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
-                    }
+                    // Onglets de sélection de configuration en LightTabs (Option 2A)
+                    PillSelector(
+                        items = setups.indices.toList(),
+                        selectedItem = selectedSetupIndex,
+                        onItemSelected = { selectedSetupIndex = it },
+                        labelProvider = { setups.getOrNull(it)?.name ?: "" },
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
                     Spacer(modifier = Modifier.height(10.dp))
 
@@ -689,6 +831,7 @@ fun BikeEditScreen(
                     )
                 }
             }
+
 
             // 3. Diamètre de Roue (Réductible, de la plus petite à la plus grande taille)
             item {
@@ -1097,7 +1240,15 @@ fun BikeEditScreen(
                 }
             }
         }
+
+        ScrollTopFade(visible = listState.canScrollBackward)
+        ScrollBottomFade(
+            visible = listState.canScrollForward,
+            showIndicator = true,
+            indicatorText = stringResource(id = R.string.settings_scroll_more)
+        )
     }
+}
 
     if (showDeleteBikeConfirmation) {
         GlassAlertDialog(
@@ -1183,6 +1334,8 @@ fun BikeEditScreen(
                 viewModel.confirmAddSetup(newSetupName, templateSetup, overrideRideStyle, defaultSetupPrefix)
             }
         )
+    }
+        }
     }
 }
 

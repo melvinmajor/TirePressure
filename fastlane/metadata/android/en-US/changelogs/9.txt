@@ -1,0 +1,6 @@
+• AndroidX Material 3 Adaptive full port (adaptive-layout & navigation3).
+• Tactile UI with compose-lumen (3D tilt & sheen), compose-glass (AGSL glass) & compose-flight (hero animations).
+• App icon with Option B double concentric sonic pressure waves & haptics.
+• Live Calculated Pressures bottom bar with dynamic accent glass & touch lumen effect.
+• Enhanced 2-step onboarding with theme/accent card, logo flight & back navigation.
+• True OLED dark & soft cool light canvas.

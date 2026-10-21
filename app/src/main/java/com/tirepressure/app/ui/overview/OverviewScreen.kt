@@ -64,6 +64,20 @@ import com.tirepressure.app.core.model.PressureUnit
 import com.tirepressure.app.domain.model.*
 import com.tirepressure.app.core.model.MassUnit
 import com.tirepressure.app.core.util.UnitConverter
+import io.github.angelomarzocchi.glass.GlassMaterial
+import io.github.angelomarzocchi.glass.GlassSurface
+import io.github.angelomarzocchi.glass.glassBackdrop
+import io.github.angelomarzocchi.glass.glassLampFollowsFinger
+import io.github.angelomarzocchi.glass.rememberGlassBackdrop
+import io.github.angelomarzocchi.glass.rememberGlassLamp
+import io.github.angelomarzocchi.glass.rememberTiltKeyLight
+import io.github.angelomarzocchi.lumen.GlossCard
+import io.github.angelomarzocchi.lumen.GlossCardDefaults
+import io.github.angelomarzocchi.lumen.rememberBounceHaptics
+import io.github.angelomarzocchi.flight.rememberFlightAnchor
+import io.github.angelomarzocchi.flight.recordedFlightAnchor
+import io.github.angelomarzocchi.flight.RecordedPaint
+import com.tirepressure.app.ui.components.LocalGlassBackdrop
 import com.tirepressure.app.ui.components.AddSetupDialog
 import com.tirepressure.app.ui.components.BikeCardCategoryHeader
 import com.tirepressure.app.ui.components.EditBikeDialog
@@ -71,6 +85,10 @@ import com.tirepressure.app.ui.components.GlassAlertDialog
 import com.tirepressure.app.ui.components.GlassCard
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import com.tirepressure.app.ui.components.PillSelector
+import com.tirepressure.app.ui.components.ScrollTopFade
+import com.tirepressure.app.ui.components.ScrollBottomFade
+import com.tirepressure.app.ui.components.appGlossCardColors
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import com.tirepressure.app.ui.theme.ElectricLime
 import com.tirepressure.app.ui.theme.ElectricLimeContainerDark
 import com.tirepressure.app.ui.theme.getCategoryColor
@@ -102,62 +120,78 @@ fun OverviewScreen(
         label = "OverviewDialogBlur"
     )
 
-    Scaffold(
-        modifier = Modifier.blur(blurRadius),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable { onNavigateToAppInfo() }
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.app_logo),
-                            contentDescription = stringResource(id = R.string.app_info_title),
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-                        val tireColor = if (isDark) Color.White else MaterialTheme.colorScheme.onBackground
-                        Text(
-                            text = buildAnnotatedString {
-                                withStyle(SpanStyle(color = tireColor)) {
-                                    append("Tire")
-                                }
-                                withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-                                    append("Pressure")
-                                }
-                            },
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.semantics { heading() }
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { userSelectedSimplified = !isSimplifiedView }) {
-                        Icon(
-                            imageVector = if (isSimplifiedView) Icons.Default.ViewAgenda else Icons.Default.TableRows,
-                            contentDescription = if (isSimplifiedView) {
-                                stringResource(id = R.string.overview_view_detailed)
-                            } else {
-                                stringResource(id = R.string.overview_view_simplified)
+    val glassBackdrop = rememberGlassBackdrop()
+    val addBikeHeroAnchor = rememberFlightAnchor(
+        key = "bike_hero_new",
+        paint = remember { RecordedPaint(single = false) }
+    )
+    val appLogoAnchor = rememberFlightAnchor(
+        key = "app_logo",
+        paint = remember { RecordedPaint(single = false) }
+    )
+    val appTitleAnchor = rememberFlightAnchor(
+        key = "app_title",
+        paint = remember { RecordedPaint(single = false) }
+    )
+    val tilt = rememberTiltKeyLight()
+    val lamp = rememberGlassLamp()
+    val haptics = rememberBounceHaptics()
+
+    CompositionLocalProvider(LocalGlassBackdrop provides glassBackdrop) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            Scaffold(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .glassBackdrop(glassBackdrop)
+                    .background(MaterialTheme.colorScheme.background)
+                    .blur(blurRadius),
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.clickable { onNavigateToAppInfo() }
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.app_logo),
+                                    contentDescription = stringResource(id = R.string.app_info_title),
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .recordedFlightAnchor(appLogoAnchor)
+                                        .clip(RoundedCornerShape(8.dp))
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                                val tireColor = if (isDark) Color.White else MaterialTheme.colorScheme.onBackground
+                                Text(
+                                    text = buildAnnotatedString {
+                                        withStyle(SpanStyle(color = tireColor)) {
+                                            append("Tire")
+                                        }
+                                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                                            append("Pressure")
+                                        }
+                                    },
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier
+                                        .recordedFlightAnchor(appTitleAnchor)
+                                        .semantics { heading() }
+                                )
                             }
-                        )
-                    }
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = stringResource(id = R.string.nav_settings)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
-            )
-        }
-    ) { paddingValues ->
+                        },
+                        actions = {
+                            // Reserve horizontal space for the floating GlassSurface action island
+                            Spacer(modifier = Modifier.width(104.dp))
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                    )
+                }
+            ) { paddingValues ->
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
@@ -190,6 +224,7 @@ fun OverviewScreen(
                 }
                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 clipboard.setPrimaryClip(ClipData.newPlainText("Pressions", textToCopy.trimEnd()))
+                haptics.bounce(1f, true)
                 Toast.makeText(context, context.getString(R.string.overview_toast_copied), Toast.LENGTH_SHORT).show()
             }
 
@@ -230,7 +265,10 @@ fun OverviewScreen(
                             showSnowSurface = state.showSnowSurface,
                             onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
                             onEditBikeInfo = { viewModel.startEditBikeInfo(bikeOverview.bike, state.massUnit) },
-                            onToggleFavorite = { viewModel.toggleFavoriteBike(bikeOverview.bike) },
+                            onToggleFavorite = {
+                                haptics.bounce(0.8f, true)
+                                viewModel.toggleFavoriteBike(bikeOverview.bike)
+                            },
                             onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike, copySuffix) },
                             onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
                             onAddSetup = { viewModel.startAddSetup(bikeOverview.bike, defaultPrefix) },
@@ -247,7 +285,10 @@ fun OverviewScreen(
                             showSnowSurface = state.showSnowSurface,
                             onEditBike = { onNavigateToEditBike(bikeOverview.bike.id) },
                             onEditBikeInfo = { viewModel.startEditBikeInfo(bikeOverview.bike, state.massUnit) },
-                            onToggleFavorite = { viewModel.toggleFavoriteBike(bikeOverview.bike) },
+                            onToggleFavorite = {
+                                haptics.bounce(0.8f, true)
+                                viewModel.toggleFavoriteBike(bikeOverview.bike)
+                            },
                             onDuplicateBike = { viewModel.duplicateBike(bikeOverview.bike, copySuffix) },
                             onDeleteBike = { viewModel.requestDeleteBike(bikeOverview.bike) },
                             onAddSetup = { viewModel.startAddSetup(bikeOverview.bike, defaultPrefix) },
@@ -259,42 +300,42 @@ fun OverviewScreen(
                 }
             }
 
+            val gridState = rememberLazyStaggeredGridState()
+
             LazyVerticalStaggeredGrid(
+                state = gridState,
                 columns = StaggeredGridCells.Fixed(columnsCount),
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp, start = horizontalPadding, end = horizontalPadding),
                 horizontalArrangement = Arrangement.spacedBy(spacing),
                 verticalItemSpacing = spacing
             ) {
-                // Bandeau de réglages rapides : Bascule d'unité de pression instantanée
+                // Bandeau de réglages rapides : Bascule d'unité de pression instantanée (Option 4A compacte)
                 item(span = StaggeredGridItemSpan.FullLine) {
-                    GlassCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        elevation = 4.dp
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = stringResource(id = R.string.overview_pressures_display_in),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        Text(
+                            text = stringResource(id = R.string.overview_pressures_display_in),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
 
-                            PillSelector(
-                                items = PressureUnit.entries,
-                                selectedItem = state.pressureUnit,
-                                onItemSelected = { viewModel.setPressureUnit(it) },
-                                labelProvider = { it.symbol },
-                                modifier = Modifier.width(140.dp)
-                            )
-                        }
+                        PillSelector(
+                            items = PressureUnit.entries,
+                            selectedItem = state.pressureUnit,
+                            onItemSelected = {
+                                haptics.press()
+                                viewModel.setPressureUnit(it)
+                            },
+                            labelProvider = { it.symbol },
+                            modifier = Modifier.width(140.dp)
+                        )
                     }
                 }
 
@@ -329,8 +370,12 @@ fun OverviewScreen(
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                                 )
                                 Button(
-                                    onClick = onNavigateToAddBike,
-                                    shape = RoundedCornerShape(12.dp)
+                                    onClick = {
+                                        haptics.press()
+                                        onNavigateToAddBike()
+                                    },
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.recordedFlightAnchor(addBikeHeroAnchor)
                                 ) {
                                     Icon(Icons.Default.Add, contentDescription = null)
                                     Spacer(modifier = Modifier.width(6.dp))
@@ -346,27 +391,81 @@ fun OverviewScreen(
                     ) { bikeOverview ->
                         RenderBikeCard(bikeOverview)
                     }
-                }
 
-                // Bouton visible après la liste des vélos pour ajouter un vélo
-                item(span = StaggeredGridItemSpan.FullLine) {
-                    Button(
-                        onClick = onNavigateToAddBike,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(id = R.string.overview_add_bike),
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
-                        )
+                    // Bouton visible après la liste des vélos pour ajouter un vélo
+                    item(span = StaggeredGridItemSpan.FullLine) {
+                        Button(
+                            onClick = {
+                                haptics.press()
+                                onNavigateToAddBike()
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp)
+                                .recordedFlightAnchor(addBikeHeroAnchor),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(id = R.string.overview_add_bike),
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
                     }
                 }
             }
+
+            ScrollTopFade(visible = gridState.canScrollBackward)
+            ScrollBottomFade(
+                visible = gridState.canScrollForward,
+                showIndicator = true,
+                indicatorText = stringResource(id = R.string.settings_scroll_more)
+            )
+            }
+        }
+
+        // Option 1C: Targeted Top-Right Actions Island
+        val isTopBarDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+        GlassSurface(
+            backdrop = glassBackdrop,
+            material = GlassMaterial.clear(dark = isTopBarDark),
+            cornerRadius = 20.dp,
+            lamp = lamp,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .statusBarsPadding()
+                .padding(top = 8.dp, end = 12.dp)
+                .glassLampFollowsFinger(lamp)
+                .blur(blurRadius)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = {
+                    haptics.press()
+                    userSelectedSimplified = !isSimplifiedView
+                }) {
+                    Icon(
+                        imageVector = if (isSimplifiedView) Icons.Default.ViewAgenda else Icons.Default.TableRows,
+                        contentDescription = if (isSimplifiedView) {
+                            stringResource(id = R.string.overview_view_detailed)
+                        } else {
+                            stringResource(id = R.string.overview_view_simplified)
+                        }
+                    )
+                }
+                IconButton(onClick = {
+                    haptics.press()
+                    onNavigateToSettings()
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = stringResource(id = R.string.nav_settings)
+                    )
+                }
             }
         }
 
@@ -468,6 +567,8 @@ fun OverviewScreen(
             }
         }
     }
+}
+}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -491,11 +592,30 @@ private fun BikeOverviewCard(
     var bikeMenuExpanded by remember { mutableStateOf(false) }
     var isExpanded by remember(bike.id, bike.isDefault) { mutableStateOf(bike.isDefault) }
 
-    GlassCard(
+    val bikeHeroAnchor = rememberFlightAnchor(
+        key = "bike_hero_${bike.id}",
+        paint = remember { RecordedPaint(single = false) }
+    )
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val categoryBaseColor = getCategoryColor(bike.category)
+    val baseCardColor = if (isDark) {
+        androidx.compose.ui.graphics.lerp(MaterialTheme.colorScheme.surface, categoryBaseColor, 0.12f)
+    } else {
+        androidx.compose.ui.graphics.lerp(MaterialTheme.colorScheme.surface, categoryBaseColor, 0.05f)
+    }
+    val cardColors = appGlossCardColors(
+        base = baseCardColor,
+        content = MaterialTheme.colorScheme.onSurface,
+        isDark = isDark
+    )
+
+    GlossCard(
         modifier = Modifier
             .fillMaxWidth()
             .animateContentSize(animationSpec = tween(300, easing = FastOutSlowInEasing)),
-        shape = RoundedCornerShape(18.dp)
+        shape = RoundedCornerShape(18.dp),
+        colors = cardColors,
+        tiltOnTouch = true
     ) {
         val headerHeight = 40.dp
 
@@ -544,6 +664,7 @@ private fun BikeOverviewCard(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
                             .weight(1f, fill = false)
+                            .recordedFlightAnchor(bikeHeroAnchor)
                             .semantics { heading() }
                     )
                 }
@@ -1149,11 +1270,30 @@ private fun BikeOverviewCardSimplified(
     val bike = bikeOverview.bike
     var bikeMenuExpanded by remember { mutableStateOf(false) }
 
-    GlassCard(
+    val bikeHeroAnchor = rememberFlightAnchor(
+        key = "bike_hero_${bike.id}",
+        paint = remember { RecordedPaint(single = false) }
+    )
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val categoryBaseColor = getCategoryColor(bike.category)
+    val baseCardColor = if (isDark) {
+        androidx.compose.ui.graphics.lerp(MaterialTheme.colorScheme.surface, categoryBaseColor, 0.12f)
+    } else {
+        androidx.compose.ui.graphics.lerp(MaterialTheme.colorScheme.surface, categoryBaseColor, 0.05f)
+    }
+    val cardColors = appGlossCardColors(
+        base = baseCardColor,
+        content = MaterialTheme.colorScheme.onSurface,
+        isDark = isDark
+    )
+
+    GlossCard(
         modifier = Modifier
             .fillMaxWidth()
             .animateContentSize(animationSpec = tween(300, easing = FastOutSlowInEasing)),
-        shape = RoundedCornerShape(14.dp)
+        shape = RoundedCornerShape(14.dp),
+        colors = cardColors,
+        tiltOnTouch = true
     ) {
         val headerHeight = 40.dp
 
@@ -1192,7 +1332,9 @@ private fun BikeOverviewCardSimplified(
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .recordedFlightAnchor(bikeHeroAnchor)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     val catColor = getCategoryColor(bike.category)

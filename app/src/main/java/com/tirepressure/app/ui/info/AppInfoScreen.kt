@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +33,15 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.tirepressure.app.R
 import com.tirepressure.app.ui.components.AboutAndPrivacyCard
+import com.tirepressure.app.ui.components.ScrollTopFade
+import com.tirepressure.app.ui.components.ScrollBottomFade
+import com.tirepressure.app.ui.components.TirePressurePulseLogo
+import com.tirepressure.app.ui.components.appGlossCardColors
+import io.github.angelomarzocchi.flight.RecordedPaint
+import io.github.angelomarzocchi.flight.recordedFlightAnchor
+import io.github.angelomarzocchi.flight.rememberFlightAnchor
+import io.github.angelomarzocchi.lumen.GlossCard
+import io.github.angelomarzocchi.lumen.GlossCardDefaults
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,6 +50,22 @@ fun AppInfoScreen(
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+
+    val appLogoAnchor = rememberFlightAnchor(
+        key = "app_logo",
+        paint = remember { RecordedPaint(single = false) }
+    )
+    val appTitleAnchor = rememberFlightAnchor(
+        key = "app_title",
+        paint = remember { RecordedPaint(single = false) }
+    )
+
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val cardColors = appGlossCardColors(
+        base = if (isDark) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
+        content = MaterialTheme.colorScheme.onSurface,
+        isDark = isDark
+    )
 
     Scaffold(
         topBar = {
@@ -54,25 +80,28 @@ fun AppInfoScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Logo agrandi
-            Image(
-                painter = painterResource(id = R.drawable.app_logo),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(96.dp)
-                    .clip(RoundedCornerShape(22.dp))
+            // Logo avec animation héro partagée et impulsion de gonflage tactile (Option C)
+            TirePressurePulseLogo(
+                size = 96.dp,
+                shape = RoundedCornerShape(22.dp),
+                imageModifier = Modifier.recordedFlightAnchor(appLogoAnchor),
+                contentDescription = stringResource(id = R.string.app_info_title)
             )
 
-            // Nom et version
+            // Nom et version avec animation héro partagée
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
                 val tireColor = if (isDark) Color.White else MaterialTheme.colorScheme.onBackground
@@ -86,7 +115,8 @@ fun AppInfoScreen(
                         }
                     },
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.recordedFlightAnchor(appTitleAnchor)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -96,16 +126,16 @@ fun AppInfoScreen(
                 )
             }
 
-            // Carte lien GitHub
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(role = Role.Button) {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/melvinmajor/TirePressure"))
-                        context.startActivity(intent)
-                    },
+            // Carte lien GitHub en GlossCard réactive au toucher
+            GlossCard(
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                colors = cardColors,
+                tiltOnTouch = true,
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/melvinmajor/TirePressure"))
+                    context.startActivity(intent)
+                }
             ) {
                 Row(
                     modifier = Modifier
@@ -148,11 +178,12 @@ fun AppInfoScreen(
                 }
             }
 
-            // Carte Adaptations Algorithme Frank Berto
-            Card(
+            // Carte Adaptations Algorithme Frank Berto en GlossCard
+            GlossCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                colors = cardColors,
+                tiltOnTouch = true
             ) {
                 Column(
                     modifier = Modifier
@@ -179,6 +210,14 @@ fun AppInfoScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
         }
+
+        ScrollTopFade(visible = scrollState.canScrollBackward)
+        ScrollBottomFade(
+            visible = scrollState.canScrollForward,
+            showIndicator = true,
+            indicatorText = stringResource(id = R.string.settings_scroll_more)
+        )
     }
+}
 }
 
