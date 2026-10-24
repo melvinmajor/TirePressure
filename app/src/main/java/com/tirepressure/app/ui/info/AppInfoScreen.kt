@@ -46,19 +46,31 @@ import io.github.angelomarzocchi.lumen.GlossCardDefaults
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppInfoScreen(
+    isDualPane: Boolean = false,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    val appLogoAnchor = rememberFlightAnchor(
-        key = "app_logo",
-        paint = remember { RecordedPaint(single = false) }
-    )
-    val appTitleAnchor = rememberFlightAnchor(
-        key = "app_title",
-        paint = remember { RecordedPaint(single = false) }
-    )
+    val logoAnchorModifier = if (!isDualPane) {
+        val appLogoAnchor = rememberFlightAnchor(
+            key = "app_logo",
+            paint = remember { RecordedPaint(single = false) }
+        )
+        Modifier.recordedFlightAnchor(appLogoAnchor)
+    } else {
+        Modifier
+    }
+
+    val titleAnchorModifier = if (!isDualPane) {
+        val appTitleAnchor = rememberFlightAnchor(
+            key = "app_title",
+            paint = remember { RecordedPaint(single = false) }
+        )
+        Modifier.recordedFlightAnchor(appTitleAnchor)
+    } else {
+        Modifier
+    }
 
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val cardColors = appGlossCardColors(
@@ -84,9 +96,13 @@ fun AppInfoScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .consumeWindowInsets(paddingValues)
+                .imePadding(),
+            contentAlignment = Alignment.TopCenter
         ) {
             Column(
                 modifier = Modifier
+                    .widthIn(max = 680.dp)
                     .fillMaxSize()
                     .verticalScroll(scrollState)
                     .padding(horizontal = 16.dp, vertical = 4.dp),
@@ -97,7 +113,7 @@ fun AppInfoScreen(
             TirePressurePulseLogo(
                 size = 96.dp,
                 shape = RoundedCornerShape(22.dp),
-                imageModifier = Modifier.recordedFlightAnchor(appLogoAnchor),
+                imageModifier = logoAnchorModifier,
                 contentDescription = stringResource(id = R.string.app_info_title)
             )
 
@@ -116,7 +132,7 @@ fun AppInfoScreen(
                     },
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.recordedFlightAnchor(appTitleAnchor)
+                    modifier = titleAnchorModifier
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(

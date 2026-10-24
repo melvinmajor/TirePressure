@@ -91,7 +91,9 @@ fun EditBikeDialog(
                     supportingText = { draft.nameError?.let { Text(it, color = MaterialTheme.colorScheme.error) } },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .keepVisibleAboveKeyboard()
                 )
 
                 // 2. Marque & Modèle (50% / 50%)
@@ -106,7 +108,9 @@ fun EditBikeDialog(
                         placeholder = { Text(stringResource(id = R.string.bike_brand_placeholder)) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .keepVisibleAboveKeyboard()
                     )
                     OutlinedTextField(
                         value = draft.model,
@@ -115,7 +119,9 @@ fun EditBikeDialog(
                         placeholder = { Text(stringResource(id = R.string.bike_model_placeholder)) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .keepVisibleAboveKeyboard()
                     )
                 }
 
@@ -136,7 +142,9 @@ fun EditBikeDialog(
                         placeholder = { Text(stringResource(id = R.string.bike_size_placeholder)) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .keepVisibleAboveKeyboard()
                     )
                 }
 

@@ -88,7 +88,9 @@ fun AddSetupDialog(
                     label = { Text(stringResource(id = R.string.add_setup_name_label)) },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .keepVisibleAboveKeyboard()
                 )
 
                 // Sélecteur de discipline / usage pour ce profil

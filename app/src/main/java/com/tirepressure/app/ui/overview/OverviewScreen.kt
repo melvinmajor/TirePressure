@@ -198,8 +198,8 @@ fun OverviewScreen(
                 .padding(paddingValues)
         ) {
             val columnsCount = if (!isDualPane && (maxWidth > maxHeight || maxWidth >= 600.dp)) 2 else 1
-            val horizontalPadding = 16.dp
-            val spacing = 16.dp
+            val horizontalPadding = 14.dp
+            val spacing = 12.dp
 
             val copySuffix = stringResource(id = R.string.overview_duplicate_suffix)
             val copyPressuresAction: (BikeOverviewData, SetupMultiSurfaceResult) -> Unit = { bikeOverview, setupResult ->
@@ -234,23 +234,23 @@ fun OverviewScreen(
                     targetState = isSimplifiedView,
                     transitionSpec = {
                         if (targetState) {
-                            slideInHorizontally(
+                            (slideInHorizontally(
                                 initialOffsetX = { fullWidth -> fullWidth },
                                 animationSpec = tween(300, easing = FastOutSlowInEasing)
                             ) + fadeIn(tween(250)) togetherWith
                             slideOutOfContainer(
                                 towards = AnimatedContentTransitionScope.SlideDirection.Start,
                                 animationSpec = tween(300, easing = FastOutSlowInEasing)
-                            ) + fadeOut(tween(200))
+                            ) + fadeOut(tween(200))) using SizeTransform(clip = false)
                         } else {
-                            slideIntoContainer(
+                            (slideIntoContainer(
                                 towards = AnimatedContentTransitionScope.SlideDirection.End,
                                 animationSpec = tween(300, easing = FastOutSlowInEasing)
                             ) + fadeIn(tween(250)) togetherWith
                             slideOutOfContainer(
                                 towards = AnimatedContentTransitionScope.SlideDirection.End,
                                 animationSpec = tween(300, easing = FastOutSlowInEasing)
-                            ) + fadeOut(tween(200))
+                            ) + fadeOut(tween(200))) using SizeTransform(clip = false)
                         }
                     },
                     label = "ViewModeCardTransition"
@@ -612,7 +612,7 @@ private fun BikeOverviewCard(
     GlossCard(
         modifier = Modifier
             .fillMaxWidth()
-            .animateContentSize(animationSpec = tween(300, easing = FastOutSlowInEasing)),
+            .padding(horizontal = 2.dp, vertical = 2.dp),
         shape = RoundedCornerShape(18.dp),
         colors = cardColors,
         tiltOnTouch = true
@@ -630,6 +630,7 @@ private fun BikeOverviewCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .animateContentSize(animationSpec = tween(300, easing = FastOutSlowInEasing))
                 .padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -1290,7 +1291,7 @@ private fun BikeOverviewCardSimplified(
     GlossCard(
         modifier = Modifier
             .fillMaxWidth()
-            .animateContentSize(animationSpec = tween(300, easing = FastOutSlowInEasing)),
+            .padding(horizontal = 2.dp, vertical = 2.dp),
         shape = RoundedCornerShape(14.dp),
         colors = cardColors,
         tiltOnTouch = true
@@ -1308,6 +1309,7 @@ private fun BikeOverviewCardSimplified(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .animateContentSize(animationSpec = tween(300, easing = FastOutSlowInEasing))
                 .padding(start = 12.dp, end = 12.dp, bottom = 10.dp)
         ) {
             // En-tête compact du vélo centré verticalement (espacements haut et bas identiques)

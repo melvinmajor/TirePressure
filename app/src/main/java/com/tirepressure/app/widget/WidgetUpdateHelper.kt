@@ -30,10 +30,12 @@ object WidgetUpdateHelper {
         val allBikesComponent = ComponentName(context, AllBikesWidgetReceiver::class.java)
         val allBikesIds = appWidgetManager.getAppWidgetIds(allBikesComponent)
         if (allBikesIds.isNotEmpty()) {
-            for (id in allBikesIds) {
-                AllBikesWidgetReceiver.updateWidget(context, appWidgetManager, id)
+            CoroutineScope(Dispatchers.IO).launch {
+                for (id in allBikesIds) {
+                    AllBikesWidgetReceiver.updateWidget(context, appWidgetManager, id)
+                }
+                appWidgetManager.notifyAppWidgetViewDataChanged(allBikesIds, R.id.widget_all_bikes_list)
             }
-            appWidgetManager.notifyAppWidgetViewDataChanged(allBikesIds, R.id.widget_all_bikes_list)
         }
     }
 

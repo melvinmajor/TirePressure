@@ -59,6 +59,7 @@ import com.tirepressure.app.ui.components.PillSelector
 import androidx.compose.foundation.BorderStroke
 import com.tirepressure.app.ui.components.SectionCard
 import com.tirepressure.app.ui.components.YearInputField
+import com.tirepressure.app.ui.components.keepVisibleAboveKeyboard
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.text.style.TextAlign
@@ -92,6 +93,7 @@ fun BikeEditScreen(
     bikeId: String,
     viewModel: BikeEditViewModel,
     preferencesRepository: PreferencesRepository,
+    isDualPane: Boolean = false,
     onNavigateBack: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -151,10 +153,15 @@ fun BikeEditScreen(
     }
 
     val glassBackdrop = rememberGlassBackdrop()
-    val bikeHeroAnchor = rememberFlightAnchor(
-        key = "bike_hero_${bikeId}",
-        paint = remember { RecordedPaint(single = false) }
-    )
+    val bikeHeroModifier = if (!isDualPane) {
+        val bikeHeroAnchor = rememberFlightAnchor(
+            key = "bike_hero_${bikeId}",
+            paint = remember { RecordedPaint(single = false) }
+        )
+        Modifier.recordedFlightAnchor(bikeHeroAnchor)
+    } else {
+        Modifier
+    }
 
     val activeSetup = setups.getOrNull(selectedSetupIndex) ?: setups.firstOrNull() ?: WheelSetup(id = "default", name = "Default")
     val calculator = remember { BertoTirePressureCalculator() }
@@ -197,13 +204,14 @@ fun BikeEditScreen(
                             Text(
                                 text = stringResource(if (bikeId == "new") R.string.bike_edit_title_new else R.string.bike_edit_title_edit),
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier
-                                    .recordedFlightAnchor(bikeHeroAnchor)
-                                    .semantics { heading() }
+                                modifier = bikeHeroModifier.semantics { heading() }
                             )
                         },
                         navigationIcon = {
-                            IconButton(onClick = onNavigateBack) {
+                            IconButton(onClick = {
+                                viewModel.reset()
+                                onNavigateBack()
+                            }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.action_cancel))
                     }
                 },
@@ -350,10 +358,14 @@ fun BikeEditScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .consumeWindowInsets(paddingValues)
+                .imePadding(),
+            contentAlignment = Alignment.TopCenter
         ) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier
+                    .widthIn(max = 760.dp)
                     .fillMaxSize()
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -505,7 +517,9 @@ fun BikeEditScreen(
                             supportingText = { nameError?.let { Text(it, color = MaterialTheme.colorScheme.error) } },
                             singleLine = true,
                             shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .keepVisibleAboveKeyboard()
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -562,7 +576,9 @@ fun BikeEditScreen(
                                 placeholder = { Text(stringResource(id = R.string.bike_brand_placeholder)) },
                                 singleLine = true,
                                 shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .keepVisibleAboveKeyboard()
                             )
                             OutlinedTextField(
                                 value = model,
@@ -571,7 +587,9 @@ fun BikeEditScreen(
                                 placeholder = { Text(stringResource(id = R.string.bike_model_placeholder)) },
                                 singleLine = true,
                                 shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .keepVisibleAboveKeyboard()
                             )
                         }
 
@@ -593,7 +611,9 @@ fun BikeEditScreen(
                                 placeholder = { Text(stringResource(id = R.string.bike_size_placeholder)) },
                                 singleLine = true,
                                 shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .keepVisibleAboveKeyboard()
                             )
                         }
 
@@ -694,7 +714,9 @@ fun BikeEditScreen(
                         label = { Text(stringResource(id = R.string.bike_setup_name_label)) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .keepVisibleAboveKeyboard()
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))

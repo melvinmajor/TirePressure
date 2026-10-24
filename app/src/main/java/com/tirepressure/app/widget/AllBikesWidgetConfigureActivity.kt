@@ -10,6 +10,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -18,14 +19,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.tirepressure.app.R
-import com.tirepressure.app.ui.theme.ElectricLime
+import com.tirepressure.app.core.model.AppAccentColor
+import com.tirepressure.app.core.model.AppTheme
+import com.tirepressure.app.data.repository.PreferencesRepositoryImpl
+import com.tirepressure.app.ui.components.ScrollBottomFade
+import com.tirepressure.app.ui.components.ScrollTopFade
+import com.tirepressure.app.ui.components.appGlossCardColors
 import com.tirepressure.app.ui.theme.TirePressureTheme
+import com.tirepressure.app.ui.theme.setupEdgeToEdge
+import io.github.angelomarzocchi.lumen.GlossCard
+import io.github.angelomarzocchi.lumen.rememberBounceHaptics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -52,6 +62,7 @@ class AllBikesWidgetConfigureActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setupEdgeToEdge()
         super.onCreate(savedInstanceState)
         val initialLocale = com.tirepressure.app.core.util.LocaleHelper.getSavedLocale(this)
         com.tirepressure.app.core.util.LocaleHelper.applyLocale(this, initialLocale)
@@ -69,9 +80,16 @@ class AllBikesWidgetConfigureActivity : ComponentActivity() {
         }
 
         val initialTheme = WidgetPreferencesHelper.getWidgetTheme(this, appWidgetId)
+        val prefs = PreferencesRepositoryImpl(this)
 
         setContent {
-            TirePressureTheme {
+            val appTheme by prefs.themeFlow.collectAsStateWithLifecycle(initialValue = AppTheme.SYSTEM)
+            val accentColor by prefs.accentColorFlow.collectAsStateWithLifecycle(initialValue = AppAccentColor.ELECTRIC_LIME)
+
+            TirePressureTheme(
+                appTheme = appTheme,
+                accentColor = accentColor
+            ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -114,6 +132,9 @@ private fun AllBikesConfigContent(
     onCancel: () -> Unit
 ) {
     var selectedTheme by remember { mutableStateOf(initialTheme) }
+    val haptics = rememberBounceHaptics()
+    val listState = rememberLazyListState()
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
     Scaffold(
         topBar = {
@@ -129,112 +150,152 @@ private fun AllBikesConfigContent(
                 tonalElevation = 4.dp,
                 color = MaterialTheme.colorScheme.surface
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    OutlinedButton(
-                        onClick = onCancel,
-                        modifier = Modifier.weight(1f)
+                    Row(
+                        modifier = Modifier
+                            .widthIn(max = 640.dp)
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(stringResource(R.string.action_cancel))
-                    }
-                    Button(
-                        onClick = { onSave(selectedTheme) },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ElectricLime,
-                            contentColor = Color.Black
-                        )
-                    ) {
-                        Text(stringResource(R.string.widget_config_apply), fontWeight = FontWeight.Bold)
+                        OutlinedButton(
+                            onClick = {
+                                haptics.press()
+                                onCancel()
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Text(stringResource(R.string.action_cancel))
+                        }
+                        Button(
+                            onClick = {
+                                haptics.press()
+                                onSave(selectedTheme)
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        ) {
+                            Text(stringResource(R.string.widget_config_apply), fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
         }
     ) { paddingValues ->
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(paddingValues),
+            contentAlignment = Alignment.TopCenter
         ) {
-            item {
-                Text(
-                    text = stringResource(R.string.widget_all_bikes_name),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = stringResource(R.string.widget_all_bikes_desc),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .widthIn(max = 640.dp)
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.widget_all_bikes_name),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.widget_all_bikes_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.widget_config_theme),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
+                item {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.widget_config_theme),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
 
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    WidgetTheme.values().forEach { theme ->
-                        val isSelected = theme == selectedTheme
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable { selectedTheme = theme }
-                                .border(
-                                    width = if (isSelected) 2.dp else 1.dp,
-                                    color = if (isSelected) ElectricLime else MaterialTheme.colorScheme.outlineVariant,
-                                    shape = RoundedCornerShape(12.dp)
-                                ),
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (isSelected) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
-                            )
-                        ) {
-                            Row(
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        WidgetTheme.values().forEach { theme ->
+                            val isSelected = theme == selectedTheme
+                            val baseCardColor = if (isSelected) {
+                                androidx.compose.ui.graphics.lerp(
+                                    MaterialTheme.colorScheme.surface,
+                                    MaterialTheme.colorScheme.primary,
+                                    if (isDark) 0.14f else 0.08f
+                                )
+                            } else {
+                                MaterialTheme.colorScheme.surface
+                            }
+                            GlossCard(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(14.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                    .padding(vertical = 2.dp)
+                                    .border(
+                                        width = if (isSelected) 2.dp else 1.dp,
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                                        shape = RoundedCornerShape(14.dp)
+                                    )
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .clickable {
+                                        haptics.press()
+                                        selectedTheme = theme
+                                    },
+                                shape = RoundedCornerShape(14.dp),
+                                colors = appGlossCardColors(base = baseCardColor, isDark = isDark),
+                                tiltOnTouch = true
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    val label = when (theme) {
-                                        WidgetTheme.SYSTEM -> stringResource(R.string.widget_theme_system)
-                                        WidgetTheme.LIGHT -> stringResource(R.string.widget_theme_light)
-                                        WidgetTheme.DARK -> stringResource(R.string.widget_theme_dark)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        val label = when (theme) {
+                                            WidgetTheme.SYSTEM -> stringResource(R.string.widget_theme_system)
+                                            WidgetTheme.LIGHT -> stringResource(R.string.widget_theme_light)
+                                            WidgetTheme.DARK -> stringResource(R.string.widget_theme_dark)
+                                        }
+                                        Text(
+                                            text = label,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
                                     }
-                                    Text(
-                                        text = label,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                                if (isSelected) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = ElectricLime
-                                    )
+                                    if (isSelected) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+
+            ScrollTopFade(visible = listState.canScrollBackward)
+            ScrollBottomFade(visible = listState.canScrollForward)
         }
     }
 }

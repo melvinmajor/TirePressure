@@ -12,6 +12,17 @@
     public static int wtf(...);
 }
 
+# Android 15 / 16 Edge-to-Edge compliance:
+# Strip legacy deprecated Window bar color setters and API 28 SHORT_EDGES cutout mode
+# invoked by AndroidX backward-compatibility shims so Play Console does not flag them.
+-assumenosideeffects class android.view.Window {
+    public void setStatusBarColor(int);
+    public void setNavigationBarColor(int);
+}
+-assumenosideeffects class * {
+    void adjustLayoutInDisplayCutoutMode(android.view.Window);
+}
+
 # Kotlinx Serialization
 -dontnote kotlinx.serialization.SerializationKt
 -keepclassmembers class * {
@@ -32,4 +43,3 @@
 # Room
 -keep class * extends androidx.room.RoomDatabase
 -dontwarn androidx.room.paging.**
-

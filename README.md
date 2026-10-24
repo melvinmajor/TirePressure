@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="files/store-presentation/FeatureGraphicBanner.png" alt="TirePressure Logo" height="400" />
+  <img src="files/store-presentation/FeatureGraphicBanner.png" alt="TirePressure Logo" width="800" />
 </p>
 
 <p align="center">
@@ -177,18 +177,18 @@ TirePressure is engineered with cutting-edge Android development best practices:
 | Category | Technology | Badges |
 | :--- | :--- | :--- |
 | **Language** | Kotlin 2.1.0 + KSP 2.1.0 | [![Kotlin](https://img.shields.io/badge/Kotlin-2.1.0-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](https://kotlinlang.org/) |
-| **UI Toolkit** | Jetpack Compose (BOM 2026.06.01) | [![Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202026.06.01-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose) |
-| **Lifecycle & State** | Lifecycle Runtime Compose 2.10.0 | [![Lifecycle](https://img.shields.io/badge/Lifecycle-2.10.0-4285F4?style=flat-square)](https://developer.android.com/topic/libraries/architecture/lifecycle) |
+| **UI Toolkit** | Jetpack Compose (BOM 2026.09.00) & Activity Compose 1.13.0 | [![Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202026.09.00-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose) |
+| **Lifecycle & Core** | Lifecycle Runtime Compose 2.11.0 & Core KTX 1.19.1 | [![Lifecycle](https://img.shields.io/badge/Lifecycle-2.11.0-4285F4?style=flat-square)](https://developer.android.com/topic/libraries/architecture/lifecycle) |
 | **Design System** | Material Design 3 | [![Material 3](https://img.shields.io/badge/Material%20Design-3-757575?style=flat-square&logo=materialdesign&logoColor=white)](https://m3.material.io/) |
 | **Tactile Components** | Compose Lumen (0.1.1) | [![Lumen](https://img.shields.io/badge/Lumen-0.1.1-E040FB?style=flat-square)](https://github.com/angelomarzocchi/compose-lumen) |
 | **AGSL Shaders** | Compose Glass (0.1.0) | [![Glass](https://img.shields.io/badge/Glass-0.1.0-00E5FF?style=flat-square)](https://github.com/angelomarzocchi/compose-glass) |
-| **Hero Flights** | Compose Flight (0.1.0) | [![Flight](https://img.shields.io/badge/Flight-0.1.0-FF4081?style=flat-square)](https://github.com/angelomarzocchi/compose-flight) |
+| **Hero Flights** | Compose Flight (0.2.0) | [![Flight](https://img.shields.io/badge/Flight-0.2.0-FF4081?style=flat-square)](https://github.com/angelomarzocchi/compose-flight) |
 | **Home Widgets** | Android AppWidgets & RemoteViews | [![Widgets](https://img.shields.io/badge/AppWidgets-RemoteViews%20%2B%20Service-00E5FF?style=flat-square)](https://developer.android.com/guide/topics/appwidgets) |
 | **Architecture** | MVVM + Clean Architecture | [![MVVM](https://img.shields.io/badge/Architecture-MVVM%20%2B%20Clean-009688?style=flat-square)](https://developer.android.com/topic/architecture) |
 | **Persistence** | Room Database 2.8.5 + KSP | [![Room](https://img.shields.io/badge/Room%20DB-2.8.5-4CAF50?style=flat-square&logo=sqlite&logoColor=white)](https://developer.android.com/training/data-storage/room) |
 | **Preferences** | Jetpack DataStore Preferences 1.2.1 | [![DataStore](https://img.shields.io/badge/DataStore-1.2.1-0288D1?style=flat-square)](https://developer.android.com/topic/libraries/architecture/datastore) |
 | **Concurrency** | Kotlin Coroutines & Flow 1.10.1 | [![Coroutines](https://img.shields.io/badge/Coroutines-1.10.1-673AB7?style=flat-square)](https://github.com/Kotlin/kotlinx.coroutines) |
-| **Serialization** | Kotlinx Serialization JSON 1.8.0 | [![Kotlinx Serialization](https://img.shields.io/badge/Kotlinx%20Serialization-1.8.0-E91E63?style=flat-square)](https://github.com/Kotlin/kotlinx.serialization) |
+| **Serialization** | Kotlinx Serialization JSON 1.8.1 | [![Kotlinx Serialization](https://img.shields.io/badge/Kotlinx%20Serialization-1.8.1-E91E63?style=flat-square)](https://github.com/Kotlin/kotlinx.serialization) |
 | **Navigation** | Jetpack Navigation 3 (1.2.0) | [![Navigation 3](https://img.shields.io/badge/Navigation%203-1.2.0-FF9800?style=flat-square)](https://developer.android.com/guide/navigation/navigation-3) |
 | **Adaptive & Foldables** | Material 3 Adaptive 1.3.0 (Layout & Window Metrics) | [![Adaptive](https://img.shields.io/badge/M3%20Adaptive-1.3.0-4285F4?style=flat-square)](https://developer.android.com/jetpack/androidx/releases/compose-material3-adaptive) |
 | **Testing** | JUnit 4, Coroutines Test, Compose UI Test | [![Tests](https://img.shields.io/badge/Unit%20Tests-100%25%20Passing-brightgreen?style=flat-square&logo=junit5&logoColor=white)](https://junit.org/) |

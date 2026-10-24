@@ -14,6 +14,7 @@ import com.tirepressure.app.core.model.PressureUnit
 import com.tirepressure.app.data.local.AppDatabase
 import com.tirepressure.app.data.repository.PreferencesRepositoryImpl
 import com.tirepressure.app.domain.model.WheelPressureResult
+import com.tirepressure.app.ui.theme.getCategoryColorInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -68,7 +69,6 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
             val accentColorInt = accentColor.getPrimaryColorInt(isDark)
 
             remoteViews.setInt(R.id.widget_bike_icon, "setColorFilter", accentColorInt)
-            remoteViews.setTextColor(R.id.widget_discipline_badge, accentColorInt)
             remoteViews.setContentDescription(R.id.widget_bike_icon, locContext.getString(R.string.bike_name_label))
             remoteViews.setContentDescription(R.id.widget_btn_settings, locContext.getString(R.string.widget_config_title))
 
@@ -83,6 +83,7 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             remoteViews.setOnClickPendingIntent(R.id.widget_root, openAppPendingIntent)
+            remoteViews.setOnClickPendingIntent(R.id.widget_header, openAppPendingIntent)
 
             // Intent to open Widget Configuration
             val configIntent = Intent(context, SingleBikeWidgetConfigureActivity::class.java).apply {
@@ -110,17 +111,36 @@ class SingleBikeWidgetReceiver : AppWidgetProvider() {
                 return
             }
 
-            // Populate Bike Info
+            // Populate Bike Info with distinct Category color matching OverviewScreen
+            val categoryColorInt = getCategoryColorInt(selectedBike.category, isDark)
             remoteViews.setViewVisibility(R.id.widget_empty_view, View.GONE)
             remoteViews.setViewVisibility(R.id.widget_setups_list, View.VISIBLE)
-            remoteViews.setTextViewText(R.id.widget_bike_name, selectedBike.name)
-            remoteViews.setTextViewText(R.id.widget_discipline_badge, locContext.getString(selectedBike.category.labelRes).uppercase(targetLocale))
+            val displayBikeName = if (selectedBike.isDefault) "★ ${selectedBike.name}" else selectedBike.name
+            remoteViews.setTextViewText(R.id.widget_bike_name, displayBikeName)
+            remoteViews.setTextViewText(
+                R.id.widget_discipline_badge,
+                locContext.getString(selectedBike.category.labelRes).uppercase(targetLocale)
+            )
+            remoteViews.setTextColor(R.id.widget_discipline_badge, categoryColorInt)
+
             val massUnit = prefs.massUnitFlow.first()
             val bikeWeight = com.tirepressure.app.core.util.UnitConverter.fromKg(selectedBike.bikeWeightKg, massUnit)
-            remoteViews.setTextViewText(
-                R.id.widget_bike_weight,
-                String.format(targetLocale, "• %.1f %s", bikeWeight, massUnit.symbol)
+            val weightText = String.format(targetLocale, "%.1f %s", bikeWeight, massUnit.symbol)
+            val metaText = if (selectedBike.frameSize.isNotBlank()) {
+                "• ${selectedBike.frameSize} • $weightText"
+            } else {
+                "• $weightText"
+            }
+            remoteViews.setTextViewText(R.id.widget_bike_weight, metaText)
+
+            // PendingIntent template so tapping any setup card in the ListView opens the app
+            val listClickPendingIntent = PendingIntent.getActivity(
+                context,
+                appWidgetId + 50000,
+                openAppIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             )
+            remoteViews.setPendingIntentTemplate(R.id.widget_setups_list, listClickPendingIntent)
 
             // Populate Setups via RemoteViewsService-backed ListView
             val serviceIntent = Intent(context, SingleBikeWidgetService::class.java).apply {

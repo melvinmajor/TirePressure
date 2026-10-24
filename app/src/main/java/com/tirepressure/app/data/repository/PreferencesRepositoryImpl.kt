@@ -90,6 +90,7 @@ class PreferencesRepositoryImpl(
         context.dataStore.edit { prefs ->
             prefs[KEY_THEME] = theme.name
         }
+        com.tirepressure.app.widget.WidgetUpdateHelper.updateAllWidgets(context)
     }
 
     override suspend fun setAppLanguage(language: AppLanguage) {
@@ -104,6 +105,7 @@ class PreferencesRepositoryImpl(
         context.dataStore.edit { prefs ->
             prefs[KEY_MASS_UNIT] = unit.name
         }
+        com.tirepressure.app.widget.WidgetUpdateHelper.updateAllWidgets(context)
     }
 
     override suspend fun setPressureUnit(unit: PressureUnit) {

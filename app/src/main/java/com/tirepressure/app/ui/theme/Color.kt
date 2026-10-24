@@ -1,6 +1,7 @@
 package com.tirepressure.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import com.tirepressure.app.domain.model.BikeCategory
 import com.tirepressure.app.domain.model.RideStyle
 
@@ -41,11 +42,24 @@ val CategoryGravel = Color(0xFFEA580C)    // Terre cuite / Orange chaleureux (Gr
 val CategoryMtb = Color(0xFF10B981)       // Vert émeraude / Forêt dynamique (MTB)
 val CategoryCommute = Color(0xFF8B5CF6)   // Violet urbain moderne (Commute)
 
+// Variantes lumineuses pour badges sur fond sombre (Dark Mode / Widgets)
+val CategoryRoadDark = Color(0xFF38BDF8)
+val CategoryGravelDark = Color(0xFFFB923C)
+val CategoryMtbDark = Color(0xFF34D399)
+val CategoryCommuteDark = Color(0xFFA78BFA)
+
 fun getCategoryColor(category: BikeCategory): Color = when (category) {
     BikeCategory.ROAD -> CategoryRoad
     BikeCategory.GRAVEL -> CategoryGravel
     BikeCategory.MTB -> CategoryMtb
     BikeCategory.COMMUTE -> CategoryCommute
+}
+
+fun getCategoryColorInt(category: BikeCategory, isDark: Boolean): Int = when (category) {
+    BikeCategory.ROAD -> (if (isDark) CategoryRoadDark else CategoryRoad).toArgb()
+    BikeCategory.GRAVEL -> (if (isDark) CategoryGravelDark else CategoryGravel).toArgb()
+    BikeCategory.MTB -> (if (isDark) CategoryMtbDark else CategoryMtb).toArgb()
+    BikeCategory.COMMUTE -> (if (isDark) CategoryCommuteDark else CategoryCommute).toArgb()
 }
 
 fun getRideStyleColor(style: RideStyle, fallbackCategory: BikeCategory): Color {
@@ -56,4 +70,14 @@ fun getRideStyleColor(style: RideStyle, fallbackCategory: BikeCategory): Color {
         RideStyle.COMMUTE -> BikeCategory.COMMUTE
     }
     return getCategoryColor(matchedCat)
+}
+
+fun getRideStyleColorInt(style: RideStyle, fallbackCategory: BikeCategory, isDark: Boolean): Int {
+    val matchedCat = when (style) {
+        RideStyle.ROAD -> BikeCategory.ROAD
+        RideStyle.GRAVEL, RideStyle.CYCLOCROSS -> BikeCategory.GRAVEL
+        RideStyle.XC_MTB, RideStyle.TRAIL_MTB, RideStyle.ENDURO_MTB, RideStyle.DOWNHILL_MTB, RideStyle.FAT_BIKE -> BikeCategory.MTB
+        RideStyle.COMMUTE -> BikeCategory.COMMUTE
+    }
+    return getCategoryColorInt(matchedCat, isDark)
 }

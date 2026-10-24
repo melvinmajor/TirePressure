@@ -1,0 +1,5 @@
+- Fixed 3D-tilted bike cards clipping on the sides during touch interactions on Overview
+- Redesigned Single Bike & All Bikes widgets and config screens to match the app's OLED / glass aesthetic, category colors, and Wet/Snow surfaces
+- Upgraded Compose Flight to v0.2.0 and updated Compose BOM, Activity, Core KTX & Lifecycle libraries
+- Fixed Navigation 3 & Material 3 Adaptive 2-pane List-Detail layout for foldables and tablets
+- Full Android 15/16 edge-to-edge compliance across all activities

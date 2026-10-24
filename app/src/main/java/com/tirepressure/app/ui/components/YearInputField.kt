@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -52,36 +51,19 @@ fun YearInputField(
         shape = RoundedCornerShape(12.dp),
         trailingIcon = if (enabled && !readOnly) {
             {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(end = 4.dp)
+                IconButton(
+                    onClick = { showDialog = true }
                 ) {
-                    if (value.isNotBlank()) {
-                        IconButton(
-                            onClick = { onValueChange("") }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = stringResource(id = R.string.action_clear),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-                    IconButton(
-                        onClick = { showDialog = true }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = stringResource(id = R.string.bike_year_picker_title),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = stringResource(id = R.string.bike_year_picker_title),
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         } else null,
-        modifier = modifier
+        modifier = modifier.keepVisibleAboveKeyboard()
     )
 
     if (showDialog) {

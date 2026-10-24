@@ -130,10 +130,12 @@ fun OnboardingScreen(
     ) {
         if (step == 1) {
                 // Étape 1 : Saisie initiale du poids du cycliste
-                Box(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                     Column(
                         modifier = Modifier
+                            .widthIn(max = 600.dp)
                             .fillMaxSize()
+                            .consumeWindowInsets(WindowInsets.navigationBars)
                             .imePadding()
                             .verticalScroll(scrollState)
                             .padding(24.dp),
@@ -307,9 +309,10 @@ fun OnboardingScreen(
             )
             val step2ScrollState = rememberScrollState()
 
-            Box(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                 Column(
                     modifier = Modifier
+                        .widthIn(max = 600.dp)
                         .fillMaxSize()
                         .verticalScroll(step2ScrollState)
                         .padding(24.dp),

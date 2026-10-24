@@ -77,14 +77,16 @@ class AllBikesWidgetReceiver : AppWidgetProvider() {
             )
             remoteViews.setPendingIntentTemplate(R.id.widget_all_bikes_list, clickPendingIntent)
 
-            // Click on Empty View opens app
-            val emptyPendingIntent = PendingIntent.getActivity(
+            // Click on Header or Empty View opens app
+            val openAppPendingIntent = PendingIntent.getActivity(
                 context,
                 appWidgetId + 200000,
                 clickIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            remoteViews.setOnClickPendingIntent(R.id.widget_all_bikes_empty, emptyPendingIntent)
+            remoteViews.setOnClickPendingIntent(R.id.widget_root, openAppPendingIntent)
+            remoteViews.setOnClickPendingIntent(R.id.widget_header, openAppPendingIntent)
+            remoteViews.setOnClickPendingIntent(R.id.widget_all_bikes_empty, openAppPendingIntent)
 
             // Click on Settings opens AllBikesWidgetConfigureActivity
             val configIntent = Intent(context, AllBikesWidgetConfigureActivity::class.java).apply {

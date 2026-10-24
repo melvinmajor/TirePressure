@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/setup_item_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/widget_card_dark"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:padding="10dp">
 
-    <!-- Setup Title & Warning -->
+    <!-- Setup Title, Discipline Badge & Hookless Warning -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -21,8 +22,8 @@
             android:ellipsize="end"
             android:fontFamily="sans-serif-medium"
             android:maxLines="1"
-            android:textColor="#F2F5F8"
-            android:textSize="12sp"
+            android:textColor="#F0F4F8"
+            android:textSize="13sp"
             android:textStyle="bold" />
 
         <TextView
@@ -30,10 +31,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/widget_badge_discipline_dark"
-            android:paddingHorizontal="5dp"
+            android:paddingHorizontal="6dp"
             android:paddingVertical="1dp"
             android:textColor="#D4FF00"
             android:textSize="9sp"
+            android:textStyle="bold"
             android:visibility="gone" />
 
         <ImageView
@@ -50,30 +52,30 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="6dp"
         android:orientation="horizontal">
 
         <!-- Front Wheel -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="3dp"
+            android:layout_marginEnd="4dp"
             android:layout_weight="1"
             android:background="@drawable/widget_pressure_pill_dark"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="6dp"
-            android:paddingVertical="4dp">
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="5dp">
 
             <TextView
                 android:id="@+id/setup_front_abbr"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/widget_badge_discipline_dark"
-                android:paddingHorizontal="3dp"
+                android:paddingHorizontal="4dp"
                 android:paddingVertical="1dp"
                 android:text="@string/widget_front_abbr"
-                android:textColor="#CBD5E1"
+                android:textColor="#D4FF00"
                 android:textSize="9sp"
                 android:textStyle="bold" />
 
@@ -85,7 +87,7 @@
                 android:gravity="end"
                 android:singleLine="true"
                 android:textColor="#D4FF00"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -93,23 +95,23 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="3dp"
+            android:layout_marginStart="4dp"
             android:layout_weight="1"
             android:background="@drawable/widget_pressure_pill_dark"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="6dp"
-            android:paddingVertical="4dp">
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="5dp">
 
             <TextView
                 android:id="@+id/setup_rear_abbr"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/widget_badge_discipline_dark"
-                android:paddingHorizontal="3dp"
+                android:paddingHorizontal="4dp"
                 android:paddingVertical="1dp"
                 android:text="@string/widget_rear_abbr"
-                android:textColor="#CBD5E1"
+                android:textColor="#D4FF00"
                 android:textSize="9sp"
                 android:textStyle="bold" />
 
@@ -121,17 +123,17 @@
                 android:gravity="end"
                 android:singleLine="true"
                 android:textColor="#D4FF00"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Wet condition subtext -->
+    <!-- Wet / Snow condition subtext -->
     <TextView
         android:id="@+id/setup_wet_info"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
+        android:layout_marginTop="4dp"
         android:fontFamily="sans-serif"
         android:gravity="end"
         android:textColor="#8B949E"

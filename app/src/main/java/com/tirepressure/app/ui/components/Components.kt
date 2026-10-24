@@ -24,10 +24,18 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import com.tirepressure.app.R
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -866,6 +874,39 @@ fun SectionCard(
     }
 }
 
+/**
+ * Ensures any focused input field remains visible and properly aligned above the soft keyboard
+ * (or within the active scroll container) whenever the user taps it or the IME animates open.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun Modifier.keepVisibleAboveKeyboard(): Modifier {
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val coroutineScope = rememberCoroutineScope()
+    var isFocused by remember { mutableStateOf(false) }
+    val density = LocalDensity.current
+    val imeBottom = WindowInsets.ime.getBottom(density)
+
+    LaunchedEffect(isFocused, imeBottom) {
+        if (isFocused && imeBottom > 0) {
+            bringIntoViewRequester.bringIntoView()
+        }
+    }
+
+    return this
+        .bringIntoViewRequester(bringIntoViewRequester)
+        .onFocusChanged { focusState ->
+            val nowFocused = focusState.isFocused || focusState.hasFocus
+            isFocused = nowFocused
+            if (nowFocused) {
+                coroutineScope.launch {
+                    delay(100)
+                    bringIntoViewRequester.bringIntoView()
+                }
+            }
+        }
+}
+
 @Composable
 fun NumberInputField(
     value: String,
@@ -876,7 +917,7 @@ fun NumberInputField(
     isError: Boolean = false,
     errorMessage: String? = null
 ) {
-    Column(modifier = modifier) {
+    Column(modifier = modifier.keepVisibleAboveKeyboard()) {
         OutlinedTextField(
             value = value,
             onValueChange = { newVal ->

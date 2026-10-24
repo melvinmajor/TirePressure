@@ -1,0 +1,5 @@
+- Correction de la coupure latérale des cartes vélo lors de l'inclinaison 3D sur l'accueil
+- Refonte visuelle des 2 widgets et de leur configuration selon le style OLED / verre de l'application, couleurs de catégories et surfaces Pluie/Neige
+- Mise à jour de Compose Flight (v0.2.0), Compose BOM, Activity, Core KTX et Lifecycle
+- Correction du mode double volet adaptatif (Navigation 3 & Material 3 Adaptive) sur pliables et tablettes
+- Conformité complète au bord à bord Android 15/16

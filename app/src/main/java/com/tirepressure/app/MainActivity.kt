@@ -5,7 +5,7 @@ import android.content.res.Resources
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import com.tirepressure.app.ui.theme.setupEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -56,12 +56,11 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setupEdgeToEdge()
         super.onCreate(savedInstanceState)
         val initialLocale = LocaleHelper.getSavedLocale(this)
         LocaleHelper.applyLocale(this, initialLocale)
         systemConfigState = Configuration(resources.configuration)
-
-        enableEdgeToEdge()
 
         val app = application as TirePressureApp
 

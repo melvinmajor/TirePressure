@@ -1,6 +1,9 @@
 package com.tirepressure.app.ui.theme
 
 import android.app.Activity
+import android.os.Build
+import android.view.WindowManager
+import androidx.activity.ComponentActivity
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -130,4 +133,20 @@ fun TirePressureTheme(
         typography = Typography,
         content = content
     )
+}
+
+/**
+ * Configures modern Android 15/16 (API 35/36) edge-to-edge display without invoking
+ * deprecated Window.setStatusBarColor, Window.setNavigationBarColor, or
+ * LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES APIs flagged by Google Play Console.
+ */
+fun ComponentActivity.setupEdgeToEdge() {
+    WindowCompat.setDecorFitsSystemWindows(window, false)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        window.isNavigationBarContrastEnforced = false
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        window.attributes.layoutInDisplayCutoutMode =
+            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+    }
 }
