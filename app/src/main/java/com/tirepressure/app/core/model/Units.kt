@@ -86,3 +86,15 @@ enum class AppAccentColor(
         }
 }
 
+@Serializable
+enum class TwoPaneSplitRatio(
+    val listWeight: Float,
+    val detailWeight: Float,
+    val displayName: String,
+    @StringRes val labelRes: Int
+) {
+    FORTY_SIXTY(0.4f, 0.6f, "40% - 60%", R.string.two_pane_split_forty_sixty),
+    HALF_HALF(0.5f, 0.5f, "1/2 - 1/2", R.string.two_pane_split_half)
+}
+
+

@@ -1,19 +1,42 @@
 package com.tirepressure.app.ui.navigation
 
+import android.content.pm.PackageManager
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
@@ -23,29 +46,40 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.WindowAdaptiveInfo
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.AnimatedPane
+import androidx.compose.material3.adaptive.layout.HingePolicy
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
+import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
+import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
+import androidx.compose.material3.adaptive.layout.ThreePaneScaffoldValue
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirectiveWithTwoPanesOnMediumWidth
-import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
-import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
+import androidx.compose.material3.adaptive.layout.rememberPaneExpansionState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.navigation3.runtime.NavKey
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
-import androidx.navigation3.scene.SceneStrategy
 import androidx.window.core.layout.WindowSizeClass
 import com.tirepressure.app.R
 import com.tirepressure.app.domain.repository.BikeRepository
@@ -64,7 +98,54 @@ import io.github.angelomarzocchi.flight.FlightHost
 import io.github.angelomarzocchi.flight.FlightNavDisplay
 import io.github.angelomarzocchi.lumen.GlossCard
 
-private const val OVERVIEW_LIST_DETAIL_SCENE_KEY = "overview_list_detail"
+/**
+ * Computes the Material 3 Adaptive [PaneScaffoldDirective] tailored to the device form factor:
+ * - Phones in portrait or landscape (Compact width < 600dp or Compact height < 480dp) and folded
+ *   foldables on the outer cover display use a 1-partition layout (`maxHorizontalPartitions = 1`).
+ * - Unfolded foldables, tablets, and large screens (width >= 600dp AND height >= 480dp, not in
+ *   half-folded tabletop posture) use a 2-partition List-Detail layout (`maxHorizontalPartitions = 2`),
+ *   clamping extra-large 3-partition defaults to 2 partitions and using [HingePolicy.AvoidOccluding]
+ *   so non-occluding flexible foldable creases support both 40% - 60% and 1/2 - 1/2 split ratios.
+ */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+internal fun computeAdaptivePaneDirective(windowAdaptiveInfo: WindowAdaptiveInfo): PaneScaffoldDirective {
+    val isCompactHeight = !windowAdaptiveInfo.windowSizeClass.isHeightAtLeastBreakpoint(
+        WindowSizeClass.HEIGHT_DP_MEDIUM_LOWER_BOUND
+    )
+    val isTabletop = windowAdaptiveInfo.windowPosture.isTabletop
+    return if (isCompactHeight || isTabletop) {
+        calculatePaneScaffoldDirective(
+            windowAdaptiveInfo = windowAdaptiveInfo,
+            verticalHingePolicy = HingePolicy.AvoidOccluding
+        ).copy(
+            maxHorizontalPartitions = 1,
+            maxVerticalPartitions = 1
+        )
+    } else {
+        val baseDirective = calculatePaneScaffoldDirectiveWithTwoPanesOnMediumWidth(
+            windowAdaptiveInfo = windowAdaptiveInfo,
+            verticalHingePolicy = HingePolicy.AvoidOccluding
+        )
+        baseDirective.copy(
+            maxHorizontalPartitions = baseDirective.maxHorizontalPartitions.coerceAtMost(2),
+            maxVerticalPartitions = 1
+        )
+    }
+}
+
+/**
+ * Returns a stable, Bundle-compatible [String] key identifying the detail pane content.
+ * Used both for [AnimatedContent] content keys and [androidx.compose.runtime.saveable.SaveableStateHolder]
+ * keys, which only accept types storable in an Android Bundle.
+ */
+internal fun Screen?.detailStateKey(): String = when (this) {
+    null -> "overview_detail_placeholder"
+    is Screen.BikeEdit -> "bike_edit_$bikeId"
+    is Screen.Settings -> "settings"
+    is Screen.AppInfo -> "app_info"
+    is Screen.Overview -> "overview"
+    is Screen.Onboarding -> "onboarding_$step"
+}
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -77,21 +158,21 @@ fun AppNavigation(
     isOnboardingCompleted: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val configuration = LocalConfiguration.current
     val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
-    // Phones in landscape have Compact height (< 480dp) even when width >= 600dp, so they must
-    // stay single-pane (where OverviewScreen uses a 2-column staggered grid). Unfolded foldables
-    // and tablets have at least Medium height (>= 480dp) AND Medium/Expanded width (>= 600dp),
-    // activating the canonical 2-pane List-Detail layout while respecting foldable hinge bounds.
-    val isCompactHeight = !windowAdaptiveInfo.windowSizeClass.isHeightAtLeastBreakpoint(
-        WindowSizeClass.HEIGHT_DP_MEDIUM_LOWER_BOUND
-    )
-    val directive = if (isCompactHeight) {
-        calculatePaneScaffoldDirective(windowAdaptiveInfo)
-    } else {
-        calculatePaneScaffoldDirectiveWithTwoPanesOnMediumWidth(windowAdaptiveInfo)
+    val directive = remember(windowAdaptiveInfo) {
+        computeAdaptivePaneDirective(windowAdaptiveInfo)
     }
-    val listDetailStrategy: SceneStrategy<NavKey> = rememberListDetailSceneStrategy(
-        directive = directive
+
+    val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val animatedListProportion by animateFloatAsState(
+        targetValue = settingsState.twoPaneSplitRatio.listWeight,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "TwoPaneSplitProportion"
     )
 
     val backStack = rememberNavBackStack(
@@ -106,6 +187,16 @@ fun AppNavigation(
     }
 
     val isScaffoldDualPane = directive.maxHorizontalPartitions > 1
+    val hasHingeSensor = remember(context) {
+        context.packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_HINGE_ANGLE)
+    }
+    val supportsTwoPaneLayout = isScaffoldDualPane ||
+        configuration.smallestScreenWidthDp >= WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND ||
+        windowAdaptiveInfo.windowPosture.isTabletop ||
+        hasHingeSensor
+
+    val isOnOnboarding = backStack.lastOrNull() is Screen.Onboarding
+    val useTwoPaneLayout = isScaffoldDualPane && !isOnOnboarding
 
     fun navigateToDetail(target: Screen) {
         val currentTop = backStack.lastOrNull() as? Screen
@@ -132,15 +223,175 @@ fun AppNavigation(
         }
     }
 
-    // Keying FlightHost by isScaffoldDualPane ensures that when folding/unfolding a foldable or
-    // resizing across the 1-pane / 2-pane threshold, PresenceDisplay cleanly disposes the previous
-    // scene type before composing the new one, preventing duplicate SaveableStateProvider keys
-    // when transitioning between SinglePaneScene and ListDetailScene.
-    key(isScaffoldDualPane) {
+    if (useTwoPaneLayout) {
+        val currentDetailScreen = (backStack.lastOrNull() as? Screen)
+            ?.takeIf { it !is Screen.Overview && it !is Screen.Onboarding }
+
+        BackHandler(enabled = currentDetailScreen != null) {
+            popDetail()
+        }
+
+        val paneExpansionState = rememberPaneExpansionState()
+        paneExpansionState.setFirstPaneProportion(animatedListProportion)
+
+        val scaffoldValue = remember {
+            ThreePaneScaffoldValue(
+                primary = PaneAdaptedValue.Expanded,
+                secondary = PaneAdaptedValue.Expanded,
+                tertiary = PaneAdaptedValue.Hidden
+            )
+        }
+
+        FlightHost(modifier = modifier.fillMaxSize()) {
+            ListDetailPaneScaffold(
+                directive = directive,
+                value = scaffoldValue,
+                listPane = {
+                    AnimatedPane(
+                        modifier = Modifier
+                            .preferredWidth(animatedListProportion)
+                            .fillMaxHeight()
+                    ) {
+                        OverviewScreen(
+                            viewModel = overviewViewModel,
+                            isDualPane = true,
+                            onNavigateToAddBike = {
+                                navigateToDetail(Screen.BikeEdit("new"))
+                            },
+                            onNavigateToEditBike = { bikeId ->
+                                navigateToDetail(Screen.BikeEdit(bikeId))
+                            },
+                            onNavigateToSettings = {
+                                navigateToDetail(Screen.Settings)
+                            },
+                            onNavigateToAppInfo = {
+                                navigateToDetail(Screen.AppInfo)
+                            }
+                        )
+                    }
+                },
+                detailPane = {
+                    AnimatedPane(
+                        modifier = Modifier
+                            .preferredWidth(1f - animatedListProportion)
+                            .fillMaxHeight()
+                    ) {
+                        val detailSaveableStateHolder = rememberSaveableStateHolder()
+                        AnimatedContent(
+                            targetState = currentDetailScreen,
+                            transitionSpec = {
+                                val isOpeningDetail = initialState == null && targetState != null
+                                val isClosingToPlaceholder = initialState != null && targetState == null
+                                when {
+                                    isOpeningDetail -> {
+                                        (slideInHorizontally(
+                                            animationSpec = tween(300, easing = FastOutSlowInEasing),
+                                            initialOffsetX = { fullWidth -> fullWidth / 6 }
+                                        ) + fadeIn(
+                                            animationSpec = tween(250, easing = FastOutSlowInEasing)
+                                        ) + scaleIn(
+                                            animationSpec = tween(300, easing = FastOutSlowInEasing),
+                                            initialScale = 0.96f
+                                        )) togetherWith (fadeOut(
+                                            animationSpec = tween(180, easing = FastOutSlowInEasing)
+                                        ) + scaleOut(
+                                            animationSpec = tween(250, easing = FastOutSlowInEasing),
+                                            targetScale = 0.96f
+                                        ))
+                                    }
+                                    isClosingToPlaceholder -> {
+                                        (fadeIn(
+                                            animationSpec = tween(250, easing = FastOutSlowInEasing)
+                                        ) + scaleIn(
+                                            animationSpec = tween(300, easing = FastOutSlowInEasing),
+                                            initialScale = 0.96f
+                                        )) togetherWith (slideOutHorizontally(
+                                            animationSpec = tween(280, easing = FastOutSlowInEasing),
+                                            targetOffsetX = { fullWidth -> fullWidth / 6 }
+                                        ) + fadeOut(
+                                            animationSpec = tween(200, easing = FastOutSlowInEasing)
+                                        ) + scaleOut(
+                                            animationSpec = tween(280, easing = FastOutSlowInEasing),
+                                            targetScale = 0.96f
+                                        ))
+                                    }
+                                    else -> {
+                                        (slideInHorizontally(
+                                            animationSpec = tween(280, easing = FastOutSlowInEasing),
+                                            initialOffsetX = { fullWidth -> fullWidth / 10 }
+                                        ) + fadeIn(
+                                            animationSpec = tween(240, easing = FastOutSlowInEasing)
+                                        ) + scaleIn(
+                                            animationSpec = tween(280, easing = FastOutSlowInEasing),
+                                            initialScale = 0.98f
+                                        )) togetherWith (slideOutHorizontally(
+                                            animationSpec = tween(240, easing = FastOutSlowInEasing),
+                                            targetOffsetX = { fullWidth -> -fullWidth / 12 }
+                                        ) + fadeOut(
+                                            animationSpec = tween(180, easing = FastOutSlowInEasing)
+                                        ) + scaleOut(
+                                            animationSpec = tween(240, easing = FastOutSlowInEasing),
+                                            targetScale = 0.98f
+                                        ))
+                                    }
+                                }.using(SizeTransform(clip = true))
+                            },
+                            contentKey = { it.detailStateKey() },
+                            modifier = Modifier.fillMaxSize(),
+                            label = "DetailPaneAnimatedContent"
+                        ) { targetDetail ->
+                            // SaveableStateProvider keys must be Bundle-compatible (String), never a Screen object,
+                            // otherwise Compose throws "Type of the key ... is not supported" and the app crashes.
+                            detailSaveableStateHolder.SaveableStateProvider(
+                                key = targetDetail.detailStateKey()
+                            ) {
+                                when (targetDetail) {
+                                    null -> OverviewDetailPlaceholder(
+                                        onOpenSettings = { navigateToDetail(Screen.Settings) },
+                                        onOpenAppInfo = { navigateToDetail(Screen.AppInfo) }
+                                    )
+                                    is Screen.BikeEdit -> key(targetDetail.bikeId) {
+                                        BikeEditScreen(
+                                            bikeId = targetDetail.bikeId,
+                                            viewModel = bikeEditViewModel,
+                                            preferencesRepository = preferencesRepository,
+                                            isDualPane = true,
+                                            onNavigateBack = {
+                                                popDetail()
+                                            }
+                                        )
+                                    }
+                                    is Screen.Settings -> SettingsScreen(
+                                        viewModel = settingsViewModel,
+                                        supportsTwoPaneLayout = supportsTwoPaneLayout,
+                                        onNavigateBack = {
+                                            popDetail()
+                                        },
+                                        onNavigateToOnboarding = {
+                                            backStack.clear()
+                                            backStack.add(Screen.Onboarding(1))
+                                        }
+                                    )
+                                    is Screen.AppInfo -> AppInfoScreen(
+                                        isDualPane = true,
+                                        onNavigateBack = {
+                                            popDetail()
+                                        }
+                                    )
+                                    else -> Unit
+                                }
+                            }
+                        }
+                    }
+                },
+                paneExpansionState = paneExpansionState,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    } else {
         FlightHost(modifier = modifier.fillMaxSize()) {
             FlightNavDisplay(
                 backStack = backStack,
-                sceneStrategies = listOf(listDetailStrategy),
                 modifier = Modifier.fillMaxSize(),
                 entryProvider = entryProvider {
                     entry<Screen.Onboarding> { key ->
@@ -161,20 +412,10 @@ fun AppNavigation(
                             }
                         )
                     }
-                    entry<Screen.Overview>(
-                        metadata = ListDetailSceneStrategy.listPane(
-                            sceneKey = OVERVIEW_LIST_DETAIL_SCENE_KEY,
-                            detailPlaceholder = {
-                                OverviewDetailPlaceholder(
-                                    onOpenSettings = { navigateToDetail(Screen.Settings) },
-                                    onOpenAppInfo = { navigateToDetail(Screen.AppInfo) }
-                                )
-                            }
-                        )
-                    ) {
+                    entry<Screen.Overview> {
                         OverviewScreen(
                             viewModel = overviewViewModel,
-                            isDualPane = isScaffoldDualPane,
+                            isDualPane = false,
                             onNavigateToAddBike = {
                                 navigateToDetail(Screen.BikeEdit("new"))
                             },
@@ -189,29 +430,21 @@ fun AppNavigation(
                             }
                         )
                     }
-                    entry<Screen.BikeEdit>(
-                        metadata = ListDetailSceneStrategy.detailPane(
-                            sceneKey = OVERVIEW_LIST_DETAIL_SCENE_KEY
-                        )
-                    ) { key ->
+                    entry<Screen.BikeEdit> { key ->
                         BikeEditScreen(
                             bikeId = key.bikeId,
                             viewModel = bikeEditViewModel,
                             preferencesRepository = preferencesRepository,
-                            isDualPane = isScaffoldDualPane,
+                            isDualPane = false,
                             onNavigateBack = {
-                                bikeEditViewModel.reset()
                                 popDetail()
                             }
                         )
                     }
-                    entry<Screen.Settings>(
-                        metadata = ListDetailSceneStrategy.detailPane(
-                            sceneKey = OVERVIEW_LIST_DETAIL_SCENE_KEY
-                        )
-                    ) {
+                    entry<Screen.Settings> {
                         SettingsScreen(
                             viewModel = settingsViewModel,
+                            supportsTwoPaneLayout = supportsTwoPaneLayout,
                             onNavigateBack = {
                                 popDetail()
                             },
@@ -221,13 +454,9 @@ fun AppNavigation(
                             }
                         )
                     }
-                    entry<Screen.AppInfo>(
-                        metadata = ListDetailSceneStrategy.detailPane(
-                            sceneKey = OVERVIEW_LIST_DETAIL_SCENE_KEY
-                        )
-                    ) {
+                    entry<Screen.AppInfo> {
                         AppInfoScreen(
-                            isDualPane = isScaffoldDualPane,
+                            isDualPane = false,
                             onNavigateBack = {
                                 popDetail()
                             }
@@ -251,6 +480,7 @@ private fun OverviewDetailPlaceholder(
         content = MaterialTheme.colorScheme.onSurface,
         isDark = isDark
     )
+    val scrollState = rememberScrollState()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -261,6 +491,7 @@ private fun OverviewDetailPlaceholder(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
+                .verticalScroll(scrollState)
                 .padding(24.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -310,21 +541,32 @@ private fun OverviewDetailPlaceholder(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         OutlinedButton(
                             onClick = onOpenSettings,
                             modifier = Modifier
                                 .weight(1f)
-                                .height(44.dp),
-                            shape = RoundedCornerShape(12.dp)
+                                .fillMaxHeight()
+                                .heightIn(min = 52.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
                         ) {
-                            Icon(Icons.Default.Settings, contentDescription = null)
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = stringResource(id = R.string.settings_title),
-                                maxLines = 1
+                                textAlign = TextAlign.Center,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
 
@@ -332,14 +574,22 @@ private fun OverviewDetailPlaceholder(
                             onClick = onOpenAppInfo,
                             modifier = Modifier
                                 .weight(1f)
-                                .height(44.dp),
-                            shape = RoundedCornerShape(12.dp)
+                                .fillMaxHeight()
+                                .heightIn(min = 52.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
                         ) {
-                            Icon(Icons.Default.Info, contentDescription = null)
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = stringResource(id = R.string.app_info_title),
-                                maxLines = 1
+                                textAlign = TextAlign.Center,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }

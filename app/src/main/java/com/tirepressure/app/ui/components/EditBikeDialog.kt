@@ -158,7 +158,8 @@ fun EditBikeDialog(
                     items = BikeCategory.entries,
                     selectedItem = draft.category,
                     onItemSelected = { onDraftChange(draft.copy(category = it)) },
-                    labelProvider = { context.getString(it.labelRes) }
+                    labelProvider = { context.getString(it.labelRes) },
+                    iconProvider = { it.getIcon() }
                 )
 
                 // 5. Poids du vélo

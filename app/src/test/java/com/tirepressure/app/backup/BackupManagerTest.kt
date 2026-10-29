@@ -1,8 +1,12 @@
 package com.tirepressure.app.backup
 
+import com.tirepressure.app.core.model.AppAccentColor
+import com.tirepressure.app.core.model.AppLanguage
 import com.tirepressure.app.core.model.AppTheme
+import com.tirepressure.app.core.model.FavoriteMode
 import com.tirepressure.app.core.model.MassUnit
 import com.tirepressure.app.core.model.PressureUnit
+import com.tirepressure.app.core.model.TwoPaneSplitRatio
 import com.tirepressure.app.data.backup.BackupManager
 import com.tirepressure.app.data.backup.BackupResult
 import com.tirepressure.app.domain.model.BikeProfile
@@ -37,6 +41,15 @@ class BackupManagerTest {
         )
         fakeBikeRepo.insertBike(originalBike)
         fakePrefsRepo.setPressureUnit(PressureUnit.PSI)
+        fakePrefsRepo.setMassUnit(MassUnit.LB)
+        fakePrefsRepo.setTheme(AppTheme.DARK)
+        fakePrefsRepo.setAppLanguage(AppLanguage.FRENCH)
+        fakePrefsRepo.setShowWetSurface(false)
+        fakePrefsRepo.setShowSnowSurface(true)
+        fakePrefsRepo.setDefaultOverviewCompact(true)
+        fakePrefsRepo.setFavoriteMode(FavoriteMode.PER_CATEGORY)
+        fakePrefsRepo.setAccentColor(AppAccentColor.LIGHT_BLUE)
+        fakePrefsRepo.setTwoPaneSplitRatio(TwoPaneSplitRatio.HALF_HALF)
 
         // Exporter
         val json = backupManager.exportToJson()
@@ -51,6 +64,15 @@ class BackupManagerTest {
         assertEquals(1, payload.bikes.size)
         assertEquals("Mon Gravel Aventure", payload.bikes[0].name)
         assertEquals(PressureUnit.PSI, payload.preferences?.pressureUnit)
+        assertEquals(MassUnit.LB, payload.preferences?.massUnit)
+        assertEquals(AppTheme.DARK, payload.preferences?.theme)
+        assertEquals(AppLanguage.FRENCH, payload.preferences?.language)
+        assertEquals(false, payload.preferences?.showWetSurface)
+        assertEquals(true, payload.preferences?.showSnowSurface)
+        assertEquals(true, payload.preferences?.defaultOverviewCompact)
+        assertEquals(FavoriteMode.PER_CATEGORY, payload.preferences?.favoriteMode)
+        assertEquals(AppAccentColor.LIGHT_BLUE, payload.preferences?.accentColor)
+        assertEquals(TwoPaneSplitRatio.HALF_HALF, payload.preferences?.twoPaneSplitRatio)
 
         // Restaurer
         val restoreResult = backupManager.restorePayload(payload, merge = false)
@@ -131,6 +153,7 @@ class BackupManagerTest {
         override val defaultOverviewCompactFlow = MutableStateFlow(false)
         override val favoriteModeFlow = MutableStateFlow(com.tirepressure.app.core.model.FavoriteMode.GLOBAL)
         override val accentColorFlow = MutableStateFlow(com.tirepressure.app.core.model.AppAccentColor.ELECTRIC_LIME)
+        override val twoPaneSplitRatioFlow = MutableStateFlow(TwoPaneSplitRatio.FORTY_SIXTY)
 
         override suspend fun setTheme(theme: AppTheme) { themeFlow.value = theme }
         override suspend fun setAppLanguage(language: com.tirepressure.app.core.model.AppLanguage) { appLanguageFlow.value = language }
@@ -144,7 +167,22 @@ class BackupManagerTest {
         override suspend fun setDefaultOverviewCompact(compact: Boolean) { defaultOverviewCompactFlow.value = compact }
         override suspend fun setFavoriteMode(mode: com.tirepressure.app.core.model.FavoriteMode) { favoriteModeFlow.value = mode }
         override suspend fun setAccentColor(accentColor: com.tirepressure.app.core.model.AppAccentColor) { accentColorFlow.value = accentColor }
-        override suspend fun clear() {}
+        override suspend fun setTwoPaneSplitRatio(ratio: TwoPaneSplitRatio) { twoPaneSplitRatioFlow.value = ratio }
+        override suspend fun clear() {
+            themeFlow.value = AppTheme.SYSTEM
+            appLanguageFlow.value = AppLanguage.SYSTEM
+            massUnitFlow.value = MassUnit.KG
+            pressureUnitFlow.value = PressureUnit.BAR
+            riderWeightFlow.value = 75.0
+            isOnboardingCompletedFlow.value = false
+            selectedBikeIdFlow.value = null
+            showWetSurfaceFlow.value = true
+            showSnowSurfaceFlow.value = true
+            defaultOverviewCompactFlow.value = false
+            favoriteModeFlow.value = FavoriteMode.GLOBAL
+            accentColorFlow.value = AppAccentColor.ELECTRIC_LIME
+            twoPaneSplitRatioFlow.value = TwoPaneSplitRatio.FORTY_SIXTY
+        }
     }
 }
 

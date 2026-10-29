@@ -180,7 +180,7 @@ TirePressure is engineered with cutting-edge Android development best practices:
 | **UI Toolkit** | Jetpack Compose (BOM 2026.09.00) & Activity Compose 1.13.0 | [![Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202026.09.00-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose) |
 | **Lifecycle & Core** | Lifecycle Runtime Compose 2.11.0 & Core KTX 1.19.1 | [![Lifecycle](https://img.shields.io/badge/Lifecycle-2.11.0-4285F4?style=flat-square)](https://developer.android.com/topic/libraries/architecture/lifecycle) |
 | **Design System** | Material Design 3 | [![Material 3](https://img.shields.io/badge/Material%20Design-3-757575?style=flat-square&logo=materialdesign&logoColor=white)](https://m3.material.io/) |
-| **Tactile Components** | Compose Lumen (0.1.1) | [![Lumen](https://img.shields.io/badge/Lumen-0.1.1-E040FB?style=flat-square)](https://github.com/angelomarzocchi/compose-lumen) |
+| **Tactile Components** | Compose Lumen (0.2.0) | [![Lumen](https://img.shields.io/badge/Lumen-0.2.0-E040FB?style=flat-square)](https://github.com/angelomarzocchi/compose-lumen) |
 | **AGSL Shaders** | Compose Glass (0.1.0) | [![Glass](https://img.shields.io/badge/Glass-0.1.0-00E5FF?style=flat-square)](https://github.com/angelomarzocchi/compose-glass) |
 | **Hero Flights** | Compose Flight (0.2.0) | [![Flight](https://img.shields.io/badge/Flight-0.2.0-FF4081?style=flat-square)](https://github.com/angelomarzocchi/compose-flight) |
 | **Home Widgets** | Android AppWidgets & RemoteViews | [![Widgets](https://img.shields.io/badge/AppWidgets-RemoteViews%20%2B%20Service-00E5FF?style=flat-square)](https://developer.android.com/guide/topics/appwidgets) |

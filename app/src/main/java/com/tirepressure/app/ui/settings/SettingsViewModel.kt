@@ -9,6 +9,7 @@ import com.tirepressure.app.core.model.AppTheme
 import com.tirepressure.app.core.model.FavoriteMode
 import com.tirepressure.app.core.model.MassUnit
 import com.tirepressure.app.core.model.PressureUnit
+import com.tirepressure.app.core.model.TwoPaneSplitRatio
 import com.tirepressure.app.data.backup.BackupManager
 import com.tirepressure.app.data.backup.BackupPayload
 import com.tirepressure.app.data.backup.BackupResult
@@ -45,6 +46,7 @@ data class SettingsUiState(
     val showWetSurface: Boolean = true,
     val showSnowSurface: Boolean = true,
     val defaultOverviewCompact: Boolean = false,
+    val twoPaneSplitRatio: TwoPaneSplitRatio = TwoPaneSplitRatio.FORTY_SIXTY,
     val isUnitsExpanded: Boolean = true,
     val isDisplayExpanded: Boolean = false,
     val isWidgetsExpanded: Boolean = false,
@@ -86,7 +88,7 @@ class SettingsViewModel(
                 SettingsExtras(wet, snow, defaultCompact, favMode, accent)
             }
 
-            combine(flowA, flowB) { base, extras ->
+            combine(flowA, flowB, preferencesRepository.twoPaneSplitRatioFlow) { base, extras, splitRatio ->
                 _uiState.update { current ->
                     current.copy(
                         theme = base.theme,
@@ -98,7 +100,8 @@ class SettingsViewModel(
                         showSnowSurface = extras.showSnow,
                         defaultOverviewCompact = extras.defaultCompact,
                         favoriteMode = extras.favMode,
-                        accentColor = extras.accent
+                        accentColor = extras.accent,
+                        twoPaneSplitRatio = splitRatio
                     )
                 }
             }.collect()
@@ -179,6 +182,12 @@ class SettingsViewModel(
     fun setDefaultOverviewCompact(compact: Boolean) {
         viewModelScope.launch {
             preferencesRepository.setDefaultOverviewCompact(compact)
+        }
+    }
+
+    fun setTwoPaneSplitRatio(ratio: TwoPaneSplitRatio) {
+        viewModelScope.launch {
+            preferencesRepository.setTwoPaneSplitRatio(ratio)
         }
     }
 

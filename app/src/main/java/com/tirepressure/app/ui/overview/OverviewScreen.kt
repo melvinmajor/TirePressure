@@ -64,15 +64,14 @@ import com.tirepressure.app.core.model.PressureUnit
 import com.tirepressure.app.domain.model.*
 import com.tirepressure.app.core.model.MassUnit
 import com.tirepressure.app.core.util.UnitConverter
-import io.github.angelomarzocchi.glass.GlassMaterial
-import io.github.angelomarzocchi.glass.GlassSurface
 import io.github.angelomarzocchi.glass.glassBackdrop
-import io.github.angelomarzocchi.glass.glassLampFollowsFinger
 import io.github.angelomarzocchi.glass.rememberGlassBackdrop
-import io.github.angelomarzocchi.glass.rememberGlassLamp
 import io.github.angelomarzocchi.glass.rememberTiltKeyLight
 import io.github.angelomarzocchi.lumen.GlossCard
-import io.github.angelomarzocchi.lumen.GlossCardDefaults
+
+
+import io.github.angelomarzocchi.lumen.LightTab
+import io.github.angelomarzocchi.lumen.LightTabIcons
 import io.github.angelomarzocchi.lumen.rememberBounceHaptics
 import io.github.angelomarzocchi.flight.rememberFlightAnchor
 import io.github.angelomarzocchi.flight.recordedFlightAnchor
@@ -88,6 +87,7 @@ import com.tirepressure.app.ui.components.PillSelector
 import com.tirepressure.app.ui.components.ScrollTopFade
 import com.tirepressure.app.ui.components.ScrollBottomFade
 import com.tirepressure.app.ui.components.appGlossCardColors
+import com.tirepressure.app.ui.components.appLumenColors
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import com.tirepressure.app.ui.theme.ElectricLime
 import com.tirepressure.app.ui.theme.ElectricLimeContainerDark
@@ -134,7 +134,6 @@ fun OverviewScreen(
         paint = remember { RecordedPaint(single = false) }
     )
     val tilt = rememberTiltKeyLight()
-    val lamp = rememberGlassLamp()
     val haptics = rememberBounceHaptics()
 
     CompositionLocalProvider(LocalGlassBackdrop provides glassBackdrop) {
@@ -185,8 +184,8 @@ fun OverviewScreen(
                             }
                         },
                         actions = {
-                            // Reserve horizontal space for the floating GlassSurface action island
-                            Spacer(modifier = Modifier.width(104.dp))
+                            // Reserve horizontal space for the floating top-right action buttons
+                            Spacer(modifier = Modifier.width(150.dp))
                         },
                         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
                     )
@@ -426,44 +425,69 @@ fun OverviewScreen(
             }
         }
 
-        // Option 1C: Targeted Top-Right Actions Island
+        // Top-right actions: separate view-mode selector island and settings glass button
         val isTopBarDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-        GlassSurface(
-            backdrop = glassBackdrop,
-            material = GlassMaterial.clear(dark = isTopBarDark),
-            cornerRadius = 20.dp,
-            lamp = lamp,
+        Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .statusBarsPadding()
-                .padding(top = 8.dp, end = 12.dp)
-                .glassLampFollowsFinger(lamp)
-                .blur(blurRadius)
+                .padding(top = 10.dp, end = 12.dp)
+                .blur(blurRadius),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = {
-                    haptics.press()
-                    userSelectedSimplified = !isSimplifiedView
-                }) {
-                    Icon(
-                        imageVector = if (isSimplifiedView) Icons.Default.ViewAgenda else Icons.Default.TableRows,
-                        contentDescription = if (isSimplifiedView) {
-                            stringResource(id = R.string.overview_view_detailed)
-                        } else {
-                            stringResource(id = R.string.overview_view_simplified)
-                        }
+            // 1. Detailed / Compact view mode selector (Compose Lumen LightTabIcons island)
+            val detailedTitle = stringResource(id = R.string.overview_mode_detailed)
+            val detailedDesc = stringResource(id = R.string.overview_view_detailed)
+            val compactTitle = stringResource(id = R.string.overview_mode_compact)
+            val compactDesc = stringResource(id = R.string.overview_view_simplified)
+            val viewModeTabs = remember(detailedTitle, detailedDesc, compactTitle, compactDesc) {
+                listOf(
+                    LightTab(
+                        id = false,
+                        title = detailedTitle,
+                        description = detailedDesc,
+                        icon = { _, tint -> Icon(Icons.Default.TableRows, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp)) }
+                    ),
+                    LightTab(
+                        id = true,
+                        title = compactTitle,
+                        description = compactDesc,
+                        icon = { _, tint -> Icon(Icons.Default.ViewAgenda, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp)) }
                     )
-                }
-                IconButton(onClick = {
+                )
+            }
+            LightTabIcons(
+                tabs = viewModeTabs,
+                selectedId = isSimplifiedView,
+                onSelect = { id ->
+                    userSelectedSimplified = id as? Boolean ?: false
+                },
+                cell = 36.dp,
+                colors = appLumenColors(),
+                haptics = true
+            )
+
+            // 2. Settings button: simple flat frosted-glass circle (no 3D bevel / moving light)
+            Surface(
+                onClick = {
                     haptics.press()
                     onNavigateToSettings()
-                }) {
+                },
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = if (isTopBarDark) 0.55f else 0.70f),
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (isTopBarDark) 0.14f else 0.10f)
+                ),
+                modifier = Modifier.size(44.dp)
+            ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Default.Settings,
-                        contentDescription = stringResource(id = R.string.nav_settings)
+                        contentDescription = stringResource(id = R.string.nav_settings),
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }

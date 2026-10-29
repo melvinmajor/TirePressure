@@ -6,6 +6,7 @@ import com.tirepressure.app.core.model.AppTheme
 import com.tirepressure.app.core.model.FavoriteMode
 import com.tirepressure.app.core.model.MassUnit
 import com.tirepressure.app.core.model.PressureUnit
+import com.tirepressure.app.core.model.TwoPaneSplitRatio
 import kotlinx.coroutines.flow.Flow
 
 interface PreferencesRepository {
@@ -21,6 +22,7 @@ interface PreferencesRepository {
     val defaultOverviewCompactFlow: Flow<Boolean>
     val favoriteModeFlow: Flow<FavoriteMode>
     val accentColorFlow: Flow<AppAccentColor>
+    val twoPaneSplitRatioFlow: Flow<TwoPaneSplitRatio>
 
     suspend fun setTheme(theme: AppTheme)
     suspend fun setAppLanguage(language: AppLanguage)
@@ -34,5 +36,6 @@ interface PreferencesRepository {
     suspend fun setDefaultOverviewCompact(compact: Boolean)
     suspend fun setFavoriteMode(mode: FavoriteMode)
     suspend fun setAccentColor(color: AppAccentColor)
+    suspend fun setTwoPaneSplitRatio(ratio: TwoPaneSplitRatio)
     suspend fun clear()
 }

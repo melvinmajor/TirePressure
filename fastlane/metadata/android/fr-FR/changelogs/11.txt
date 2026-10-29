@@ -1,0 +1,4 @@
+- Ajout du choix de répartition à 2 volets Material 3 Adaptive (40% – 60% par défaut ou 1/2 – 1/2) dans Affichage & Langue pour tablettes et pliables avec transition fluide
+- Ajout de transitions fluides pour le volet droit en mode 2 volets à l'ouverture, au changement et à la fermeture d'un écran
+- Amélioration de la hauteur et de l'alignement des boutons sur le volet d'accueil pliable
+- Mise à jour de Compose Lumen en v0.2.0 et extension des tests JUnit pour l'ensemble des préférences et de la disposition adaptative

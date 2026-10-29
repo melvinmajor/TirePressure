@@ -340,4 +340,9 @@
 
     <!-- Défilement -->
     <string name="settings_scroll_more">Faites défiler</string>
+    <!-- Répartition de la disposition à 2 volets -->
+    <string name="settings_two_pane_split_title">Disposition à 2 volets par défaut</string>
+    <string name="settings_two_pane_split_desc">Choisissez la répartition de l\'écran entre la liste des vélos et le volet de détail sur les grands écrans et appareils pliables.</string>
+    <string name="two_pane_split_forty_sixty" formatted="false">40 % – 60 %</string>
+    <string name="two_pane_split_half">1/2 – 1/2</string>
 </resources>

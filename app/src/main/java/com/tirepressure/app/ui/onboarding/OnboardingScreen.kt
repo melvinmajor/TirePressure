@@ -483,6 +483,13 @@ fun OnboardingScreen(
                             PillSelector(
                                 items = AppTheme.entries,
                                 selectedItem = currentTheme,
+                                iconProvider = {
+                                    when (it) {
+                                        AppTheme.SYSTEM -> Icons.Default.BrightnessAuto
+                                        AppTheme.LIGHT -> Icons.Default.LightMode
+                                        AppTheme.DARK -> Icons.Default.DarkMode
+                                    }
+                                },
                                 onItemSelected = { theme ->
                                     haptics.press()
                                     coroutineScope.launch {

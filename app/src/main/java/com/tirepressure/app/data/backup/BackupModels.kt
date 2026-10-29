@@ -1,9 +1,12 @@
 package com.tirepressure.app.data.backup
 
+import com.tirepressure.app.core.model.AppAccentColor
 import com.tirepressure.app.core.model.AppLanguage
 import com.tirepressure.app.core.model.AppTheme
+import com.tirepressure.app.core.model.FavoriteMode
 import com.tirepressure.app.core.model.MassUnit
 import com.tirepressure.app.core.model.PressureUnit
+import com.tirepressure.app.core.model.TwoPaneSplitRatio
 import com.tirepressure.app.domain.model.BikeProfile
 import kotlinx.serialization.Serializable
 
@@ -13,7 +16,13 @@ data class AppPreferencesBackup(
     val language: AppLanguage = AppLanguage.SYSTEM,
     val massUnit: MassUnit = MassUnit.KG,
     val pressureUnit: PressureUnit = PressureUnit.BAR,
-    val riderWeightKg: Double = 75.0
+    val riderWeightKg: Double = 75.0,
+    val showWetSurface: Boolean = true,
+    val showSnowSurface: Boolean = true,
+    val defaultOverviewCompact: Boolean = false,
+    val favoriteMode: FavoriteMode = FavoriteMode.GLOBAL,
+    val accentColor: AppAccentColor = AppAccentColor.ELECTRIC_LIME,
+    val twoPaneSplitRatio: TwoPaneSplitRatio = TwoPaneSplitRatio.FORTY_SIXTY
 )
 
 @Serializable

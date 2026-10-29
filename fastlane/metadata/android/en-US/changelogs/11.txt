@@ -1,0 +1,4 @@
+- Added Material 3 Adaptive 2-partition split ratio setting (40% – 60% default or 1/2 – 1/2) under Display & Language for tablets and foldables with smooth live layout transitions
+- Added smooth animations for the right detail pane in 2-partition mode when opening, switching, or closing detail screens
+- Improved button sizing and alignment on the 2-partition welcome pane for foldables
+- Updated Compose Lumen to v0.2.0 and expanded JUnit test coverage across all user preferences and adaptive layout settings

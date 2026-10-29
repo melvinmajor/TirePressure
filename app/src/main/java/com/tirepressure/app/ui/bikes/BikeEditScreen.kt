@@ -56,6 +56,7 @@ import com.tirepressure.app.ui.components.AddSetupDialog
 import com.tirepressure.app.ui.components.GlassAlertDialog
 import com.tirepressure.app.ui.components.NumberInputField
 import com.tirepressure.app.ui.components.PillSelector
+import com.tirepressure.app.ui.components.getIcon
 import androidx.compose.foundation.BorderStroke
 import com.tirepressure.app.ui.components.SectionCard
 import com.tirepressure.app.ui.components.YearInputField
@@ -534,6 +535,7 @@ fun BikeEditScreen(
                         PillSelector(
                             items = BikeCategory.entries,
                             selectedItem = bikeCategory,
+                            iconProvider = { it.getIcon() },
                             onItemSelected = { newCat ->
                                 bikeCategory = newCat
                                 val catWeightInUserUnit = UnitConverter.fromKg(newCat.defaultWeightKg, massUnit)

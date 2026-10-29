@@ -340,4 +340,9 @@
 
     <!-- Scroll Affordance -->
     <string name="settings_scroll_more">Scroll for more</string>
+    <!-- 2-Partition Layout Split Ratio Setting -->
+    <string name="settings_two_pane_split_title">Default 2-Partition Layout</string>
+    <string name="settings_two_pane_split_desc">Choose the screen split ratio between the bike list and the detail pane on large screens and foldables.</string>
+    <string name="two_pane_split_forty_sixty" formatted="false">40% – 60%</string>
+    <string name="two_pane_split_half">1/2 – 1/2</string>
 </resources>

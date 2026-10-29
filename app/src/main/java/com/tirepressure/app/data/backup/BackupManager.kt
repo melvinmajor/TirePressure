@@ -30,6 +30,12 @@ class BackupManager(
         val massUnit = preferencesRepository.massUnitFlow.first()
         val pressureUnit = preferencesRepository.pressureUnitFlow.first()
         val riderWeight = preferencesRepository.riderWeightFlow.first()
+        val showWetSurface = preferencesRepository.showWetSurfaceFlow.first()
+        val showSnowSurface = preferencesRepository.showSnowSurfaceFlow.first()
+        val defaultOverviewCompact = preferencesRepository.defaultOverviewCompactFlow.first()
+        val favoriteMode = preferencesRepository.favoriteModeFlow.first()
+        val accentColor = preferencesRepository.accentColorFlow.first()
+        val twoPaneSplitRatio = preferencesRepository.twoPaneSplitRatioFlow.first()
 
         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
         dateFormat.timeZone = TimeZone.getTimeZone("UTC")
@@ -44,7 +50,13 @@ class BackupManager(
                 language = language,
                 massUnit = massUnit,
                 pressureUnit = pressureUnit,
-                riderWeightKg = riderWeight
+                riderWeightKg = riderWeight,
+                showWetSurface = showWetSurface,
+                showSnowSurface = showSnowSurface,
+                defaultOverviewCompact = defaultOverviewCompact,
+                favoriteMode = favoriteMode,
+                accentColor = accentColor,
+                twoPaneSplitRatio = twoPaneSplitRatio
             )
         )
     }
@@ -130,6 +142,12 @@ class BackupManager(
                 preferencesRepository.setMassUnit(prefs.massUnit)
                 preferencesRepository.setPressureUnit(prefs.pressureUnit)
                 preferencesRepository.setRiderWeight(prefs.riderWeightKg)
+                preferencesRepository.setShowWetSurface(prefs.showWetSurface)
+                preferencesRepository.setShowSnowSurface(prefs.showSnowSurface)
+                preferencesRepository.setDefaultOverviewCompact(prefs.defaultOverviewCompact)
+                preferencesRepository.setFavoriteMode(prefs.favoriteMode)
+                preferencesRepository.setAccentColor(prefs.accentColor)
+                preferencesRepository.setTwoPaneSplitRatio(prefs.twoPaneSplitRatio)
             }
 
             BackupResult.Success(finalBikes.size)

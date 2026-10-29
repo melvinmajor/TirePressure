@@ -7,6 +7,7 @@ import com.tirepressure.app.core.model.AppLanguage
 import com.tirepressure.app.core.model.AppTheme
 import com.tirepressure.app.core.model.MassUnit
 import com.tirepressure.app.core.model.PressureUnit
+import com.tirepressure.app.core.model.TwoPaneSplitRatio
 import com.tirepressure.app.domain.repository.PreferencesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -30,6 +31,7 @@ class PreferencesRepositoryImpl(
         val KEY_DEFAULT_OVERVIEW_COMPACT = booleanPreferencesKey("default_overview_compact")
         val KEY_FAVORITE_MODE = stringPreferencesKey("favorite_mode")
         val KEY_ACCENT_COLOR = stringPreferencesKey("accent_color")
+        val KEY_TWO_PANE_SPLIT_RATIO = stringPreferencesKey("two_pane_split_ratio")
     }
 
     override val favoriteModeFlow: Flow<com.tirepressure.app.core.model.FavoriteMode> = context.dataStore.data.map { prefs ->
@@ -84,6 +86,11 @@ class PreferencesRepositoryImpl(
 
     override val defaultOverviewCompactFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
         prefs[KEY_DEFAULT_OVERVIEW_COMPACT] ?: false
+    }
+
+    override val twoPaneSplitRatioFlow: Flow<TwoPaneSplitRatio> = context.dataStore.data.map { prefs ->
+        val raw = prefs[KEY_TWO_PANE_SPLIT_RATIO] ?: TwoPaneSplitRatio.FORTY_SIXTY.name
+        runCatching { TwoPaneSplitRatio.valueOf(raw) }.getOrDefault(TwoPaneSplitRatio.FORTY_SIXTY)
     }
 
     override suspend fun setTheme(theme: AppTheme) {
@@ -155,6 +162,12 @@ class PreferencesRepositoryImpl(
     override suspend fun setDefaultOverviewCompact(compact: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[KEY_DEFAULT_OVERVIEW_COMPACT] = compact
+        }
+    }
+
+    override suspend fun setTwoPaneSplitRatio(ratio: TwoPaneSplitRatio) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_TWO_PANE_SPLIT_RATIO] = ratio.name
         }
     }
 

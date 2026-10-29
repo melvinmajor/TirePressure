@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ViewSidebar
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -50,6 +51,7 @@ import com.tirepressure.app.core.model.AppLanguage
 import com.tirepressure.app.core.model.AppTheme
 import com.tirepressure.app.core.model.MassUnit
 import com.tirepressure.app.core.model.PressureUnit
+import com.tirepressure.app.core.model.TwoPaneSplitRatio
 import com.tirepressure.app.core.util.UnitConverter
 import com.tirepressure.app.ui.components.AboutAndPrivacyCard
 import com.tirepressure.app.ui.components.GlassAlertDialog
@@ -70,6 +72,7 @@ import java.util.*
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit,
+    supportsTwoPaneLayout: Boolean = false,
     onNavigateToOnboarding: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -404,6 +407,13 @@ fun SettingsScreen(
                 PillSelector(
                     items = AppTheme.entries,
                     selectedItem = state.theme,
+                    iconProvider = {
+                        when (it) {
+                            AppTheme.SYSTEM -> Icons.Default.BrightnessAuto
+                            AppTheme.LIGHT -> Icons.Default.LightMode
+                            AppTheme.DARK -> Icons.Default.DarkMode
+                        }
+                    },
                     onItemSelected = { viewModel.setTheme(it) },
                     labelProvider = { context.getString(it.labelRes) }
                 )
@@ -495,8 +505,35 @@ fun SettingsScreen(
                 PillSelector(
                     items = listOf(false, true),
                     selectedItem = state.defaultOverviewCompact,
+                    iconProvider = { if (it) Icons.Default.ViewAgenda else Icons.Default.TableRows },
                     onItemSelected = { viewModel.setDefaultOverviewCompact(it) },
                     labelProvider = { if (it) compactLabel else detailedLabel }
+                )
+
+                if (supportsTwoPaneLayout) {
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Text(
+                        text = stringResource(id = R.string.settings_two_pane_split_title),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    PillSelector(
+                        items = TwoPaneSplitRatio.entries,
+                        selectedItem = state.twoPaneSplitRatio,
+                        iconProvider = {
+                            when (it) {
+                                TwoPaneSplitRatio.FORTY_SIXTY -> Icons.AutoMirrored.Filled.ViewSidebar
+                                TwoPaneSplitRatio.HALF_HALF -> Icons.Default.VerticalSplit
+                            }
+                        },
+                        onItemSelected = { viewModel.setTwoPaneSplitRatio(it) },
+                        labelProvider = { context.getString(it.labelRes) }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(0.dp)
                 )
             }
 

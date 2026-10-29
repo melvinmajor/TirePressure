@@ -39,6 +39,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Landscape
+import androidx.compose.material.icons.filled.LocationCity
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Terrain
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -68,8 +72,10 @@ import io.github.angelomarzocchi.glass.rememberGlassPainter
 import io.github.angelomarzocchi.glass.rememberTiltKeyLight
 import io.github.angelomarzocchi.lumen.GlossCardColors
 import io.github.angelomarzocchi.lumen.GlossCardDefaults
+import io.github.angelomarzocchi.lumen.GlossCardSurface
 import io.github.angelomarzocchi.lumen.LightTab
 import io.github.angelomarzocchi.lumen.LightTabs
+import io.github.angelomarzocchi.lumen.LumenColors
 import io.github.angelomarzocchi.lumen.LumenDefaults
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.animation.AnimatedVisibility
@@ -154,8 +160,28 @@ fun appGlossCardColors(
 }
 
 /**
- * Reusable Glassmorphic 3D Card with translucent gradient surface, specular highlight border,
- * and soft ambient/spot depth shadow.
+ * Shared adaptive colors provider for Lumen tactile island components ([LightTabs], [io.github.angelomarzocchi.lumen.LightTabIcons]).
+ */
+@Composable
+fun appLumenColors(): LumenColors = LumenDefaults.colors(
+    island = MaterialTheme.colorScheme.surfaceVariant,
+    plate = MaterialTheme.colorScheme.primary,
+    onPlate = MaterialTheme.colorScheme.onPrimary,
+    content = MaterialTheme.colorScheme.onSurfaceVariant,
+    lit = MaterialTheme.colorScheme.primary
+)
+
+fun BikeCategory.getIcon(): ImageVector = when (this) {
+    BikeCategory.ROAD -> Icons.Default.Speed
+    BikeCategory.GRAVEL -> Icons.Default.Landscape
+    BikeCategory.MTB -> Icons.Default.Terrain
+    BikeCategory.COMMUTE -> Icons.Default.LocationCity
+}
+
+/**
+ * Reusable Glassmorphic 3D Card powered by Compose Lumen 0.2.0 [GlossCardSurface]
+ * with 3-stop surface gradient, 3D slab border, radial specular gloss, top/bottom edge lighting,
+ * and soft ambient/spot depth shadow without intercepting child touch/scroll gestures.
  */
 @Composable
 fun GlassCard(
@@ -165,60 +191,34 @@ fun GlassCard(
     content: @Composable BoxScope.() -> Unit
 ) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-
-    // 3D volume shadow with enhanced ambient & spot diffusion - softened in light mode
-    val shadowColor = if (isDark) Color.Black.copy(alpha = 0.60f) else Color(0xFF0F172A).copy(alpha = 0.08f)
-    val ambientColor = if (isDark) Color.Black.copy(alpha = 0.30f) else Color(0xFF0F172A).copy(alpha = 0.04f)
-
-    // Frosted glass gradient background with subtle dark slate cards (#121318 to #181920) or pure white in light mode
-    val glassBrush = if (isDark) {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color(0xFF181920).copy(alpha = 0.85f),
-                Color(0xFF121318).copy(alpha = 0.80f)
-            )
-        )
-    } else {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color.White.copy(alpha = 0.95f),
-                Color.White.copy(alpha = 0.90f)
-            )
-        )
-    }
-
-    // Frosted specular rim border gradient (#E2E8F0 in light theme, soft white rim in dark theme)
-    val borderBrush = if (isDark) {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color.White.copy(alpha = 0.16f),
-                Color.White.copy(alpha = 0.06f),
-                Color.White.copy(alpha = 0.02f)
-            )
-        )
-    } else {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color(0xFFE2E8F0),
-                Color(0xFFE2E8F0).copy(alpha = 0.85f),
-                Color(0xFFE2E8F0).copy(alpha = 0.60f)
-            )
-        )
-    }
+    val cardColors = appGlossCardColors(
+        base = if (isDark) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
+        content = MaterialTheme.colorScheme.onSurface,
+        isDark = isDark
+    )
 
     Box(
         modifier = modifier
             .shadow(
                 elevation = elevation,
                 shape = shape,
-                ambientColor = ambientColor,
-                spotColor = shadowColor
+                ambientColor = cardColors.contactShadow,
+                spotColor = cardColors.shadow
             )
             .clip(shape)
-            .background(glassBrush)
-            .border(BorderStroke(1.dp, borderBrush), shape)
     ) {
-        content()
+        GlossCardSurface(
+            shape = shape,
+            colors = cardColors,
+            slabShift = { androidx.compose.ui.geometry.Offset.Zero },
+            glossCenter = { androidx.compose.ui.geometry.Offset(0.3f, 0f) },
+            glossAlpha = { 0.55f }
+        )
+        androidx.compose.runtime.CompositionLocalProvider(
+            LocalContentColor provides cardColors.content
+        ) {
+            content()
+        }
     }
 }
 
@@ -957,15 +957,34 @@ fun <T> PillSelector(
     selectedItem: T,
     onItemSelected: (T) -> Unit,
     labelProvider: (T) -> String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    iconProvider: ((T) -> ImageVector)? = null
 ) {
-    val tabs = androidx.compose.runtime.remember(items, labelProvider) {
+    val tabs = androidx.compose.runtime.remember(items, labelProvider, iconProvider) {
         items.mapIndexed { index, item ->
-            LightTab(
-                id = index,
-                title = labelProvider(item),
-                description = labelProvider(item)
-            )
+            val label = labelProvider(item)
+            if (iconProvider != null) {
+                val iconVector = iconProvider(item)
+                LightTab(
+                    id = index,
+                    title = label,
+                    description = label,
+                    icon = { _, tint ->
+                        Icon(
+                            imageVector = iconVector,
+                            contentDescription = null,
+                            tint = tint,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                )
+            } else {
+                LightTab(
+                    id = index,
+                    title = label,
+                    description = label
+                )
+            }
         }
     }
     val selectedIndex = items.indexOf(selectedItem).coerceAtLeast(0)
@@ -980,7 +999,8 @@ fun <T> PillSelector(
             }
         },
         fillWidth = true,
-        height = 44.dp,
+        height = if (iconProvider != null) 48.dp else 44.dp,
+        colors = appLumenColors(),
         modifier = modifier.fillMaxWidth(),
         haptics = true
     )
