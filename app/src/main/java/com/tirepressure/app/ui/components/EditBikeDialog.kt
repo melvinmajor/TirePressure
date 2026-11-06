@@ -8,6 +8,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.window.core.layout.WindowSizeClass
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -35,6 +38,7 @@ private val BikeCategorySaver: Saver<BikeCategory, String> = Saver(
     }
 )
 
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun EditBikeDialog(
     draft: EditBikeDraft,
@@ -149,11 +153,27 @@ fun EditBikeDialog(
                 }
 
                 // 4. Catégorie principale du vélo (PillSelector rapide)
-                Text(
-                    text = stringResource(id = R.string.bike_category_label),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                val isLargeScreen = currentWindowAdaptiveInfoV2().windowSizeClass
+                    .isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.bike_category_label),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (!isLargeScreen) {
+                        Text(
+                            text = stringResource(id = draft.category.labelRes),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
                 PillSelector(
                     items = BikeCategory.entries,
                     selectedItem = draft.category,
@@ -232,6 +252,7 @@ fun EditBikeDialog(
     )
 }
 
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun EditBikeDialog(
     bike: BikeProfile,

@@ -14,7 +14,10 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +40,7 @@ import com.tirepressure.app.ui.components.ScrollTopFade
 import com.tirepressure.app.ui.components.ScrollBottomFade
 import com.tirepressure.app.ui.components.TirePressurePulseLogo
 import com.tirepressure.app.ui.components.appGlossCardColors
+import com.tirepressure.app.ui.components.lockScrollOnActiveCardTilt
 import io.github.angelomarzocchi.flight.RecordedPaint
 import io.github.angelomarzocchi.flight.recordedFlightAnchor
 import io.github.angelomarzocchi.flight.rememberFlightAnchor
@@ -51,13 +55,14 @@ fun AppInfoScreen(
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    var isCardTiltActive by remember { mutableStateOf(false) }
 
     val logoAnchorModifier = if (!isDualPane) {
         val appLogoAnchor = rememberFlightAnchor(
             key = "app_logo",
-            paint = remember { RecordedPaint(single = false) }
+            paint = remember { RecordedPaint(single = false, overflow = true) }
         )
-        Modifier.recordedFlightAnchor(appLogoAnchor)
+        Modifier.recordedFlightAnchor(appLogoAnchor, spill = 4.dp)
     } else {
         Modifier
     }
@@ -65,9 +70,9 @@ fun AppInfoScreen(
     val titleAnchorModifier = if (!isDualPane) {
         val appTitleAnchor = rememberFlightAnchor(
             key = "app_title",
-            paint = remember { RecordedPaint(single = false) }
+            paint = remember { RecordedPaint(single = false, overflow = true) }
         )
-        Modifier.recordedFlightAnchor(appTitleAnchor)
+        Modifier.recordedFlightAnchor(appTitleAnchor, spill = 4.dp)
     } else {
         Modifier
     }
@@ -104,7 +109,7 @@ fun AppInfoScreen(
                 modifier = Modifier
                     .widthIn(max = 680.dp)
                     .fillMaxSize()
-                    .verticalScroll(scrollState)
+                    .verticalScroll(scrollState, enabled = !isCardTiltActive)
                     .padding(horizontal = 16.dp, vertical = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -144,7 +149,9 @@ fun AppInfoScreen(
 
             // Carte lien GitHub en GlossCard réactive au toucher
             GlossCard(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .lockScrollOnActiveCardTilt { isCardTiltActive = it },
                 shape = RoundedCornerShape(16.dp),
                 colors = cardColors,
                 tiltOnTouch = true,
@@ -196,7 +203,9 @@ fun AppInfoScreen(
 
             // Carte Adaptations Algorithme Frank Berto en GlossCard
             GlossCard(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .lockScrollOnActiveCardTilt { isCardTiltActive = it },
                 shape = RoundedCornerShape(16.dp),
                 colors = cardColors,
                 tiltOnTouch = true

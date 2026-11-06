@@ -61,7 +61,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,15 +90,20 @@ import com.tirepressure.app.ui.bikes.BikeEditScreen
 import com.tirepressure.app.ui.bikes.BikeEditViewModel
 import com.tirepressure.app.ui.components.TirePressurePulseLogo
 import com.tirepressure.app.ui.components.appGlossCardColors
+import com.tirepressure.app.ui.components.appLumenActionColors
+import com.tirepressure.app.ui.components.lockScrollOnActiveCardTilt
 import com.tirepressure.app.ui.info.AppInfoScreen
 import com.tirepressure.app.ui.onboarding.OnboardingScreen
 import com.tirepressure.app.ui.overview.OverviewScreen
 import com.tirepressure.app.ui.overview.OverviewViewModel
 import com.tirepressure.app.ui.settings.SettingsScreen
 import com.tirepressure.app.ui.settings.SettingsViewModel
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import io.github.angelomarzocchi.flight.FlightHost
 import io.github.angelomarzocchi.flight.FlightNavDisplay
 import io.github.angelomarzocchi.lumen.GlossCard
+import io.github.angelomarzocchi.lumen.LightAction
+import io.github.angelomarzocchi.lumen.LightActions
 
 /**
  * Computes the Material 3 Adaptive [PaneScaffoldDirective] tailored to the device form factor:
@@ -481,6 +488,7 @@ private fun OverviewDetailPlaceholder(
         isDark = isDark
     )
     val scrollState = rememberScrollState()
+    var isCardTiltActive by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -491,7 +499,7 @@ private fun OverviewDetailPlaceholder(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .verticalScroll(scrollState)
+                .verticalScroll(scrollState, enabled = !isCardTiltActive)
                 .padding(24.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -499,7 +507,8 @@ private fun OverviewDetailPlaceholder(
                 modifier = Modifier
                     .widthIn(max = 460.dp)
                     .fillMaxWidth()
-                    .padding(4.dp),
+                    .padding(4.dp)
+                    .lockScrollOnActiveCardTilt { isCardTiltActive = it },
                 shape = RoundedCornerShape(24.dp),
                 colors = cardColors,
                 tiltOnTouch = true
@@ -540,59 +549,31 @@ private fun OverviewDetailPlaceholder(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(IntrinsicSize.Max),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedButton(
-                            onClick = onOpenSettings,
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                                .heightIn(min = 52.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
+                    val settingsPainter = rememberVectorPainter(Icons.Default.Settings)
+                    val infoPainter = rememberVectorPainter(Icons.Default.Info)
+                    val settingsLabel = stringResource(id = R.string.settings_title)
+                    val infoLabel = stringResource(id = R.string.app_info_title)
+                    val placeholderActions = remember(settingsPainter, infoPainter, settingsLabel, infoLabel, onOpenSettings, onOpenAppInfo) {
+                        listOf(
+                            LightAction(
+                                label = settingsLabel,
+                                icon = settingsPainter,
+                                onClick = onOpenSettings
+                            ),
+                            LightAction(
+                                label = infoLabel,
+                                icon = infoPainter,
+                                onClick = onOpenAppInfo
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = stringResource(id = R.string.settings_title),
-                                textAlign = TextAlign.Center,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-
-                        OutlinedButton(
-                            onClick = onOpenAppInfo,
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                                .heightIn(min = 52.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = stringResource(id = R.string.app_info_title),
-                                textAlign = TextAlign.Center,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+                        )
                     }
+                    LightActions(
+                        actions = placeholderActions,
+                        colors = appLumenActionColors(),
+                        markSize = 20.dp,
+                        modifier = Modifier.fillMaxWidth(),
+                        haptics = true
+                    )
                 }
             }
         }

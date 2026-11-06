@@ -14,6 +14,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -87,6 +88,7 @@ import com.tirepressure.app.ui.components.PillSelector
 import com.tirepressure.app.ui.components.ScrollTopFade
 import com.tirepressure.app.ui.components.ScrollBottomFade
 import com.tirepressure.app.ui.components.appGlossCardColors
+import com.tirepressure.app.ui.components.lockScrollOnActiveCardTilt
 import com.tirepressure.app.ui.components.appLumenColors
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import com.tirepressure.app.ui.theme.ElectricLime
@@ -123,15 +125,15 @@ fun OverviewScreen(
     val glassBackdrop = rememberGlassBackdrop()
     val addBikeHeroAnchor = rememberFlightAnchor(
         key = "bike_hero_new",
-        paint = remember { RecordedPaint(single = false) }
+        paint = remember { RecordedPaint(single = false, overflow = true) }
     )
     val appLogoAnchor = rememberFlightAnchor(
         key = "app_logo",
-        paint = remember { RecordedPaint(single = false) }
+        paint = remember { RecordedPaint(single = false, overflow = true) }
     )
     val appTitleAnchor = rememberFlightAnchor(
         key = "app_title",
-        paint = remember { RecordedPaint(single = false) }
+        paint = remember { RecordedPaint(single = false, overflow = true) }
     )
     val tilt = rememberTiltKeyLight()
     val haptics = rememberBounceHaptics()
@@ -160,7 +162,7 @@ fun OverviewScreen(
                                     contentDescription = stringResource(id = R.string.app_info_title),
                                     modifier = Modifier
                                         .size(34.dp)
-                                        .recordedFlightAnchor(appLogoAnchor)
+                                        .recordedFlightAnchor(appLogoAnchor, spill = 4.dp)
                                         .clip(RoundedCornerShape(8.dp))
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
@@ -178,7 +180,7 @@ fun OverviewScreen(
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier
-                                        .recordedFlightAnchor(appTitleAnchor)
+                                        .recordedFlightAnchor(appTitleAnchor, spill = 4.dp)
                                         .semantics { heading() }
                                 )
                             }
@@ -227,6 +229,8 @@ fun OverviewScreen(
                 Toast.makeText(context, context.getString(R.string.overview_toast_copied), Toast.LENGTH_SHORT).show()
             }
 
+            var isCardTiltActive by remember { mutableStateOf(false) }
+
             @Composable
             fun RenderBikeCard(bikeOverview: BikeOverviewData) {
                 AnimatedContent(
@@ -273,7 +277,8 @@ fun OverviewScreen(
                             onAddSetup = { viewModel.startAddSetup(bikeOverview.bike, defaultPrefix) },
                             onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup, copySuffix) },
                             onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
-                            onCopyPressures = { setupResult -> copyPressuresAction(bikeOverview, setupResult) }
+                            onCopyPressures = { setupResult -> copyPressuresAction(bikeOverview, setupResult) },
+                            onCardTiltActiveChanged = { isCardTiltActive = it }
                         )
                     } else {
                         BikeOverviewCard(
@@ -293,7 +298,8 @@ fun OverviewScreen(
                             onAddSetup = { viewModel.startAddSetup(bikeOverview.bike, defaultPrefix) },
                             onDuplicateSetup = { setup -> viewModel.duplicateSetup(bikeOverview.bike, setup, copySuffix) },
                             onDeleteSetup = { setup -> viewModel.requestDeleteSetup(bikeOverview.bike, setup) },
-                            onCopyPressures = { setupResult -> copyPressuresAction(bikeOverview, setupResult) }
+                            onCopyPressures = { setupResult -> copyPressuresAction(bikeOverview, setupResult) },
+                            onCardTiltActiveChanged = { isCardTiltActive = it }
                         )
                     }
                 }
@@ -303,6 +309,7 @@ fun OverviewScreen(
 
             LazyVerticalStaggeredGrid(
                 state = gridState,
+                userScrollEnabled = !isCardTiltActive,
                 columns = StaggeredGridCells.Fixed(columnsCount),
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp, start = horizontalPadding, end = horizontalPadding),
@@ -401,7 +408,7 @@ fun OverviewScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp)
-                                .recordedFlightAnchor(addBikeHeroAnchor),
+                                .recordedFlightAnchor(addBikeHeroAnchor, spill = 4.dp),
                             shape = RoundedCornerShape(14.dp)
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null)
@@ -610,7 +617,8 @@ private fun BikeOverviewCard(
     onAddSetup: () -> Unit,
     onDuplicateSetup: (WheelSetup) -> Unit,
     onDeleteSetup: (WheelSetup) -> Unit,
-    onCopyPressures: (SetupMultiSurfaceResult) -> Unit
+    onCopyPressures: (SetupMultiSurfaceResult) -> Unit,
+    onCardTiltActiveChanged: (Boolean) -> Unit = {}
 ) {
     val bike = bikeOverview.bike
     var bikeMenuExpanded by remember { mutableStateOf(false) }
@@ -618,7 +626,7 @@ private fun BikeOverviewCard(
 
     val bikeHeroAnchor = rememberFlightAnchor(
         key = "bike_hero_${bike.id}",
-        paint = remember { RecordedPaint(single = false) }
+        paint = remember { RecordedPaint(single = false, overflow = true) }
     )
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val categoryBaseColor = getCategoryColor(bike.category)
@@ -636,7 +644,8 @@ private fun BikeOverviewCard(
     GlossCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 2.dp, vertical = 2.dp),
+            .padding(horizontal = 2.dp, vertical = 2.dp)
+            .lockScrollOnActiveCardTilt(onCardTiltActiveChanged),
         shape = RoundedCornerShape(18.dp),
         colors = cardColors,
         tiltOnTouch = true
@@ -670,16 +679,9 @@ private fun BikeOverviewCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                val collapseBikeDesc = stringResource(id = R.string.overview_collapse_bike)
-                val expandBikeDesc = stringResource(id = R.string.overview_expand_bike)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .weight(1f)
-                        .semantics {
-                            stateDescription = if (isExpanded) collapseBikeDesc else expandBikeDesc
-                        }
-                        .clickable(role = Role.Button) { isExpanded = !isExpanded }
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text(
                         text = bike.name,
@@ -689,7 +691,7 @@ private fun BikeOverviewCard(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
                             .weight(1f, fill = false)
-                            .recordedFlightAnchor(bikeHeroAnchor)
+                            .recordedFlightAnchor(bikeHeroAnchor, spill = 4.dp)
                             .semantics { heading() }
                     )
                 }
@@ -820,9 +822,7 @@ private fun BikeOverviewCard(
 
             // Sous-titre vélo : Catégorie (pastille colorée), Taille (pastille grisâtre), Poids
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { isExpanded = !isExpanded },
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1290,14 +1290,15 @@ private fun BikeOverviewCardSimplified(
     onAddSetup: () -> Unit,
     onDuplicateSetup: (WheelSetup) -> Unit,
     onDeleteSetup: (WheelSetup) -> Unit,
-    onCopyPressures: (SetupMultiSurfaceResult) -> Unit
+    onCopyPressures: (SetupMultiSurfaceResult) -> Unit,
+    onCardTiltActiveChanged: (Boolean) -> Unit = {}
 ) {
     val bike = bikeOverview.bike
     var bikeMenuExpanded by remember { mutableStateOf(false) }
 
     val bikeHeroAnchor = rememberFlightAnchor(
         key = "bike_hero_${bike.id}",
-        paint = remember { RecordedPaint(single = false) }
+        paint = remember { RecordedPaint(single = false, overflow = true) }
     )
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val categoryBaseColor = getCategoryColor(bike.category)
@@ -1315,7 +1316,8 @@ private fun BikeOverviewCardSimplified(
     GlossCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 2.dp, vertical = 2.dp),
+            .padding(horizontal = 2.dp, vertical = 2.dp)
+            .lockScrollOnActiveCardTilt(onCardTiltActiveChanged),
         shape = RoundedCornerShape(14.dp),
         colors = cardColors,
         tiltOnTouch = true
@@ -1360,7 +1362,7 @@ private fun BikeOverviewCardSimplified(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
                             .weight(1f, fill = false)
-                            .recordedFlightAnchor(bikeHeroAnchor)
+                            .recordedFlightAnchor(bikeHeroAnchor, spill = 4.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     val catColor = getCategoryColor(bike.category)

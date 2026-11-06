@@ -1,0 +1,5 @@
+- Ajout des effets 3D et reflets Compose Lumen sur la carte Vélos favoris dans les Paramètres
+- Ajout des icônes Auto, Clair et Sombre sur le sélecteur d'apparence des widgets dans les Paramètres
+- Affichage du nom de la catégorie sélectionnée face au libellé Catégorie sur les écrans compacts
+- Suppression de l'effet de survol rectangulaire sur le nom et la ligne d'infos du vélo en vue détaillée
+- Mise à jour de Compose Lumen, Glass & Flight en 1.1.1 avec îlots d'actions tactiles, sous-légendes et nouvelles icônes de catégories

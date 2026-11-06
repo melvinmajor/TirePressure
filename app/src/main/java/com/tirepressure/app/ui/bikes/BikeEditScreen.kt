@@ -17,6 +17,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.window.core.layout.WindowSizeClass
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.saveable.Saver
@@ -88,7 +91,7 @@ private class VmState<T>(
 private fun <T> vmState(getter: () -> T, setter: (T) -> Unit): MutableState<T> =
     VmState(getter, setter)
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun BikeEditScreen(
     bikeId: String,
@@ -157,9 +160,10 @@ fun BikeEditScreen(
     val bikeHeroModifier = if (!isDualPane) {
         val bikeHeroAnchor = rememberFlightAnchor(
             key = "bike_hero_${bikeId}",
-            paint = remember { RecordedPaint(single = false) }
+            paint = remember { RecordedPaint(single = false, overflow = true) }
         )
-        Modifier.recordedFlightAnchor(bikeHeroAnchor)
+        bikeHeroAnchor?.canLand = { isLoaded }
+        Modifier.recordedFlightAnchor(bikeHeroAnchor, spill = 4.dp)
     } else {
         Modifier
     }
@@ -526,11 +530,27 @@ fun BikeEditScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         // Catégorie
-                        Text(
-                            text = stringResource(id = R.string.bike_category_label),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        val isLargeScreen = currentWindowAdaptiveInfoV2().windowSizeClass
+                            .isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.bike_category_label),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            if (!isLargeScreen) {
+                                Text(
+                                    text = stringResource(id = bikeCategory.labelRes),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                         Spacer(modifier = Modifier.height(4.dp))
                         PillSelector(
                             items = BikeCategory.entries,
@@ -953,7 +973,8 @@ fun BikeEditScreen(
                                         } else s
                                     }
                                 },
-                                labelProvider = { it.getLabelForStyle(currentSetupStyle) }
+                                labelProvider = { it.getLabelForStyle(currentSetupStyle) },
+                                captionProvider = { "${it.diameterMm.toInt()} mm" }
                             )
                         } else {
                             Column {
@@ -974,7 +995,8 @@ fun BikeEditScreen(
                                             } else s
                                         }
                                     },
-                                    labelProvider = { it.getLabelForStyle(currentSetupStyle) }
+                                    labelProvider = { it.getLabelForStyle(currentSetupStyle) },
+                                    captionProvider = { "${it.diameterMm.toInt()} mm" }
                                 )
 
                                 Spacer(modifier = Modifier.height(12.dp))
@@ -996,7 +1018,8 @@ fun BikeEditScreen(
                                             } else s
                                         }
                                     },
-                                    labelProvider = { it.getLabelForStyle(currentSetupStyle) }
+                                    labelProvider = { it.getLabelForStyle(currentSetupStyle) },
+                                    captionProvider = { "${it.diameterMm.toInt()} mm" }
                                 )
 
                                 Spacer(modifier = Modifier.height(8.dp))

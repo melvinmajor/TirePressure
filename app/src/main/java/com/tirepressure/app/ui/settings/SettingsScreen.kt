@@ -45,6 +45,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import com.tirepressure.app.core.model.AppAccentColor
 import com.tirepressure.app.core.model.FavoriteMode
 import com.tirepressure.app.core.model.AppLanguage
@@ -61,8 +62,12 @@ import com.tirepressure.app.ui.components.SectionCard
 import com.tirepressure.app.ui.components.ScrollTopFade
 import com.tirepressure.app.ui.components.ScrollBottomFade
 import com.tirepressure.app.ui.components.appGlossCardColors
+import com.tirepressure.app.ui.components.appLumenActionColors
+import com.tirepressure.app.ui.components.lockScrollOnActiveCardTilt
 import io.github.angelomarzocchi.lumen.GlossCard
 import io.github.angelomarzocchi.lumen.GlossCardDefaults
+import io.github.angelomarzocchi.lumen.LightAction
+import io.github.angelomarzocchi.lumen.LightActions
 import io.github.angelomarzocchi.lumen.rememberBounceHaptics
 import java.text.SimpleDateFormat
 import java.util.*
@@ -78,6 +83,7 @@ fun SettingsScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    var isCardTiltActive by remember { mutableStateOf(false) }
     val haptics = rememberBounceHaptics()
 
     // Gestion SAF : Export JSON
@@ -141,7 +147,7 @@ fun SettingsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(scrollState)
+                    .verticalScroll(scrollState, enabled = !isCardTiltActive)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -158,7 +164,9 @@ fun SettingsScreen(
                     isDark = isDark
                 )
                 GlossCard(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .lockScrollOnActiveCardTilt { isCardTiltActive = it },
                     shape = RoundedCornerShape(16.dp),
                     colors = riderGlossColors,
                     tiltOnTouch = true
@@ -218,19 +226,52 @@ fun SettingsScreen(
                     }
                 }
 
-                // 2. Vélos favoris (Non réductible, juste après Profil Cycliste)
-                SectionCard(
-                    title = stringResource(id = R.string.settings_favorites_title),
-                    icon = Icons.Default.Star,
-                    subtitle = stringResource(id = R.string.settings_favorites_desc),
-                    isCollapsible = false
+                // 2. Vélos favoris (Non réductible, juste après Profil Cycliste - GlossCard réactive au toucher)
+                GlossCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .lockScrollOnActiveCardTilt { isCardTiltActive = it },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = riderGlossColors,
+                    tiltOnTouch = true
                 ) {
-                    PillSelector(
-                        items = FavoriteMode.entries,
-                        selectedItem = state.favoriteMode,
-                        onItemSelected = { viewModel.setFavoriteMode(it) },
-                        labelProvider = { context.getString(it.labelRes) }
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = stringResource(id = R.string.settings_favorites_title),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = stringResource(id = R.string.settings_favorites_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(14.dp))
+                        PillSelector(
+                            items = FavoriteMode.entries,
+                            selectedItem = state.favoriteMode,
+                            onItemSelected = { viewModel.setFavoriteMode(it) },
+                            labelProvider = { context.getString(it.labelRes) }
+                        )
+                    }
                 }
 
                 // 3. Unités & Calculs (Regroupé, réductible)
@@ -252,7 +293,8 @@ fun SettingsScreen(
                     items = MassUnit.entries,
                     selectedItem = state.massUnit,
                     onItemSelected = { viewModel.setMassUnit(it) },
-                    labelProvider = { context.getString(it.labelRes) }
+                    labelProvider = { context.getString(it.labelRes).substringBefore(" (") },
+                    captionProvider = { it.symbol }
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -267,7 +309,14 @@ fun SettingsScreen(
                     items = PressureUnit.entries,
                     selectedItem = state.pressureUnit,
                     onItemSelected = { viewModel.setPressureUnit(it) },
-                    labelProvider = { context.getString(it.labelRes) }
+                    labelProvider = { context.getString(it.labelRes) },
+                    captionProvider = {
+                        when (it) {
+                            PressureUnit.BAR -> "1.00 bar"
+                            PressureUnit.PSI -> "14.5 psi"
+                            PressureUnit.KPA -> "100 kPa"
+                        }
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -561,6 +610,13 @@ fun SettingsScreen(
                 PillSelector(
                     items = com.tirepressure.app.widget.WidgetTheme.entries,
                     selectedItem = defaultWidgetTheme,
+                    iconProvider = {
+                        when (it) {
+                            com.tirepressure.app.widget.WidgetTheme.SYSTEM -> Icons.Default.BrightnessAuto
+                            com.tirepressure.app.widget.WidgetTheme.LIGHT -> Icons.Default.LightMode
+                            com.tirepressure.app.widget.WidgetTheme.DARK -> Icons.Default.DarkMode
+                        }
+                    },
                     onItemSelected = { theme ->
                         defaultWidgetTheme = theme
                         com.tirepressure.app.widget.WidgetPreferencesHelper.setDefaultWidgetTheme(context.applicationContext, theme)
@@ -585,38 +641,37 @@ fun SettingsScreen(
                 isExpanded = state.isBackupExpanded,
                 onToggleExpand = { viewModel.toggleBackupExpanded() }
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = {
-                            haptics.press()
-                            val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-                            val filename = "bike-pressure-backup-${dateFormat.format(Date())}.json"
-                            exportLauncher.launch(filename)
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(Icons.Default.Upload, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(id = R.string.settings_export_btn))
-                    }
-
-                    OutlinedButton(
-                        onClick = {
-                            haptics.press()
-                            importLauncher.launch(arrayOf("application/json"))
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(id = R.string.settings_import_btn))
-                    }
+                val exportPainter = rememberVectorPainter(Icons.Default.Upload)
+                val importPainter = rememberVectorPainter(Icons.Default.Download)
+                val exportLabel = stringResource(id = R.string.settings_export_btn)
+                val importLabel = stringResource(id = R.string.settings_import_btn)
+                val backupActions = remember(exportPainter, importPainter, exportLabel, importLabel) {
+                    listOf(
+                        LightAction(
+                            label = exportLabel,
+                            icon = exportPainter,
+                            onClick = {
+                                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                                val filename = "bike-pressure-backup-${dateFormat.format(Date())}.json"
+                                exportLauncher.launch(filename)
+                            }
+                        ),
+                        LightAction(
+                            label = importLabel,
+                            icon = importPainter,
+                            onClick = {
+                                importLauncher.launch(arrayOf("application/json"))
+                            }
+                        )
+                    )
                 }
+                LightActions(
+                    actions = backupActions,
+                    colors = appLumenActionColors(),
+                    markSize = 20.dp,
+                    modifier = Modifier.fillMaxWidth(),
+                    haptics = true
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
 

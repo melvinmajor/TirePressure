@@ -1,0 +1,5 @@
+- Added Compose Lumen 3D tilt and specular gloss effects to the Favorite Bikes card in Settings
+- Added adaptive Auto, Light, and Dark icons to the Widget Appearance selector in Settings
+- Displayed the selected bike category name opposite the Bike Category label on compact screens
+- Removed unwanted touch ripple boxes on the bike name and metadata line in the Detailed overview card
+- Upgraded Compose Lumen, Glass & Flight to 1.1.1 with tactile action islands, tab captions, and refined bike category icons

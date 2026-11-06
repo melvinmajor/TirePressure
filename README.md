@@ -109,66 +109,18 @@ TirePressure is fully bilingual:
 
 ## 📐 The Frank Berto 15% Tire Drop Open-Source Physics Engine
 
-TirePressure utilizes an open-source, scientifically validated tire deflection model founded on Frank Berto's groundbreaking cycling physics research (published across *Bicycling Magazine*, *Bicycle Quarterly*, and Sheldon Brown's engineering archives), expanded to modern rim widths (ISO 5775 / ETRTO standards) and dynamic tire impedance research.
+TirePressure builds upon **Frank Berto's renowned open-source 15% Tire Drop physics model** (originally published in *Bicycling Magazine* and *Bicycle Quarterly*), which establishes that a pneumatic bicycle tire achieves optimal rolling resistance, grip, and comfort when it deflects by roughly **15% of its cross-sectional height** under load.
 
-### 1. The 15% Tire Drop Principle
-Optimal rolling resistance, comfort, and grip are achieved when a pneumatic bicycle tire deflects by approximately **15% of its mounted cross-sectional height** under static wheel load. 
-- Higher pressure causes excessive impedance vibration losses (*high-frequency chatter* that wastes rider energy).
-- Lower pressure increases internal tire hysteresis friction and risk of pinch flats or rim damage.
+Because Berto's original formula only accounts for static load and nominal tire width, **TirePressure integrates several key engineering layers** to make calculations tailored and far more accurate for modern cycling:
 
-### 2. Wheel Load Distribution
-Total system mass is partitioned according to riding discipline geometry and posture:
-$$M_{total} = M_{rider} + M_{bike} + M_{luggage}$$
-- **Road:** 42% Front / 58% Rear load distribution.
-- **Gravel & Cyclocross:** 44% Front / 56% Rear load distribution.
-- **MTB (XC, Trail, Enduro, Downhill):** 45% Front / 55% Rear load distribution.
-- **Fat Bike:** 48% Front / 52% Rear load distribution.
-
-### 3. Effective Tire Width ($W_{eff}$)
-Modern wide rims alter actual inflated tire width. Effective width is calibrated using ISO/ETRTO baseline references:
-$$W_{eff} = W_{tire} + 0.4 \cdot (W_{rim} - W_{ref})$$
-*(Reference rim inner widths: 17 mm for Road, 21 mm for Gravel, 25 mm for MTB).*
-
-### 4. Base Pressure Model
-For each wheel, base pressure in PSI is computed via Berto's power-law deflection equation:
-$$P_{base} = 0.85 \cdot L \cdot \left(\frac{25.0}{W_{eff}}\right)^{1.5}$$
-Where $L$ is the static wheel load in pounds ($lbs$).
-
-### 5. Dynamic Discipline Adaptation ($K_{discipline}$)
-
-#### 💡 Engineering Motivation: Why Static Models Fall Short in Modern Mountain Biking
-The classical Frank Berto model was formulated around static equilibrium (a rider sitting still). In a purely static formula, wider tires (e.g., 2.5" DH) and heavier casings (2-ply DoubleDown) naturally compute a *lower* pressure. 
-
-In real-world cycling, however, this would be catastrophic for Downhill and Enduro:
-1. **Dynamic G-Forces (G-Outs & Berms):** In high-speed berms and sudden compression dips, centrifugal and vertical accelerations subject the bike to **2.5G to 3.5G**, multiplying instantaneous wheel load by 2.5× to 3.5×.
-2. **Kinetic Impact Velocity ($E_c = \frac{1}{2}mv^2$):** Hitting square-edge boulders at 60 km/h in DH unleashes **4× more destructive kinetic energy** than at 30 km/h in XC. Higher pressure forms the indispensable pneumatic barrier preventing catastrophic rim strikes against carbon or alloy wheels.
-3. **Lateral Tire Squirm & Burping:** Heavy lateral cornering forces cause under-inflated tires to fold over the rim sidewall (*tire squirm*) or unseat from the bead (*burping* air and sealant).
-4. **Impedance vs. Traction (XC & Gravel):** Conversely, in Cross-Country and Gravel, prioritizing low pressure enables the tire to conform to roots and washboards without bouncing, drastically reducing high-frequency vibrational impedance and leg fatigue.
-
-To resolve this, TirePressure extends Berto's model with a calibrated dynamic discipline multiplier ($K_{discipline}$):
-- **Road (`1.00`):** Rolling speed baseline, low vertical impact frequency.
-- **Gravel (`0.96`):** Micro-vibration absorption and impedance reduction over gravel washboards.
-- **Cyclocross (`0.88`):** Maximum carcass deformation for cornering grip in deep mud and wet grass.
-- **XC MTB (`0.95`):** Climbing traction, root compliance, and efficient pedaling transfer.
-- **Trail MTB (`1.02`):** Balanced all-mountain compliance across climbs and technical descents.
-- **Enduro MTB (`1.10`):** High-speed stability, rocky terrain protection, and drop-off resistance.
-- **Downhill MTB (`1.18`):** Extreme compression absorption (G-outs 2.5–3.5G), berm support, and rim defense.
-- **Fat Bike (`0.90`):** Soft-ground displacement and snow/sand flotation.
-- **Urban (`1.05`):** Pavement puncture protection and reliable urban rolling resistance under daily commuting conditions.
-
-### 6. Full Multiplier Equation & Safety Bounds
-$$P_{final} = P_{base} \cdot K_{discipline} \cdot K_{rim} \cdot K_{casing} \cdot K_{surface}$$
-- **Discipline ($K_{discipline}$):** Road (1.00), Gravel (0.96), Cyclocross (0.88), XC (0.95), Trail (1.02), Enduro (1.10), Downhill (1.18), Fat Bike (0.90), Commute (1.05).
-- **Casing ($K_{casing}$):** Standard (1.00), Supple / Race (1.025), Reinforced (0.95), Double Down (0.90).
-- **Rim Construction ($K_{rim}$):** Tubeless Crocheted (0.95), Tubeless Hookless (0.93), Clincher with Tubes (1.00), Tubular (0.98), Wide Aero Hookless (0.92).
-- **Surface Grip Adjustment ($K_{surface}$):** Dry (1.00), Wet / Slippery (0.90), Snow / Deep Mud (0.55).
-- **ETRTO Hookless Safety Cap:** Strictly enforced at **5.0 bar (72.5 psi)** maximum for tires $\le 29\text{ mm}$ mounted on hookless rims.
-
-### 7. Empirical Calibration & Clean-Room Legal Notice
-To ensure real-world reliability across diverse disciplines, TirePressure's mathematical parameters are calibrated and validated against empirical industry reference datasets (including real-world benchmark curves from the SRAM AXS App calculator).
+- **Discipline-Specific Axle Load Distribution:** Automatically splits total system mass ($\text{Rider} + \text{Bike} + \text{Luggage}$) between front and rear wheels according to riding posture—ranging from **42% / 58%** (Road) and **44% / 56%** (Gravel & Cyclocross) to **45% / 55%** (MTB) and **48% / 52%** (Fat Bike).
+- **Modern Rim-to-Tire Volume Calibration (ETRTO / ISO 5775):** Computes the *effective* inflated tire width ($W_{eff}$) based on your actual inner rim width ($0.4\text{ mm}$ effective tire width change per $1\text{ mm}$ difference from discipline reference rims), fully supporting wide modern rims, mixed **Mullet / MX** setups, and **32"** wheels.
+- **Dynamic Discipline Adaptation:** In a purely static formula, wider gravity tires compute lower pressures—which in real-world riding would cause rim strikes and tire squirm under 2.5–3.5G cornering and high-speed square-edge impacts. TirePressure applies calibrated dynamic multipliers across all 9 disciplines (**Road, Gravel, Cyclocross, XC, Trail, Enduro, Downhill, Fat Bike, Urban**) to balance low-pressure trail compliance against high-speed rim protection.
+- **Casing, Rim Bed & Weather Modifiers:** Fine-tunes recommendations for tire casing construction (*Supple/Race, Standard, Reinforced, DoubleDown*), rim bed architecture (*Clincher Tubes, Tubular, Hooked Tubeless, Hookless, Wide Aero Hookless*), and surface grip (*Dry 100%, Wet 90%, Snow/Mud 55%*).
+- **ETRTO Hookless Safety Guard:** Enforces the strict **5.0 bar (72.5 psi)** safety ceiling on hookless straight-side rims for tires $\le 29\text{ mm}$ and displays immediate visual warnings if system weight pushes pressures above safe limits.
 
 > [!NOTE]
-> **Independent Clean-Room Implementation:** TirePressure is a 100% offline, independent open-source project. It does not use, copy, or interface with any proprietary third-party code or APIs. All pressure curves are solved locally on-device through our own physics equations, bridging Frank Berto's static tire deflection formula with modern dynamic impedance, rim widths, and ISO/ETRTO safety standards. References to industry benchmarks are provided strictly for comparative validation.
+> **Independent Clean-Room Implementation:** TirePressure is a 100% offline, independent open-source project calibrated against empirical industry benchmarks (including reference curves from the SRAM AXS calculator). It does not use, copy, or interface with any proprietary third-party code or APIs.
 
 ## 🛠️ Tech Stack & Architecture
 
@@ -176,13 +128,13 @@ TirePressure is engineered with cutting-edge Android development best practices:
 
 | Category | Technology | Badges |
 | :--- | :--- | :--- |
-| **Language** | Kotlin 2.1.0 + KSP 2.1.0 | [![Kotlin](https://img.shields.io/badge/Kotlin-2.1.0-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](https://kotlinlang.org/) |
+| **Language** | Kotlin 2.1.0 + KSP 2.1.0-1.0.29 | [![Kotlin](https://img.shields.io/badge/Kotlin-2.1.0-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](https://kotlinlang.org/) |
 | **UI Toolkit** | Jetpack Compose (BOM 2026.09.00) & Activity Compose 1.13.0 | [![Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202026.09.00-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose) |
 | **Lifecycle & Core** | Lifecycle Runtime Compose 2.11.0 & Core KTX 1.19.1 | [![Lifecycle](https://img.shields.io/badge/Lifecycle-2.11.0-4285F4?style=flat-square)](https://developer.android.com/topic/libraries/architecture/lifecycle) |
 | **Design System** | Material Design 3 | [![Material 3](https://img.shields.io/badge/Material%20Design-3-757575?style=flat-square&logo=materialdesign&logoColor=white)](https://m3.material.io/) |
-| **Tactile Components** | Compose Lumen (0.2.0) | [![Lumen](https://img.shields.io/badge/Lumen-0.2.0-E040FB?style=flat-square)](https://github.com/angelomarzocchi/compose-lumen) |
-| **AGSL Shaders** | Compose Glass (0.1.0) | [![Glass](https://img.shields.io/badge/Glass-0.1.0-00E5FF?style=flat-square)](https://github.com/angelomarzocchi/compose-glass) |
-| **Hero Flights** | Compose Flight (0.2.0) | [![Flight](https://img.shields.io/badge/Flight-0.2.0-FF4081?style=flat-square)](https://github.com/angelomarzocchi/compose-flight) |
+| **Tactile Components** | Compose Lumen (1.1.1) | [![Lumen](https://img.shields.io/badge/Lumen-1.1.1-E040FB?style=flat-square)](https://github.com/angelomarzocchi/compose-lumen) |
+| **AGSL Shaders** | Compose Glass (1.1.1) | [![Glass](https://img.shields.io/badge/Glass-1.1.1-00E5FF?style=flat-square)](https://github.com/angelomarzocchi/compose-glass) |
+| **Hero Flights** | Compose Flight (1.1.1) | [![Flight](https://img.shields.io/badge/Flight-1.1.1-FF4081?style=flat-square)](https://github.com/angelomarzocchi/compose-flight) |
 | **Home Widgets** | Android AppWidgets & RemoteViews | [![Widgets](https://img.shields.io/badge/AppWidgets-RemoteViews%20%2B%20Service-00E5FF?style=flat-square)](https://developer.android.com/guide/topics/appwidgets) |
 | **Architecture** | MVVM + Clean Architecture | [![MVVM](https://img.shields.io/badge/Architecture-MVVM%20%2B%20Clean-009688?style=flat-square)](https://developer.android.com/topic/architecture) |
 | **Persistence** | Room Database 2.8.5 + KSP | [![Room](https://img.shields.io/badge/Room%20DB-2.8.5-4CAF50?style=flat-square&logo=sqlite&logoColor=white)](https://developer.android.com/training/data-storage/room) |
@@ -221,10 +173,11 @@ app/src/main/java/com/tirepressure/app/
 └── ui/
     ├── theme/          # Material 3 palette (Electric Lime, Titanium, Dark/Light modes)
     ├── components/     # Reusable components (SectionCard, NumberInputField, PillSelector...)
-    ├── navigation/     # AppNavigation, destinations, ListDetailSceneStrategy (Material 3 Adaptive)
+    ├── navigation/     # AppNavigation, Navigation 3 & Material 3 Adaptive ListDetailPaneScaffold
     ├── onboarding/     # First-run weight prompt & swipeable tutorial (HorizontalPager)
     ├── overview/       # Main dashboard: bikes with multi-setup & multi-surface pressures
     ├── bikes/          # Bike & wheelset setup editor (calculator-style inputs with inch tags)
+    ├── info/           # AppInfoScreen (version, credits, GitHub repository & privacy overview)
     └── settings/       # Settings (rider weight, language, units, themes, widgets, JSON backup/restore)
 ```
 

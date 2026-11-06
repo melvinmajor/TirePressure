@@ -50,9 +50,18 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathFillType
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -69,6 +78,7 @@ import io.github.angelomarzocchi.glass.glassLampFollowsFinger
 import io.github.angelomarzocchi.glass.glassPosition
 import io.github.angelomarzocchi.glass.rememberGlassLamp
 import io.github.angelomarzocchi.glass.rememberGlassPainter
+import io.github.angelomarzocchi.glass.rememberStillGlassBackdrop
 import io.github.angelomarzocchi.glass.rememberTiltKeyLight
 import io.github.angelomarzocchi.lumen.GlossCardColors
 import io.github.angelomarzocchi.lumen.GlossCardDefaults
@@ -171,11 +181,216 @@ fun appLumenColors(): LumenColors = LumenDefaults.colors(
     lit = MaterialTheme.colorScheme.primary
 )
 
+/**
+ * Shared adaptive colors provider for Lumen tactile action islands ([io.github.angelomarzocchi.lumen.LightActions]).
+ * Adapts the island track, resting action pills, text/icon contrast, and touch bloom to Light/Dark themes and the active accent color.
+ */
+@Composable
+fun appLumenActionColors(): LumenColors {
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val primary = MaterialTheme.colorScheme.primary
+    return LumenDefaults.colors(
+        island = if (isDark) Color(0xFF14161D) else MaterialTheme.colorScheme.surfaceVariant,
+        plate = if (isDark) {
+            lerp(MaterialTheme.colorScheme.surfaceVariant, primary, 0.18f)
+        } else {
+            lerp(Color.White, primary, 0.10f)
+        },
+        onPlate = MaterialTheme.colorScheme.onSurface,
+        content = MaterialTheme.colorScheme.onSurface,
+        lit = primary
+    )
+}
+
+/**
+ * Theme- and accent-aware [GlassMaterial] leveraging Compose Glass 1.1.1 specular
+ * [GlassMaterial.hairline] and [GlassMaterial.farHairline] rim optics.
+ */
+@Composable
+fun appGlassMaterial(
+    isDark: Boolean = MaterialTheme.colorScheme.background.luminance() < 0.5f,
+    liquid: Boolean = false
+): GlassMaterial {
+    val primary = MaterialTheme.colorScheme.primary
+    val base = if (liquid) GlassMaterial.liquid(isDark) else GlassMaterial.frosted(isDark)
+    val liquidSpec = GlassMaterial.liquid(isDark)
+    val accentTint = lerp(
+        base.tint,
+        primary,
+        if (isDark) 0.10f else 0.06f
+    )
+    return base.copy(
+        tint = accentTint,
+        hairline = liquidSpec.hairline,
+        farHairline = liquidSpec.farHairline
+    )
+}
+
+private val RoadCategoryIcon: ImageVector by lazy {
+    ImageVector.Builder(
+        name = "RoadCategoryR1",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(
+            fill = SolidColor(Color.Black),
+            pathFillType = PathFillType.NonZero
+        ) {
+            // Left perspective road shoulder (M6.5 4L3 20h2.2L8.7 4H6.5z)
+            moveTo(6.5f, 4f)
+            lineTo(3f, 20f)
+            horizontalLineToRelative(2.2f)
+            lineTo(8.7f, 4f)
+            close()
+            // Right perspective road shoulder (M17.5 4h-2.2L18.8 20H21L17.5 4z)
+            moveTo(17.5f, 4f)
+            horizontalLineToRelative(-2.2f)
+            lineTo(18.8f, 20f)
+            horizontalLineTo(21f)
+            lineTo(17.5f, 4f)
+            close()
+            // 3 center dashed lane markings (M11 4h2v4h-2V4zm0 6h2v4h-2v-4zm0 6h2v4h-2v-4z)
+            moveTo(11f, 4f)
+            horizontalLineToRelative(2f)
+            verticalLineToRelative(4f)
+            horizontalLineToRelative(-2f)
+            close()
+            moveTo(11f, 10f)
+            horizontalLineToRelative(2f)
+            verticalLineToRelative(4f)
+            horizontalLineToRelative(-2f)
+            close()
+            moveTo(11f, 16f)
+            horizontalLineToRelative(2f)
+            verticalLineToRelative(4f)
+            horizontalLineToRelative(-2f)
+            close()
+        }
+    }.build()
+}
+
+private val GravelCategoryIcon: ImageVector by lazy {
+    ImageVector.Builder(
+        name = "GravelCategoryG2",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(
+            fill = SolidColor(Color.Black),
+            pathFillType = PathFillType.NonZero
+        ) {
+            // Left trail edge (M7.5 4L4 20h2.2L9.7 4H7.5z)
+            moveTo(7.5f, 4f)
+            lineTo(4f, 20f)
+            horizontalLineToRelative(2.2f)
+            lineTo(9.7f, 4f)
+            close()
+            // Right trail edge (M16.5 4h-2.2L17.8 20H20L16.5 4z)
+            moveTo(16.5f, 4f)
+            horizontalLineToRelative(-2.2f)
+            lineTo(17.8f, 20f)
+            horizontalLineTo(20f)
+            lineTo(16.5f, 4f)
+            close()
+            // Pebble 1 (center 11, 8, r = 1.5)
+            moveTo(11f, 6.5f)
+            arcToRelative(1.5f, 1.5f, 0f, isMoreThanHalf = true, isPositiveArc = true, dx1 = 0f, dy1 = 3f)
+            arcToRelative(1.5f, 1.5f, 0f, isMoreThanHalf = true, isPositiveArc = true, dx1 = 0f, dy1 = -3f)
+            close()
+            // Pebble 2 (center 13.2, 12.3, r = 1.3)
+            moveTo(13.2f, 11f)
+            arcToRelative(1.3f, 1.3f, 0f, isMoreThanHalf = true, isPositiveArc = true, dx1 = 0f, dy1 = 2.6f)
+            arcToRelative(1.3f, 1.3f, 0f, isMoreThanHalf = true, isPositiveArc = true, dx1 = 0f, dy1 = -2.6f)
+            close()
+            // Pebble 3 (center 10.8, 16.8, r = 1.6)
+            moveTo(10.8f, 15.2f)
+            arcToRelative(1.6f, 1.6f, 0f, isMoreThanHalf = true, isPositiveArc = true, dx1 = 0f, dy1 = 3.2f)
+            arcToRelative(1.6f, 1.6f, 0f, isMoreThanHalf = true, isPositiveArc = true, dx1 = 0f, dy1 = -3.2f)
+            close()
+        }
+    }.build()
+}
+
 fun BikeCategory.getIcon(): ImageVector = when (this) {
-    BikeCategory.ROAD -> Icons.Default.Speed
-    BikeCategory.GRAVEL -> Icons.Default.Landscape
+    BikeCategory.ROAD -> RoadCategoryIcon
+    BikeCategory.GRAVEL -> GravelCategoryIcon
     BikeCategory.MTB -> Icons.Default.Terrain
     BikeCategory.COMMUTE -> Icons.Default.LocationCity
+}
+
+/**
+ * Prevents parent vertical scroll containers ([androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid],
+ * [androidx.compose.foundation.verticalScroll]) from scrolling the screen when the user activates and plays with
+ * a [io.github.angelomarzocchi.lumen.GlossCard]'s 3D tilt and specular light movement.
+ *
+ * - Immediate vertical swipes (moving vertically past touchSlop within < 130ms) are not intercepted,
+ *   allowing normal page scrolling.
+ * - Holding on the card for >= 130ms (activating the Lumen press/light bloom) or starting with a
+ *   horizontal tilt movement locks the gesture to the card: [io.github.angelomarzocchi.lumen.GlossCard]'s inner
+ *   pointerInput processes each unconsumed Move event first in [PointerEventPass.Main], and this outer modifier
+ *   then consumes the position change before it reaches the parent scroll container.
+ */
+fun Modifier.lockScrollOnActiveCardTilt(
+    onActiveTiltChanged: ((Boolean) -> Unit)? = null
+): Modifier = composed {
+    val scope = rememberCoroutineScope()
+    this.pointerInput(Unit) {
+        val touchSlop = viewConfiguration.touchSlop
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Main)
+            val downId = down.id
+            val downPos = down.position
+            val downTime = down.uptimeMillis
+            var decided = false
+            var lockedForTilt = false
+
+            val activationJob = scope.launch {
+                delay(130)
+                if (!decided) {
+                    decided = true
+                    lockedForTilt = true
+                    onActiveTiltChanged?.invoke(true)
+                }
+            }
+
+            try {
+                while (true) {
+                    val event = awaitPointerEvent(PointerEventPass.Main)
+                    val change = event.changes.firstOrNull { it.id == downId } ?: break
+                    if (!change.pressed) {
+                        break
+                    }
+                    if (!decided) {
+                        val dx = kotlin.math.abs(change.position.x - downPos.x)
+                        val dy = kotlin.math.abs(change.position.y - downPos.y)
+                        val elapsed = change.uptimeMillis - downTime
+                        if (elapsed >= 130L || (dx > touchSlop * 0.6f && dx >= dy)) {
+                            decided = true
+                            lockedForTilt = true
+                            activationJob.cancel()
+                            onActiveTiltChanged?.invoke(true)
+                        } else if (dy > touchSlop && dy > dx) {
+                            decided = true
+                            lockedForTilt = false
+                            activationJob.cancel()
+                        }
+                    }
+                    if (lockedForTilt && change.positionChanged()) {
+                        change.consume()
+                    }
+                }
+            } finally {
+                activationJob.cancel()
+                if (lockedForTilt) {
+                    onActiveTiltChanged?.invoke(false)
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -243,6 +458,8 @@ fun GlassAlertDialog(
 ) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val backdrop = LocalGlassBackdrop.current
+    val stillBackdrop = backdrop?.let { rememberStillGlassBackdrop(it) }
+    val glassMaterial = appGlassMaterial(isDark = isDark, liquid = false)
     val painter = rememberGlassPainter()
     val glassLamp = rememberGlassLamp()
     val roomLight = rememberTiltKeyLight()
@@ -301,7 +518,7 @@ fun GlassAlertDialog(
 
     val shadowColor = if (isDark) Color.Black.copy(alpha = 0.65f) else Color(0xFF475569).copy(alpha = 0.22f)
 
-    val dialogModifier = if (backdrop != null) {
+    val dialogModifier = if (stillBackdrop != null) {
         modifier
             .shadow(24.dp, shape, ambientColor = shadowColor, spotColor = shadowColor)
             .glassPosition(painter)
@@ -314,8 +531,8 @@ fun GlassAlertDialog(
                 }
                 with(painter) {
                     this@drawBehind.drawBody(
-                        backdrop = backdrop,
-                        material = GlassMaterial.frosted(isDark),
+                        backdrop = stillBackdrop,
+                        material = glassMaterial,
                         shape = androidx.compose.ui.geometry.Rect(androidx.compose.ui.geometry.Offset.Zero, this@drawBehind.size),
                         radius = radius,
                         dark = isDark
@@ -958,17 +1175,20 @@ fun <T> PillSelector(
     onItemSelected: (T) -> Unit,
     labelProvider: (T) -> String,
     modifier: Modifier = Modifier,
-    iconProvider: ((T) -> ImageVector)? = null
+    iconProvider: ((T) -> ImageVector)? = null,
+    captionProvider: ((T) -> String?)? = null
 ) {
-    val tabs = androidx.compose.runtime.remember(items, labelProvider, iconProvider) {
+    val tabs = androidx.compose.runtime.remember(items, labelProvider, iconProvider, captionProvider) {
         items.mapIndexed { index, item ->
             val label = labelProvider(item)
+            val caption = captionProvider?.invoke(item)
             if (iconProvider != null) {
                 val iconVector = iconProvider(item)
                 LightTab(
                     id = index,
                     title = label,
                     description = label,
+                    caption = caption,
                     icon = { _, tint ->
                         Icon(
                             imageVector = iconVector,
@@ -982,7 +1202,8 @@ fun <T> PillSelector(
                 LightTab(
                     id = index,
                     title = label,
-                    description = label
+                    description = label,
+                    caption = caption
                 )
             }
         }
@@ -999,7 +1220,11 @@ fun <T> PillSelector(
             }
         },
         fillWidth = true,
-        height = if (iconProvider != null) 48.dp else 44.dp,
+        height = when {
+            captionProvider != null -> 54.dp
+            iconProvider != null -> 48.dp
+            else -> 44.dp
+        },
         colors = appLumenColors(),
         modifier = modifier.fillMaxWidth(),
         haptics = true
