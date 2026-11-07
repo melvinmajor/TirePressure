@@ -2,7 +2,7 @@ package com.tirepressure.app.ui.info
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,13 +11,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.Code
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,13 +35,9 @@ import com.tirepressure.app.ui.components.AboutAndPrivacyCard
 import com.tirepressure.app.ui.components.ScrollTopFade
 import com.tirepressure.app.ui.components.ScrollBottomFade
 import com.tirepressure.app.ui.components.TirePressurePulseLogo
-import com.tirepressure.app.ui.components.appGlossCardColors
-import com.tirepressure.app.ui.components.lockScrollOnActiveCardTilt
 import io.github.angelomarzocchi.flight.RecordedPaint
 import io.github.angelomarzocchi.flight.recordedFlightAnchor
 import io.github.angelomarzocchi.flight.rememberFlightAnchor
-import io.github.angelomarzocchi.lumen.GlossCard
-import io.github.angelomarzocchi.lumen.GlossCardDefaults
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +47,6 @@ fun AppInfoScreen(
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    var isCardTiltActive by remember { mutableStateOf(false) }
 
     val logoAnchorModifier = if (!isDualPane) {
         val appLogoAnchor = rememberFlightAnchor(
@@ -77,44 +68,29 @@ fun AppInfoScreen(
         Modifier
     }
 
-    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val cardColors = appGlossCardColors(
-        base = if (isDark) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
-        content = MaterialTheme.colorScheme.onSurface,
-        isDark = isDark
-    )
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(id = R.string.app_info_title), fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() }) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.action_cancel))
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
-            )
-        }
-    ) { paddingValues ->
-        Box(
+    // Unified single-piece screen background so the logo's sonic pressure waves radiate
+    // freely behind the transparent header all the way to the top of the display without clipping.
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .imePadding(),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Column(
             modifier = Modifier
+                .widthIn(max = 680.dp)
                 .fillMaxSize()
-                .padding(paddingValues)
-                .consumeWindowInsets(paddingValues)
-                .imePadding(),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            Column(
-                modifier = Modifier
-                    .widthIn(max = 680.dp)
-                    .fillMaxSize()
-                    .verticalScroll(scrollState, enabled = !isCardTiltActive)
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                .verticalScroll(scrollState)
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Logo avec animation héro partagée et impulsion de gonflage tactile (Option C)
+            Spacer(modifier = Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
+            Spacer(modifier = Modifier.height(52.dp))
+
+            // Logo avec animation héro partagée et impulsion de gonflage tactile
             TirePressurePulseLogo(
                 size = 96.dp,
                 shape = RoundedCornerShape(22.dp),
@@ -147,87 +123,71 @@ fun AppInfoScreen(
                 )
             }
 
-            // Carte lien GitHub en GlossCard réactive au toucher
-            GlossCard(
+            // Lien GitHub direct sans contour de carte ni effet Lumen/Flight
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .lockScrollOnActiveCardTilt { isCardTiltActive = it },
-                shape = RoundedCornerShape(16.dp),
-                colors = cardColors,
-                tiltOnTouch = true,
-                onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/melvinmajor/TirePressure"))
-                    context.startActivity(intent)
-                }
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(role = Role.Button) {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/melvinmajor/TirePressure"))
+                        context.startActivity(intent)
+                    }
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_github),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(26.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = stringResource(id = R.string.app_info_github_title),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = stringResource(id = R.string.app_info_github_url),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                        painter = painterResource(id = R.drawable.ic_github),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(26.dp)
                     )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = stringResource(id = R.string.app_info_github_title),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = stringResource(id = R.string.app_info_github_url),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
+
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
             }
 
-            // Carte Adaptations Algorithme Frank Berto en GlossCard
-            GlossCard(
+            // Section Adaptations Algorithme Frank Berto directe (sans contour de carte)
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .lockScrollOnActiveCardTilt { isCardTiltActive = it },
-                shape = RoundedCornerShape(16.dp),
-                colors = cardColors,
-                tiltOnTouch = true
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.app_info_algorithm_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(id = R.string.app_info_algorithm_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Text(
+                    text = stringResource(id = R.string.app_info_algorithm_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(id = R.string.app_info_algorithm_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             // Section À propos & Confidentialité (identique à celle des paramètres, sans doublon de version)
@@ -236,6 +196,30 @@ fun AppInfoScreen(
             Spacer(modifier = Modifier.height(24.dp))
         }
 
+        // Transparent header overlaid on the unified background
+        TopAppBar(
+            title = {
+                Text(
+                    text = stringResource(id = R.string.app_info_title),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.semantics { heading() }
+                )
+            },
+            navigationIcon = {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(id = R.string.action_cancel)
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = Color.Transparent,
+                scrolledContainerColor = Color.Transparent
+            ),
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
+
         ScrollTopFade(visible = scrollState.canScrollBackward)
         ScrollBottomFade(
             visible = scrollState.canScrollForward,
@@ -243,6 +227,5 @@ fun AppInfoScreen(
             indicatorText = stringResource(id = R.string.settings_scroll_more)
         )
     }
-}
 }
 

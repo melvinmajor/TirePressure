@@ -56,6 +56,7 @@ fun AddSetupDialog(
     val setupRideStyle = draft.setupRideStyle ?: bikeCategory.defaultRideStyle
 
     var styleMenuExpanded by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
     GlassAlertDialog(
         onDismissRequest = onDismiss,
@@ -77,7 +78,7 @@ fun AddSetupDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {

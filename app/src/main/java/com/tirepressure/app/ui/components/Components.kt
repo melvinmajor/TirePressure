@@ -34,9 +34,16 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.positionOnScreen
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Landscape
@@ -78,7 +85,6 @@ import io.github.angelomarzocchi.glass.glassLampFollowsFinger
 import io.github.angelomarzocchi.glass.glassPosition
 import io.github.angelomarzocchi.glass.rememberGlassLamp
 import io.github.angelomarzocchi.glass.rememberGlassPainter
-import io.github.angelomarzocchi.glass.rememberStillGlassBackdrop
 import io.github.angelomarzocchi.glass.rememberTiltKeyLight
 import io.github.angelomarzocchi.lumen.GlossCardColors
 import io.github.angelomarzocchi.lumen.GlossCardDefaults
@@ -458,11 +464,12 @@ fun GlassAlertDialog(
 ) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val backdrop = LocalGlassBackdrop.current
-    val stillBackdrop = backdrop?.let { rememberStillGlassBackdrop(it) }
     val glassMaterial = appGlassMaterial(isDark = isDark, liquid = false)
     val painter = rememberGlassPainter()
     val glassLamp = rememberGlassLamp()
     val roomLight = rememberTiltKeyLight()
+    var dialogScreenPos by remember { mutableStateOf(Offset.Unspecified) }
+    var anchorInDialogRoot by remember { mutableStateOf(Offset.Zero) }
 
     // Window blur-behind for Android 12+ (API 31+) to blur content beneath the dialog
     val view = LocalView.current
@@ -473,7 +480,9 @@ fun GlassAlertDialog(
                 if (parent is DialogWindowProvider) {
                     val window = parent.window
                     window.addFlags(android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-                    window.attributes.blurBehindRadius = 48
+                    val attrs = window.attributes
+                    attrs.blurBehindRadius = 48
+                    window.attributes = attrs
                     break
                 }
                 parent = parent.parent
@@ -518,22 +527,28 @@ fun GlassAlertDialog(
 
     val shadowColor = if (isDark) Color.Black.copy(alpha = 0.65f) else Color(0xFF475569).copy(alpha = 0.22f)
 
-    val dialogModifier = if (stillBackdrop != null) {
+    val dialogModifier = if (backdrop != null) {
         modifier
             .shadow(24.dp, shape, ambientColor = shadowColor, spotColor = shadowColor)
-            .glassPosition(painter)
+            .onGloballyPositioned { coords ->
+                dialogScreenPos = coords.positionOnScreen()
+            }
             .drawBehind {
                 val radius = 24.dp.toPx()
+                drawRoundRect(
+                    brush = glassBrush,
+                    cornerRadius = CornerRadius(radius, radius)
+                )
                 painter.light {
-                    lamp = androidx.compose.ui.geometry.Offset(glassLamp.x.value, glassLamp.y.value)
+                    lamp = Offset(glassLamp.x.value, glassLamp.y.value)
                     lampOn = glassLamp.on.value
                     keyLight = roomLight()
                 }
                 with(painter) {
                     this@drawBehind.drawBody(
-                        backdrop = stillBackdrop,
+                        backdrop = backdrop,
                         material = glassMaterial,
-                        shape = androidx.compose.ui.geometry.Rect(androidx.compose.ui.geometry.Offset.Zero, this@drawBehind.size),
+                        shape = Rect(Offset.Zero, this@drawBehind.size),
                         radius = radius,
                         dark = isDark
                     )
@@ -550,7 +565,29 @@ fun GlassAlertDialog(
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
-        confirmButton = confirmButton,
+        confirmButton = {
+            if (backdrop != null) {
+                Box(
+                    modifier = Modifier
+                        .size(0.dp)
+                        .onGloballyPositioned { coords ->
+                            anchorInDialogRoot = coords.positionInRoot()
+                        }
+                        .offset {
+                            if (dialogScreenPos != Offset.Unspecified) {
+                                IntOffset(
+                                    x = (dialogScreenPos.x - anchorInDialogRoot.x).roundToInt(),
+                                    y = (dialogScreenPos.y - anchorInDialogRoot.y).roundToInt()
+                                )
+                            } else {
+                                IntOffset.Zero
+                            }
+                        }
+                        .glassPosition(painter)
+                )
+            }
+            confirmButton()
+        },
         dismissButton = dismissButton,
         icon = icon,
         title = title,
@@ -1388,14 +1425,16 @@ fun TirePressurePulseLogo(
     val wave1Alpha = remember { Animatable(0f) }
     val wave2Scale = remember { Animatable(1f) }
     val wave2Alpha = remember { Animatable(0f) }
+    val wave3Scale = remember { Animatable(1f) }
+    val wave3Alpha = remember { Animatable(0f) }
 
     LaunchedEffect(pulseTrigger) {
         if (pulseTrigger > 0) {
-            // Punchy logo inflation pulse - expanding visibly to 1.20x and bouncing back
+            // Punchy logo inflation pulse - expanding visibly to 1.22x and bouncing back
             launch {
                 logoScale.snapTo(1f)
                 logoScale.animateTo(
-                    targetValue = 1.20f,
+                    targetValue = 1.22f,
                     animationSpec = tween(durationMillis = 110, easing = FastOutSlowInEasing)
                 )
                 logoScale.animateTo(
@@ -1406,38 +1445,56 @@ fun TirePressurePulseLogo(
                     )
                 )
             }
-            // Wave 1: First concentric circular sonic pressure wave
+            // Wave 1: Inner primary sonic pressure wave expanding to 3.8x
             launch {
                 wave1Scale.snapTo(1.0f)
-                wave1Alpha.snapTo(0.90f)
+                wave1Alpha.snapTo(0.92f)
                 launch {
                     wave1Scale.animateTo(
-                        targetValue = 2.2f,
-                        animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing)
+                        targetValue = 3.8f,
+                        animationSpec = tween(durationMillis = 680, easing = FastOutSlowInEasing)
                     )
                 }
                 launch {
                     wave1Alpha.animateTo(
                         targetValue = 0f,
-                        animationSpec = tween(durationMillis = 520, easing = LinearOutSlowInEasing)
+                        animationSpec = tween(durationMillis = 680, easing = LinearOutSlowInEasing)
                     )
                 }
             }
-            // Wave 2: Second concentric circular wave, delayed by ~60ms and expanding to 2.8x
+            // Wave 2: Middle concentric circular wave, delayed by 65ms and expanding to 5.4x
             launch {
-                delay(60)
+                delay(65)
                 wave2Scale.snapTo(1.0f)
-                wave2Alpha.snapTo(0.70f)
+                wave2Alpha.snapTo(0.75f)
                 launch {
                     wave2Scale.animateTo(
-                        targetValue = 2.8f,
-                        animationSpec = tween(durationMillis = 580, easing = FastOutSlowInEasing)
+                        targetValue = 5.4f,
+                        animationSpec = tween(durationMillis = 780, easing = FastOutSlowInEasing)
                     )
                 }
                 launch {
                     wave2Alpha.animateTo(
                         targetValue = 0f,
-                        animationSpec = tween(durationMillis = 580, easing = LinearOutSlowInEasing)
+                        animationSpec = tween(durationMillis = 780, easing = LinearOutSlowInEasing)
+                    )
+                }
+            }
+            // Wave 3: Far-reaching outer sonic halo, delayed by 130ms and expanding to 7.2x across the screen
+            launch {
+                delay(130)
+                wave3Scale.snapTo(1.0f)
+                wave3Alpha.snapTo(0.58f)
+                launch {
+                    wave3Scale.animateTo(
+                        targetValue = 7.2f,
+                        animationSpec = tween(durationMillis = 900, easing = FastOutSlowInEasing)
+                    )
+                }
+                launch {
+                    wave3Alpha.animateTo(
+                        targetValue = 0f,
+                        animationSpec = tween(durationMillis = 900, easing = LinearOutSlowInEasing)
                     )
                 }
             }
@@ -1456,7 +1513,35 @@ fun TirePressurePulseLogo(
             },
         contentAlignment = Alignment.Center
     ) {
-        // Wave 2: Second outer concentric circular wave
+        // Wave 3: Far-reaching outer sonic halo
+        if (wave3Alpha.value > 0.01f) {
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .graphicsLayer {
+                        scaleX = wave3Scale.value
+                        scaleY = wave3Scale.value
+                        alpha = wave3Alpha.value
+                        clip = false
+                    }
+                    .border(
+                        width = 1.8.dp,
+                        color = primaryColor.copy(alpha = 0.85f),
+                        shape = CircleShape
+                    )
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                primaryColor.copy(alpha = 0.14f)
+                            )
+                        ),
+                        shape = CircleShape
+                    )
+            )
+        }
+
+        // Wave 2: Middle concentric circular wave
         if (wave2Alpha.value > 0.01f) {
             Box(
                 modifier = Modifier
@@ -1468,18 +1553,23 @@ fun TirePressurePulseLogo(
                         clip = false
                     }
                     .border(
-                        width = 3.dp,
+                        width = 2.6.dp,
                         color = primaryColor,
                         shape = CircleShape
                     )
                     .background(
-                        color = primaryColor.copy(alpha = 0.12f),
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                primaryColor.copy(alpha = 0.06f),
+                                primaryColor.copy(alpha = 0.18f)
+                            )
+                        ),
                         shape = CircleShape
                     )
             )
         }
 
-        // Wave 1: First inner concentric circular wave
+        // Wave 1: Inner primary concentric circular wave
         if (wave1Alpha.value > 0.01f) {
             Box(
                 modifier = Modifier
@@ -1491,12 +1581,17 @@ fun TirePressurePulseLogo(
                         clip = false
                     }
                     .border(
-                        width = 4.dp,
+                        width = 3.5.dp,
                         color = primaryColor,
                         shape = CircleShape
                     )
                     .background(
-                        color = primaryColor.copy(alpha = 0.20f),
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                primaryColor.copy(alpha = 0.10f),
+                                primaryColor.copy(alpha = 0.24f)
+                            )
+                        ),
                         shape = CircleShape
                     )
             )

@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -21,6 +22,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -56,6 +58,7 @@ import com.tirepressure.app.core.model.TwoPaneSplitRatio
 import com.tirepressure.app.core.util.UnitConverter
 import com.tirepressure.app.ui.components.AboutAndPrivacyCard
 import com.tirepressure.app.ui.components.GlassAlertDialog
+import com.tirepressure.app.ui.components.LocalGlassBackdrop
 import com.tirepressure.app.ui.components.NumberInputField
 import com.tirepressure.app.ui.components.PillSelector
 import com.tirepressure.app.ui.components.SectionCard
@@ -64,6 +67,8 @@ import com.tirepressure.app.ui.components.ScrollBottomFade
 import com.tirepressure.app.ui.components.appGlossCardColors
 import com.tirepressure.app.ui.components.appLumenActionColors
 import com.tirepressure.app.ui.components.lockScrollOnActiveCardTilt
+import io.github.angelomarzocchi.glass.glassBackdrop
+import io.github.angelomarzocchi.glass.rememberGlassBackdrop
 import io.github.angelomarzocchi.lumen.GlossCard
 import io.github.angelomarzocchi.lumen.GlossCardDefaults
 import io.github.angelomarzocchi.lumen.LightAction
@@ -122,21 +127,48 @@ fun SettingsScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(id = R.string.settings_title), fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() }) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.action_cancel))
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        }
-    ) { paddingValues ->
+    val parentGlassBackdrop = LocalGlassBackdrop.current
+    val isPopupActive = state.showResetConfirmation || state.pendingImportPayload != null
+    val blurRadius by animateDpAsState(
+        targetValue = if (isPopupActive && parentGlassBackdrop == null) 14.dp else 0.dp,
+        animationSpec = tween(250),
+        label = "SettingsDialogBlur"
+    )
+    val localGlassBackdrop = rememberGlassBackdrop()
+    val effectiveGlassBackdrop = parentGlassBackdrop ?: localGlassBackdrop
+
+    CompositionLocalProvider(LocalGlassBackdrop provides effectiveGlassBackdrop) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            Scaffold(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(
+                        if (parentGlassBackdrop == null) {
+                            Modifier.glassBackdrop(localGlassBackdrop)
+                        } else {
+                            Modifier
+                        }
+                    )
+                    .background(MaterialTheme.colorScheme.background)
+                    .blur(blurRadius),
+                topBar = {
+                    TopAppBar(
+                        title = { Text(stringResource(id = R.string.settings_title), fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() }) },
+                        navigationIcon = {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.action_cancel))
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.background
+                        )
+                    )
+                }
+            ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -700,53 +732,63 @@ fun SettingsScreen(
             indicatorText = stringResource(id = R.string.settings_scroll_more)
         )
     }
+            }
 
-        // Dialogue de réinitialisation
-        if (state.showResetConfirmation) {
-            GlassAlertDialog(
-                onDismissRequest = { viewModel.cancelReset() },
-                title = { Text(stringResource(id = R.string.settings_reset_dialog_title)) },
-                text = { Text(stringResource(id = R.string.settings_reset_dialog_msg)) },
-                confirmButton = {
-                    TextButton(
-                        onClick = { viewModel.confirmReset(onResetCompleted = onNavigateToOnboarding) },
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                    ) {
-                        Text(stringResource(id = R.string.settings_reset_all_data))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { viewModel.cancelReset() }) {
-                        Text(stringResource(id = R.string.action_cancel))
-                    }
-                }
-            )
-        }
-
-        // Dialogue d'importation : Remplacer ou Fusionner
-        state.pendingImportPayload?.let { payload ->
-            GlassAlertDialog(
-                onDismissRequest = { viewModel.cancelImport() },
-                title = { Text(stringResource(id = R.string.settings_import_dialog_title)) },
-                text = {
-                    Text(stringResource(id = R.string.settings_import_dialog_msg, payload.bikes.size, payload.exportDate))
-                },
-                confirmButton = {
-                    Row {
-                        TextButton(onClick = { viewModel.confirmImport(merge = true) }) {
-                            Text(stringResource(id = R.string.settings_import_merge))
+            // Dialogue de réinitialisation
+            if (state.showResetConfirmation) {
+                GlassAlertDialog(
+                    onDismissRequest = { viewModel.cancelReset() },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    },
+                    title = { Text(stringResource(id = R.string.settings_reset_dialog_title)) },
+                    text = { Text(stringResource(id = R.string.settings_reset_dialog_msg)) },
+                    confirmButton = {
+                        Button(
+                            onClick = { viewModel.confirmReset(onResetCompleted = onNavigateToOnboarding) },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Text(stringResource(id = R.string.settings_reset_all_data))
                         }
-                        Button(onClick = { viewModel.confirmImport(merge = false) }) {
-                            Text(stringResource(id = R.string.settings_import_replace))
+                    },
+                    dismissButton = {
+                        OutlinedButton(onClick = { viewModel.cancelReset() }) {
+                            Text(stringResource(id = R.string.action_cancel))
                         }
                     }
-                },
-                dismissButton = {
-                    TextButton(onClick = { viewModel.cancelImport() }) {
-                        Text(stringResource(id = R.string.action_cancel))
+                )
+            }
+
+            // Dialogue d'importation : Remplacer ou Fusionner
+            state.pendingImportPayload?.let { payload ->
+                GlassAlertDialog(
+                    onDismissRequest = { viewModel.cancelImport() },
+                    title = { Text(stringResource(id = R.string.settings_import_dialog_title)) },
+                    text = {
+                        Text(stringResource(id = R.string.settings_import_dialog_msg, payload.bikes.size, payload.exportDate))
+                    },
+                    confirmButton = {
+                        Row {
+                            TextButton(onClick = { viewModel.confirmImport(merge = true) }) {
+                                Text(stringResource(id = R.string.settings_import_merge))
+                            }
+                            Button(onClick = { viewModel.confirmImport(merge = false) }) {
+                                Text(stringResource(id = R.string.settings_import_replace))
+                            }
+                        }
+                    },
+                    dismissButton = {
+                        OutlinedButton(onClick = { viewModel.cancelImport() }) {
+                            Text(stringResource(id = R.string.action_cancel))
+                        }
                     }
-                }
-            )
+                )
+            }
         }
     }
 }

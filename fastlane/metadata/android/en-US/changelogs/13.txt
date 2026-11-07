@@ -1,0 +1,5 @@
+- Fixed a freeze when opening the Add Setup popup from a bike card
+- Unified the App Info screen background so the logo's expanded multi-ring sonic wave radiates seamlessly through the header
+- Removed card borders and touch-tilt effects from the Frank Berto Algorithm Adaptations and GitHub link sections on the App Info screen
+- Moved the compact discipline pill to the wheel specs line on the Detailed overview card and hid it on the Compact view when the setup name is too long
+- Aligned the Reset All Data confirmation popup in Settings with the Delete Bike and Delete Setup Profile popups

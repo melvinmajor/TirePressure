@@ -58,6 +58,8 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tirepressure.app.R
@@ -112,17 +114,19 @@ fun OverviewScreen(
     var userSelectedSimplified by rememberSaveable { mutableStateOf<Boolean?>(null) }
     val isSimplifiedView = userSelectedSimplified ?: state.defaultOverviewCompact
 
+    val parentGlassBackdrop = LocalGlassBackdrop.current
     val isPopupActive = state.bikeToDelete != null ||
         state.setupToDelete != null ||
         state.editingBikeDraft != null ||
         state.addSetupDraft != null
     val blurRadius by animateDpAsState(
-        targetValue = if (isPopupActive) 14.dp else 0.dp,
+        targetValue = if (isPopupActive && parentGlassBackdrop == null) 14.dp else 0.dp,
         animationSpec = tween(250),
         label = "OverviewDialogBlur"
     )
 
-    val glassBackdrop = rememberGlassBackdrop()
+    val localGlassBackdrop = rememberGlassBackdrop()
+    val effectiveGlassBackdrop = parentGlassBackdrop ?: localGlassBackdrop
     val addBikeHeroAnchor = rememberFlightAnchor(
         key = "bike_hero_new",
         paint = remember { RecordedPaint(single = false, overflow = true) }
@@ -138,7 +142,7 @@ fun OverviewScreen(
     val tilt = rememberTiltKeyLight()
     val haptics = rememberBounceHaptics()
 
-    CompositionLocalProvider(LocalGlassBackdrop provides glassBackdrop) {
+    CompositionLocalProvider(LocalGlassBackdrop provides effectiveGlassBackdrop) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -147,7 +151,13 @@ fun OverviewScreen(
             Scaffold(
                 modifier = Modifier
                     .fillMaxSize()
-                    .glassBackdrop(glassBackdrop)
+                    .then(
+                        if (parentGlassBackdrop == null) {
+                            Modifier.glassBackdrop(localGlassBackdrop)
+                        } else {
+                            Modifier
+                        }
+                    )
                     .background(MaterialTheme.colorScheme.background)
                     .blur(blurRadius),
                 topBar = {
@@ -954,22 +964,6 @@ private fun BikeOverviewCard(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
-                                    val effStyle = setup.getEffectiveRideStyle(bike.category)
-                                    val styleColor = getRideStyleColor(effStyle, bike.category)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = styleColor.copy(alpha = 0.10f),
-                                        border = BorderStroke(1.dp, styleColor.copy(alpha = 0.35f))
-                                    ) {
-                                        Text(
-                                            text = stringResource(id = effStyle.labelRes),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = styleColor.copy(alpha = 0.9f),
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                    }
                                 }
 
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1105,11 +1099,32 @@ private fun BikeOverviewCard(
                                     specLabel
                                 }
 
-                                Text(
-                                    text = fullSpecLabel,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                val styleColor = getRideStyleColor(effStyle, bike.category)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Surface(
+                                        shape = RoundedCornerShape(4.dp),
+                                        color = styleColor.copy(alpha = 0.10f),
+                                        border = BorderStroke(1.dp, styleColor.copy(alpha = 0.35f))
+                                    ) {
+                                        Text(
+                                            text = stringResource(id = effStyle.labelRes),
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                            color = styleColor.copy(alpha = 0.9f),
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                    Text(
+                                        text = fullSpecLabel,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
 
                                 // Cartes des conditions de surface calculées globales
                                 Row(
@@ -1511,49 +1526,88 @@ private fun BikeOverviewCardSimplified(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f, fill = false)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.DonutLarge,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(15.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(5.dp))
-                                    Text(
-                                        text = setup.name,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    val effStyle = setup.getEffectiveRideStyle(bike.category)
-                                    val styleColor = getRideStyleColor(effStyle, bike.category)
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Surface(
-                                        shape = RoundedCornerShape(4.dp),
-                                        color = styleColor.copy(alpha = 0.10f),
-                                        border = BorderStroke(1.dp, styleColor.copy(alpha = 0.35f))
-                                    ) {
-                                        Text(
-                                            text = stringResource(id = effStyle.labelRes),
-                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                            color = styleColor.copy(alpha = 0.9f),
-                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
-                                            fontWeight = FontWeight.SemiBold
+                                val effStyle = setup.getEffectiveRideStyle(bike.category)
+                                val styleColor = getRideStyleColor(effStyle, bike.category)
+                                Layout(
+                                    modifier = Modifier.weight(1f),
+                                    content = {
+                                        Icon(
+                                            imageVector = Icons.Default.DonutLarge,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(15.dp)
                                         )
+                                        Text(
+                                            text = setup.name,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = styleColor.copy(alpha = 0.10f),
+                                            border = BorderStroke(1.dp, styleColor.copy(alpha = 0.35f))
+                                        ) {
+                                            Text(
+                                                text = stringResource(id = effStyle.labelRes),
+                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                                color = styleColor.copy(alpha = 0.9f),
+                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+                                                fontWeight = FontWeight.SemiBold,
+                                                maxLines = 1
+                                            )
+                                        }
+                                        if (setup.luggageWeightKg > 0.0) {
+                                            Text(
+                                                text = "• " + stringResource(R.string.overview_luggage_weight_short, String.format(java.util.Locale.US, "%.1f", UnitConverter.fromKg(setup.luggageWeightKg, massUnit)), massUnit.symbol),
+                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1
+                                            )
+                                        }
                                     }
-
-                                    // Si bagages / équipement > 0 kg, afficher sur la même ligne
-                                    if (setup.luggageWeightKg > 0.0) {
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = "• " + stringResource(R.string.overview_luggage_weight_short, String.format(java.util.Locale.US, "%.1f", UnitConverter.fromKg(setup.luggageWeightKg, massUnit)), massUnit.symbol),
-                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
+                                ) { measurables, constraints ->
+                                    val maxW = constraints.maxWidth
+                                    val gap1 = 5.dp.roundToPx()
+                                    val gap2 = 6.dp.roundToPx()
+                                    val iconPlaceable = measurables[0].measure(Constraints(maxWidth = maxW))
+                                    val pillPlaceable = measurables[2].measure(Constraints())
+                                    val naturalNameWidth = measurables[1].maxIntrinsicWidth(constraints.maxHeight)
+                                    val showPill = iconPlaceable.width + gap1 + naturalNameWidth + gap2 + pillPlaceable.width <= maxW
+                                    val maxNameW = if (showPill) {
+                                        naturalNameWidth
+                                    } else {
+                                        (maxW - iconPlaceable.width - gap1).coerceAtLeast(0)
+                                    }
+                                    val namePlaceable = measurables[1].measure(
+                                        Constraints(maxWidth = maxNameW, maxHeight = constraints.maxHeight)
+                                    )
+                                    val luggagePlaceable = if (showPill && measurables.size > 3) {
+                                        val p = measurables[3].measure(Constraints())
+                                        if (iconPlaceable.width + gap1 + namePlaceable.width + gap2 + pillPlaceable.width + gap2 + p.width <= maxW) p else null
+                                    } else null
+                                    val rowHeight = maxOf(
+                                        iconPlaceable.height,
+                                        namePlaceable.height,
+                                        if (showPill) pillPlaceable.height else 0,
+                                        luggagePlaceable?.height ?: 0
+                                    )
+                                    layout(maxW, rowHeight) {
+                                        var x = 0
+                                        iconPlaceable.placeRelative(x, (rowHeight - iconPlaceable.height) / 2)
+                                        x += iconPlaceable.width + gap1
+                                        namePlaceable.placeRelative(x, (rowHeight - namePlaceable.height) / 2)
+                                        x += namePlaceable.width
+                                        if (showPill) {
+                                            x += gap2
+                                            pillPlaceable.placeRelative(x, (rowHeight - pillPlaceable.height) / 2)
+                                            x += pillPlaceable.width
+                                            if (luggagePlaceable != null) {
+                                                x += gap2
+                                                luggagePlaceable.placeRelative(x, (rowHeight - luggagePlaceable.height) / 2)
+                                            }
+                                        }
                                     }
                                 }
 

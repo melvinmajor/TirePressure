@@ -6,6 +6,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -16,6 +17,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,6 +60,7 @@ import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirectiveWithTwoPanesOnMediumWidth
 import androidx.compose.material3.adaptive.layout.rememberPaneExpansionState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -67,6 +70,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalConfiguration
@@ -88,6 +92,7 @@ import com.tirepressure.app.domain.repository.BikeRepository
 import com.tirepressure.app.domain.repository.PreferencesRepository
 import com.tirepressure.app.ui.bikes.BikeEditScreen
 import com.tirepressure.app.ui.bikes.BikeEditViewModel
+import com.tirepressure.app.ui.components.LocalGlassBackdrop
 import com.tirepressure.app.ui.components.TirePressurePulseLogo
 import com.tirepressure.app.ui.components.appGlossCardColors
 import com.tirepressure.app.ui.components.appLumenActionColors
@@ -98,6 +103,8 @@ import com.tirepressure.app.ui.overview.OverviewScreen
 import com.tirepressure.app.ui.overview.OverviewViewModel
 import com.tirepressure.app.ui.settings.SettingsScreen
 import com.tirepressure.app.ui.settings.SettingsViewModel
+import io.github.angelomarzocchi.glass.glassBackdrop
+import io.github.angelomarzocchi.glass.rememberGlassBackdrop
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import io.github.angelomarzocchi.flight.FlightHost
 import io.github.angelomarzocchi.flight.FlightNavDisplay
@@ -172,7 +179,9 @@ fun AppNavigation(
         computeAdaptivePaneDirective(windowAdaptiveInfo)
     }
 
+    val overviewState by overviewViewModel.uiState.collectAsStateWithLifecycle()
     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val bikeEditState by bikeEditViewModel.uiState.collectAsStateWithLifecycle()
     val animatedListProportion by animateFloatAsState(
         targetValue = settingsState.twoPaneSplitRatio.listWeight,
         animationSpec = spring(
@@ -249,151 +258,177 @@ fun AppNavigation(
             )
         }
 
-        FlightHost(modifier = modifier.fillMaxSize()) {
-            ListDetailPaneScaffold(
-                directive = directive,
-                value = scaffoldValue,
-                listPane = {
-                    AnimatedPane(
-                        modifier = Modifier
-                            .preferredWidth(animatedListProportion)
-                            .fillMaxHeight()
-                    ) {
-                        OverviewScreen(
-                            viewModel = overviewViewModel,
-                            isDualPane = true,
-                            onNavigateToAddBike = {
-                                navigateToDetail(Screen.BikeEdit("new"))
-                            },
-                            onNavigateToEditBike = { bikeId ->
-                                navigateToDetail(Screen.BikeEdit(bikeId))
-                            },
-                            onNavigateToSettings = {
-                                navigateToDetail(Screen.Settings)
-                            },
-                            onNavigateToAppInfo = {
-                                navigateToDetail(Screen.AppInfo)
-                            }
-                        )
-                    }
-                },
-                detailPane = {
-                    AnimatedPane(
-                        modifier = Modifier
-                            .preferredWidth(1f - animatedListProportion)
-                            .fillMaxHeight()
-                    ) {
-                        val detailSaveableStateHolder = rememberSaveableStateHolder()
-                        AnimatedContent(
-                            targetState = currentDetailScreen,
-                            transitionSpec = {
-                                val isOpeningDetail = initialState == null && targetState != null
-                                val isClosingToPlaceholder = initialState != null && targetState == null
-                                when {
-                                    isOpeningDetail -> {
-                                        (slideInHorizontally(
-                                            animationSpec = tween(300, easing = FastOutSlowInEasing),
-                                            initialOffsetX = { fullWidth -> fullWidth / 6 }
-                                        ) + fadeIn(
-                                            animationSpec = tween(250, easing = FastOutSlowInEasing)
-                                        ) + scaleIn(
-                                            animationSpec = tween(300, easing = FastOutSlowInEasing),
-                                            initialScale = 0.96f
-                                        )) togetherWith (fadeOut(
-                                            animationSpec = tween(180, easing = FastOutSlowInEasing)
-                                        ) + scaleOut(
-                                            animationSpec = tween(250, easing = FastOutSlowInEasing),
-                                            targetScale = 0.96f
-                                        ))
-                                    }
-                                    isClosingToPlaceholder -> {
-                                        (fadeIn(
-                                            animationSpec = tween(250, easing = FastOutSlowInEasing)
-                                        ) + scaleIn(
-                                            animationSpec = tween(300, easing = FastOutSlowInEasing),
-                                            initialScale = 0.96f
-                                        )) togetherWith (slideOutHorizontally(
-                                            animationSpec = tween(280, easing = FastOutSlowInEasing),
-                                            targetOffsetX = { fullWidth -> fullWidth / 6 }
-                                        ) + fadeOut(
-                                            animationSpec = tween(200, easing = FastOutSlowInEasing)
-                                        ) + scaleOut(
-                                            animationSpec = tween(280, easing = FastOutSlowInEasing),
-                                            targetScale = 0.96f
-                                        ))
-                                    }
-                                    else -> {
-                                        (slideInHorizontally(
-                                            animationSpec = tween(280, easing = FastOutSlowInEasing),
-                                            initialOffsetX = { fullWidth -> fullWidth / 10 }
-                                        ) + fadeIn(
-                                            animationSpec = tween(240, easing = FastOutSlowInEasing)
-                                        ) + scaleIn(
-                                            animationSpec = tween(280, easing = FastOutSlowInEasing),
-                                            initialScale = 0.98f
-                                        )) togetherWith (slideOutHorizontally(
-                                            animationSpec = tween(240, easing = FastOutSlowInEasing),
-                                            targetOffsetX = { fullWidth -> -fullWidth / 12 }
-                                        ) + fadeOut(
-                                            animationSpec = tween(180, easing = FastOutSlowInEasing)
-                                        ) + scaleOut(
-                                            animationSpec = tween(240, easing = FastOutSlowInEasing),
-                                            targetScale = 0.98f
-                                        ))
-                                    }
-                                }.using(SizeTransform(clip = true))
-                            },
-                            contentKey = { it.detailStateKey() },
-                            modifier = Modifier.fillMaxSize(),
-                            label = "DetailPaneAnimatedContent"
-                        ) { targetDetail ->
-                            // SaveableStateProvider keys must be Bundle-compatible (String), never a Screen object,
-                            // otherwise Compose throws "Type of the key ... is not supported" and the app crashes.
-                            detailSaveableStateHolder.SaveableStateProvider(
-                                key = targetDetail.detailStateKey()
-                            ) {
-                                when (targetDetail) {
-                                    null -> OverviewDetailPlaceholder(
-                                        onOpenSettings = { navigateToDetail(Screen.Settings) },
-                                        onOpenAppInfo = { navigateToDetail(Screen.AppInfo) }
-                                    )
-                                    is Screen.BikeEdit -> key(targetDetail.bikeId) {
-                                        BikeEditScreen(
-                                            bikeId = targetDetail.bikeId,
-                                            viewModel = bikeEditViewModel,
-                                            preferencesRepository = preferencesRepository,
+        val isAnyTwoPaneDialogActive = overviewState.bikeToDelete != null ||
+            overviewState.setupToDelete != null ||
+            overviewState.editingBikeDraft != null ||
+            overviewState.addSetupDraft != null ||
+            settingsState.showResetConfirmation ||
+            settingsState.pendingImportPayload != null ||
+            bikeEditState.showDeleteBikeConfirmation ||
+            bikeEditState.setupToDeleteId != null ||
+            bikeEditState.showAddSetupDialog
+        val twoPaneBlurRadius by animateDpAsState(
+            targetValue = if (isAnyTwoPaneDialogActive) 14.dp else 0.dp,
+            animationSpec = tween(250),
+            label = "TwoPaneDialogBlur"
+        )
+        val rootGlassBackdrop = rememberGlassBackdrop()
+
+        CompositionLocalProvider(LocalGlassBackdrop provides rootGlassBackdrop) {
+            FlightHost(
+                modifier = modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                ListDetailPaneScaffold(
+                    directive = directive,
+                    value = scaffoldValue,
+                    listPane = {
+                        AnimatedPane(
+                            modifier = Modifier
+                                .preferredWidth(animatedListProportion)
+                                .fillMaxHeight()
+                        ) {
+                            OverviewScreen(
+                                viewModel = overviewViewModel,
+                                isDualPane = true,
+                                onNavigateToAddBike = {
+                                    navigateToDetail(Screen.BikeEdit("new"))
+                                },
+                                onNavigateToEditBike = { bikeId ->
+                                    navigateToDetail(Screen.BikeEdit(bikeId))
+                                },
+                                onNavigateToSettings = {
+                                    navigateToDetail(Screen.Settings)
+                                },
+                                onNavigateToAppInfo = {
+                                    navigateToDetail(Screen.AppInfo)
+                                }
+                            )
+                        }
+                    },
+                    detailPane = {
+                        AnimatedPane(
+                            modifier = Modifier
+                                .preferredWidth(1f - animatedListProportion)
+                                .fillMaxHeight()
+                        ) {
+                            val detailSaveableStateHolder = rememberSaveableStateHolder()
+                            AnimatedContent(
+                                targetState = currentDetailScreen,
+                                transitionSpec = {
+                                    val isOpeningDetail = initialState == null && targetState != null
+                                    val isClosingToPlaceholder = initialState != null && targetState == null
+                                    when {
+                                        isOpeningDetail -> {
+                                            (slideInHorizontally(
+                                                animationSpec = tween(300, easing = FastOutSlowInEasing),
+                                                initialOffsetX = { fullWidth -> fullWidth / 6 }
+                                            ) + fadeIn(
+                                                animationSpec = tween(250, easing = FastOutSlowInEasing)
+                                            ) + scaleIn(
+                                                animationSpec = tween(300, easing = FastOutSlowInEasing),
+                                                initialScale = 0.96f
+                                            )) togetherWith (fadeOut(
+                                                animationSpec = tween(180, easing = FastOutSlowInEasing)
+                                            ) + scaleOut(
+                                                animationSpec = tween(250, easing = FastOutSlowInEasing),
+                                                targetScale = 0.96f
+                                            ))
+                                        }
+                                        isClosingToPlaceholder -> {
+                                            (fadeIn(
+                                                animationSpec = tween(250, easing = FastOutSlowInEasing)
+                                            ) + scaleIn(
+                                                animationSpec = tween(300, easing = FastOutSlowInEasing),
+                                                initialScale = 0.96f
+                                            )) togetherWith (slideOutHorizontally(
+                                                animationSpec = tween(280, easing = FastOutSlowInEasing),
+                                                targetOffsetX = { fullWidth -> fullWidth / 6 }
+                                            ) + fadeOut(
+                                                animationSpec = tween(200, easing = FastOutSlowInEasing)
+                                            ) + scaleOut(
+                                                animationSpec = tween(280, easing = FastOutSlowInEasing),
+                                                targetScale = 0.96f
+                                            ))
+                                        }
+                                        else -> {
+                                            (slideInHorizontally(
+                                                animationSpec = tween(280, easing = FastOutSlowInEasing),
+                                                initialOffsetX = { fullWidth -> fullWidth / 10 }
+                                            ) + fadeIn(
+                                                animationSpec = tween(240, easing = FastOutSlowInEasing)
+                                            ) + scaleIn(
+                                                animationSpec = tween(280, easing = FastOutSlowInEasing),
+                                                initialScale = 0.98f
+                                            )) togetherWith (slideOutHorizontally(
+                                                animationSpec = tween(240, easing = FastOutSlowInEasing),
+                                                targetOffsetX = { fullWidth -> -fullWidth / 12 }
+                                            ) + fadeOut(
+                                                animationSpec = tween(180, easing = FastOutSlowInEasing)
+                                            ) + scaleOut(
+                                                animationSpec = tween(240, easing = FastOutSlowInEasing),
+                                                targetScale = 0.98f
+                                            ))
+                                        }
+                                    }.using(SizeTransform(clip = true))
+                                },
+                                contentKey = { it.detailStateKey() },
+                                modifier = Modifier.fillMaxSize(),
+                                label = "DetailPaneAnimatedContent"
+                            ) { targetDetail ->
+                                // SaveableStateProvider keys must be Bundle-compatible (String), never a Screen object,
+                                // otherwise Compose throws "Type of the key ... is not supported" and the app crashes.
+                                detailSaveableStateHolder.SaveableStateProvider(
+                                    key = targetDetail.detailStateKey()
+                                ) {
+                                    when (targetDetail) {
+                                        null -> OverviewDetailPlaceholder(
+                                            onOpenSettings = { navigateToDetail(Screen.Settings) },
+                                            onOpenAppInfo = { navigateToDetail(Screen.AppInfo) }
+                                        )
+                                        is Screen.BikeEdit -> key(targetDetail.bikeId) {
+                                            BikeEditScreen(
+                                                bikeId = targetDetail.bikeId,
+                                                viewModel = bikeEditViewModel,
+                                                preferencesRepository = preferencesRepository,
+                                                isDualPane = true,
+                                                onNavigateBack = {
+                                                    popDetail()
+                                                }
+                                            )
+                                        }
+                                        is Screen.Settings -> SettingsScreen(
+                                            viewModel = settingsViewModel,
+                                            supportsTwoPaneLayout = supportsTwoPaneLayout,
+                                            onNavigateBack = {
+                                                popDetail()
+                                            },
+                                            onNavigateToOnboarding = {
+                                                backStack.clear()
+                                                backStack.add(Screen.Onboarding(1))
+                                            }
+                                        )
+                                        is Screen.AppInfo -> AppInfoScreen(
                                             isDualPane = true,
                                             onNavigateBack = {
                                                 popDetail()
                                             }
                                         )
+                                        else -> Unit
                                     }
-                                    is Screen.Settings -> SettingsScreen(
-                                        viewModel = settingsViewModel,
-                                        supportsTwoPaneLayout = supportsTwoPaneLayout,
-                                        onNavigateBack = {
-                                            popDetail()
-                                        },
-                                        onNavigateToOnboarding = {
-                                            backStack.clear()
-                                            backStack.add(Screen.Onboarding(1))
-                                        }
-                                    )
-                                    is Screen.AppInfo -> AppInfoScreen(
-                                        isDualPane = true,
-                                        onNavigateBack = {
-                                            popDetail()
-                                        }
-                                    )
-                                    else -> Unit
                                 }
                             }
                         }
-                    }
-                },
-                paneExpansionState = paneExpansionState,
-                modifier = Modifier.fillMaxSize()
-            )
+                    },
+                    paneExpansionState = paneExpansionState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .glassBackdrop(rootGlassBackdrop)
+                        .background(MaterialTheme.colorScheme.background)
+                        .blur(twoPaneBlurRadius)
+                )
+            }
         }
     } else {
         FlightHost(modifier = modifier.fillMaxSize()) {

@@ -143,10 +143,11 @@ fun BikeEditScreen(
 
     var nameError by remember(state, viewModel) { vmState({ state.nameError }, { viewModel.setNameError(it) }) }
 
+    val parentGlassBackdrop = LocalGlassBackdrop.current
     val nameRequiredErrorMsg = stringResource(id = R.string.bike_name_required_error)
     val isDeleteDialogOpen = showDeleteBikeConfirmation || setupToDeleteConfirmation != null || showAddSetupDialog
     val blurRadius by animateDpAsState(
-        targetValue = if (isDeleteDialogOpen) 14.dp else 0.dp,
+        targetValue = if (isDeleteDialogOpen && parentGlassBackdrop == null) 14.dp else 0.dp,
         animationSpec = tween(250),
         label = "EditScreenDialogBlur"
     )
@@ -156,7 +157,8 @@ fun BikeEditScreen(
         onNavigateBack()
     }
 
-    val glassBackdrop = rememberGlassBackdrop()
+    val localGlassBackdrop = rememberGlassBackdrop()
+    val effectiveGlassBackdrop = parentGlassBackdrop ?: localGlassBackdrop
     val bikeHeroModifier = if (!isDualPane) {
         val bikeHeroAnchor = rememberFlightAnchor(
             key = "bike_hero_${bikeId}",
@@ -191,7 +193,7 @@ fun BikeEditScreen(
         }
     }
 
-    CompositionLocalProvider(LocalGlassBackdrop provides glassBackdrop) {
+    CompositionLocalProvider(LocalGlassBackdrop provides effectiveGlassBackdrop) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -200,7 +202,13 @@ fun BikeEditScreen(
             Scaffold(
                 modifier = Modifier
                     .fillMaxSize()
-                    .glassBackdrop(glassBackdrop)
+                    .then(
+                        if (parentGlassBackdrop == null) {
+                            Modifier.glassBackdrop(localGlassBackdrop)
+                        } else {
+                            Modifier
+                        }
+                    )
                     .background(MaterialTheme.colorScheme.background)
                     .blur(blurRadius),
                 topBar = {
@@ -701,7 +709,7 @@ fun BikeEditScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         OutlinedButton(
-                            onClick = { showAddSetupDialog = true },
+                            onClick = { viewModel.startAddSetup(defaultSetupPrefix) },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(10.dp)
                         ) {

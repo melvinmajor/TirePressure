@@ -1,0 +1,5 @@
+- Correction d'un blocage à l'ouverture de la fenêtre d'ajout de configuration
+- Unification de l'arrière-plan de l'écran Infos de l'application pour que l'onde sonore étendue du logo rayonne à travers l'en-tête
+- Suppression des bordures de carte et effets 3D sur la section Adaptations de l'algorithme Frank Berto et le lien GitHub
+- Déplacement de la pastille compacte de discipline sur la ligne des caractéristiques de roues en vue détaillée et masquage automatique en vue compacte si le nom est trop long
+- Harmonisation de la fenêtre de confirmation de réinitialisation des données avec celles de suppression de vélo et de configuration
