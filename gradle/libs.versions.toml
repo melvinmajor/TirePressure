@@ -15,7 +15,7 @@ room = "2.8.5"
 datastore = "1.2.1"
 kotlinxSerialization = "1.8.1"
 coroutines = "1.10.1"
-composeLumen = "1.1.1"
+composeLumen = "1.2.1"
 composeGlass = "1.1.1"
 composeFlight = "1.1.1"
 

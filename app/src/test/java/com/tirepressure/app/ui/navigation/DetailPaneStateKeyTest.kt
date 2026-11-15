@@ -17,7 +17,9 @@ class DetailPaneStateKeyTest {
             Screen.Settings.detailStateKey(),
             Screen.AppInfo.detailStateKey(),
             Screen.BikeEdit("new").detailStateKey(),
-            Screen.BikeEdit("bike-42").detailStateKey()
+            Screen.BikeEdit("bike-42").detailStateKey(),
+            Screen.BikeEdit("bike-42", "setup-1").detailStateKey(),
+            Screen.BikeEdit("bike-42", "setup-2").detailStateKey()
         )
         assertEquals(keys.size, keys.toSet().size)
     }
@@ -25,10 +27,12 @@ class DetailPaneStateKeyTest {
     @Test
     fun `detail pane keys are stable across equal screens`() {
         assertEquals(Screen.BikeEdit("abc").detailStateKey(), Screen.BikeEdit("abc").detailStateKey())
+        assertEquals(Screen.BikeEdit("abc", "s1").detailStateKey(), Screen.BikeEdit("abc", "s1").detailStateKey())
         assertEquals("settings", Screen.Settings.detailStateKey())
         assertEquals("app_info", Screen.AppInfo.detailStateKey())
         assertEquals("overview_detail_placeholder", null.detailStateKey())
         assertNotEquals(Screen.BikeEdit("a").detailStateKey(), Screen.BikeEdit("b").detailStateKey())
+        assertNotEquals(Screen.BikeEdit("abc", "s1").detailStateKey(), Screen.BikeEdit("abc", "s2").detailStateKey())
     }
 }
 

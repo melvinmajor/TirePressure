@@ -16,6 +16,7 @@ import java.util.UUID
 
 data class BikeEditUiState(
     val initialBikeId: String? = null,
+    val loadedSetupId: String? = null,
     val isLoaded: Boolean = false,
     val currentId: String = UUID.randomUUID().toString(),
     val name: String = "",
@@ -51,22 +52,48 @@ class BikeEditViewModel(
     fun loadBikeIfNeeded(
         bikeId: String,
         massUnit: MassUnit,
-        defaultSetupName: String
+        defaultSetupName: String,
+        initialSetupId: String? = null
     ) {
         val current = _uiState.value
         if (current.initialBikeId == bikeId && current.isLoaded) {
+            if (initialSetupId != null && initialSetupId != current.loadedSetupId) {
+                val targetIndex = current.setups.indexOfFirst { it.id == initialSetupId }
+                if (targetIndex >= 0) {
+                    val targetSetup = current.setups[targetIndex]
+                    _uiState.update {
+                        it.copy(
+                            loadedSetupId = initialSetupId,
+                            selectedSetupIndex = targetIndex,
+                            isSameWheels = computeIsSameWheels(targetSetup, it.bikeCategory)
+                        )
+                    }
+                }
+            }
             return
         }
 
         if (bikeId == "new") {
             val defaultWeightInUserUnit = UnitConverter.fromKg(BikeCategory.ROAD.defaultWeightKg, massUnit)
             val weightStr = String.format(java.util.Locale.US, "%.1f", defaultWeightInUserUnit)
+            val defaultStyle = BikeCategory.ROAD.defaultRideStyle
             val initialSetup = WheelSetup(
                 name = defaultSetupName,
-                isDefault = true
+                isDefault = true,
+                frontTire = TireConfig(
+                    widthMm = defaultStyle.defaultTireWidthMm,
+                    casing = defaultStyle.defaultTireCasing,
+                    isWidthInInches = defaultStyle.isMtbInches
+                ),
+                rearTire = TireConfig(
+                    widthMm = defaultStyle.defaultTireWidthMm,
+                    casing = defaultStyle.defaultTireCasing,
+                    isWidthInInches = defaultStyle.isMtbInches
+                )
             )
             _uiState.value = BikeEditUiState(
                 initialBikeId = "new",
+                loadedSetupId = null,
                 isLoaded = true,
                 currentId = UUID.randomUUID().toString(),
                 name = "",
@@ -93,15 +120,17 @@ class BikeEditViewModel(
                     val convertedWeight = UnitConverter.fromKg(existing.bikeWeightKg, massUnit)
                     val weightStr = String.format(java.util.Locale.US, "%.1f", convertedWeight)
                     val existingSetups = if (existing.setups.isNotEmpty()) existing.setups else listOf(WheelSetup(name = defaultSetupName, isDefault = true))
-                    val firstSetup = existingSetups.first()
-                    val sameWheels = firstSetup.frontWheel.diameter == firstSetup.rearWheel.diameter &&
-                            firstSetup.frontWheel.innerRimWidthMm == firstSetup.rearWheel.innerRimWidthMm &&
-                            firstSetup.frontWheel.rimType == firstSetup.rearWheel.rimType &&
-                            firstSetup.frontTire.widthMm == firstSetup.rearTire.widthMm &&
-                            firstSetup.frontTire.casing == firstSetup.rearTire.casing
+                    val targetIndex = if (initialSetupId != null) {
+                        existingSetups.indexOfFirst { it.id == initialSetupId }.takeIf { it >= 0 } ?: 0
+                    } else {
+                        0
+                    }
+                    val activeSetup = existingSetups[targetIndex]
+                    val sameWheels = computeIsSameWheels(activeSetup, existing.category)
 
                     _uiState.value = BikeEditUiState(
                         initialBikeId = bikeId,
+                        loadedSetupId = initialSetupId,
                         isLoaded = true,
                         currentId = existing.id,
                         name = existing.name,
@@ -118,14 +147,24 @@ class BikeEditViewModel(
                         isFrontWheelExpanded = true,
                         isRearWheelExpanded = true,
                         setups = existingSetups,
-                        selectedSetupIndex = 0,
+                        selectedSetupIndex = targetIndex,
                         isSameWheels = sameWheels
                     )
                 } else {
-                    _uiState.update { it.copy(isLoaded = true, initialBikeId = bikeId) }
+                    _uiState.update { it.copy(isLoaded = true, initialBikeId = bikeId, loadedSetupId = initialSetupId) }
                 }
             }
         }
+    }
+
+    private fun computeIsSameWheels(setup: WheelSetup, bikeCategory: BikeCategory): Boolean {
+        val style = setup.getEffectiveRideStyle(bikeCategory)
+        return setup.frontWheel.diameter == setup.rearWheel.diameter &&
+                setup.frontWheel.innerRimWidthMm == setup.rearWheel.innerRimWidthMm &&
+                setup.frontWheel.rimType == setup.rearWheel.rimType &&
+                setup.frontTire.widthMm == setup.rearTire.widthMm &&
+                setup.frontTire.casing == setup.rearTire.casing &&
+                setup.frontTire.resolveUseInches(style) == setup.rearTire.resolveUseInches(style)
     }
 
     fun setName(name: String) {
@@ -167,11 +206,13 @@ class BikeEditViewModel(
                         ),
                         frontTire = s.frontTire.copy(
                             widthMm = defStyle.defaultTireWidthMm,
-                            casing = defStyle.defaultTireCasing
+                            casing = defStyle.defaultTireCasing,
+                            isWidthInInches = defStyle.isMtbInches
                         ),
                         rearTire = s.rearTire.copy(
                             widthMm = defStyle.defaultTireWidthMm,
-                            casing = defStyle.defaultTireCasing
+                            casing = defStyle.defaultTireCasing,
+                            isWidthInInches = defStyle.isMtbInches
                         )
                     )
                 } else s
@@ -211,12 +252,10 @@ class BikeEditViewModel(
     fun setSelectedSetupIndex(index: Int) {
         _uiState.update { current ->
             val setup = current.setups.getOrNull(index) ?: return@update current.copy(selectedSetupIndex = index)
-            val sameWheels = setup.frontWheel.diameter == setup.rearWheel.diameter &&
-                    setup.frontWheel.innerRimWidthMm == setup.rearWheel.innerRimWidthMm &&
-                    setup.frontWheel.rimType == setup.rearWheel.rimType &&
-                    setup.frontTire.widthMm == setup.rearTire.widthMm &&
-                    setup.frontTire.casing == setup.rearTire.casing
-            current.copy(selectedSetupIndex = index, isSameWheels = sameWheels)
+            current.copy(
+                selectedSetupIndex = index,
+                isSameWheels = computeIsSameWheels(setup, current.bikeCategory)
+            )
         }
     }
 
@@ -292,11 +331,13 @@ class BikeEditViewModel(
                 rideStyle = targetStyle,
                 frontTire = TireConfig(
                     widthMm = targetStyle.defaultTireWidthMm,
-                    casing = targetStyle.defaultTireCasing
+                    casing = targetStyle.defaultTireCasing,
+                    isWidthInInches = targetStyle.isMtbInches
                 ),
                 rearTire = TireConfig(
                     widthMm = targetStyle.defaultTireWidthMm,
-                    casing = targetStyle.defaultTireCasing
+                    casing = targetStyle.defaultTireCasing,
+                    isWidthInInches = targetStyle.isMtbInches
                 ),
                 frontWheel = WheelConfig(
                     diameter = validDiameters.first(),
@@ -338,7 +379,9 @@ class BikeEditViewModel(
             _uiState.update { it.copy(setupToDeleteId = null) }
             return
         }
-        val updated = current.setups.filter { it.id != toDelete }
+        val updated = current.setups
+            .filter { it.id != toDelete }
+            .withSingleDefault()
         _uiState.update {
             it.copy(
                 setups = updated,
@@ -365,6 +408,17 @@ class BikeEditViewModel(
         viewModelScope.launch {
             val typedBikeWeight = current.bikeWeightInput.toDoubleOrNull() ?: UnitConverter.fromKg(8.0, massUnit)
             val bikeWeightKg = UnitConverter.toKg(typedBikeWeight, massUnit)
+            val normalizedSetups = current.setups.map { s ->
+                val effStyle = s.getEffectiveRideStyle(current.bikeCategory)
+                s.copy(
+                    frontTire = s.frontTire.copy(
+                        isWidthInInches = s.frontTire.resolveUseInches(effStyle)
+                    ),
+                    rearTire = s.rearTire.copy(
+                        isWidthInInches = s.rearTire.resolveUseInches(effStyle)
+                    )
+                )
+            }
             val bike = BikeProfile(
                 id = current.currentId,
                 name = current.name.trim(),
@@ -374,7 +428,7 @@ class BikeEditViewModel(
                 frameSize = current.frameSize.trim(),
                 category = current.bikeCategory,
                 bikeWeightKg = bikeWeightKg,
-                setups = current.setups,
+                setups = normalizedSetups,
                 isDefault = current.isDefault,
                 updatedAt = System.currentTimeMillis()
             )

@@ -121,6 +121,35 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import com.tirepressure.app.domain.model.BikeCategory
 
 import androidx.compose.ui.window.DialogProperties
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
+import io.github.angelomarzocchi.lumen.LightMenu
+import io.github.angelomarzocchi.lumen.LightMenuColors
+import io.github.angelomarzocchi.lumen.LightMenuDefaults
+import io.github.angelomarzocchi.lumen.LightMenuEntry
+import io.github.angelomarzocchi.lumen.LightMenuHandOff
+import io.github.angelomarzocchi.lumen.LightMenuItem
+import io.github.angelomarzocchi.lumen.lightMenuHandOff
+import io.github.angelomarzocchi.lumen.rememberLightMenuHandOff
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.math.roundToInt
 
 /**
  * Utility to format decimal numbers cleanly up to maxDecimals places without trailing zeros.
@@ -206,6 +235,339 @@ fun appLumenActionColors(): LumenColors {
         content = MaterialTheme.colorScheme.onSurface,
         lit = primary
     )
+}
+
+@Composable
+fun appLightMenuColors(): LightMenuColors {
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val primary = MaterialTheme.colorScheme.primary
+    val islandColor = if (isDark) {
+        lerp(Color(0xFF161922), primary, 0.08f)
+    } else {
+        lerp(Color(0xFFFDFEFF), primary, 0.05f)
+    }
+    return LightMenuDefaults.colors(
+        island = islandColor,
+        content = MaterialTheme.colorScheme.onSurface,
+        lit = primary,
+        accent = primary,
+        destructive = MaterialTheme.colorScheme.error,
+        secondary = MaterialTheme.colorScheme.onSurfaceVariant,
+        divider = MaterialTheme.colorScheme.outlineVariant
+    )
+}
+
+internal data class LightMenuRequest(
+    val anchorBounds: Rect,
+    val entries: List<LightMenuEntry>,
+    val handOff: LightMenuHandOff?,
+    val preferRightAlign: Boolean,
+    val matchAnchorMinWidth: Boolean,
+    val minWidth: Dp
+)
+
+@Stable
+class LightMenuHostState {
+    internal var currentRequest by mutableStateOf<LightMenuRequest?>(null)
+        private set
+
+    fun show(
+        anchorBoundsInWindow: Rect,
+        entries: List<LightMenuEntry>,
+        handOff: LightMenuHandOff? = null,
+        preferRightAlign: Boolean = false,
+        matchAnchorMinWidth: Boolean = false,
+        minWidth: Dp = 216.dp
+    ) {
+        currentRequest = LightMenuRequest(
+            anchorBounds = anchorBoundsInWindow,
+            entries = entries,
+            handOff = handOff,
+            preferRightAlign = preferRightAlign,
+            matchAnchorMinWidth = matchAnchorMinWidth,
+            minWidth = minWidth
+        )
+    }
+
+    fun dismiss() {
+        currentRequest = null
+    }
+}
+
+val LocalLightMenuHostState = staticCompositionLocalOf<LightMenuHostState?> { null }
+
+private fun LightMenuEntry.withAutoDismiss(dismiss: () -> Unit): LightMenuEntry = when (this) {
+    is LightMenuItem -> LightMenuItem(
+        label = label,
+        onClick = {
+            dismiss()
+            onClick()
+        },
+        icon = icon,
+        trailing = trailing,
+        checked = checked,
+        destructive = destructive,
+        enabled = enabled,
+        testTag = testTag
+    )
+    else -> this
+}
+
+@Composable
+fun LightMenuOverlayHost(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    val hostState = remember { LightMenuHostState() }
+    var hostBounds by remember { mutableStateOf<Rect?>(null) }
+    val request = hostState.currentRequest
+
+    CompositionLocalProvider(LocalLightMenuHostState provides hostState) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .onGloballyPositioned { hostBounds = it.boundsInWindow() }
+        ) {
+            content()
+
+            val activeHostBounds = hostBounds
+            if (request != null && activeHostBounds != null) {
+                BackHandler(enabled = true) {
+                    hostState.dismiss()
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.28f))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { hostState.dismiss() }
+                        )
+                )
+
+                val menuColors = appLightMenuColors()
+                val density = LocalDensity.current
+                val wrappedEntries = remember(request) {
+                    request.entries.map { it.withAutoDismiss { hostState.dismiss() } }
+                }
+                val itemHeight = if (wrappedEntries.size > 7) 36.dp else 44.dp
+                val effectiveMinWidth = remember(request, density) {
+                    if (request.matchAnchorMinWidth) {
+                        with(density) {
+                            maxOf(request.minWidth, request.anchorBounds.width.toDp().coerceAtMost(340.dp))
+                        }
+                    } else {
+                        request.minWidth
+                    }
+                }
+                val effectiveMaxWidth = remember(effectiveMinWidth) {
+                    maxOf(304.dp, effectiveMinWidth + 24.dp).coerceAtMost(360.dp)
+                }
+
+                Layout(
+                    modifier = Modifier.fillMaxSize(),
+                    content = {
+                        LightMenu(
+                            entries = wrappedEntries,
+                            colors = menuColors,
+                            itemHeight = itemHeight,
+                            handOff = request.handOff,
+                            modifier = Modifier.widthIn(min = effectiveMinWidth, max = effectiveMaxWidth)
+                        )
+                    }
+                ) { measurables, constraints ->
+                    val placeable = measurables.first().measure(
+                        constraints.copy(minWidth = 0, minHeight = 0)
+                    )
+                    val marginPx = 16.dp.roundToPx()
+                    val gapPx = 4.dp.roundToPx()
+                    val relLeft = (request.anchorBounds.left - activeHostBounds.left).roundToInt()
+                    val relRight = (request.anchorBounds.right - activeHostBounds.left).roundToInt()
+                    val relTop = (request.anchorBounds.top - activeHostBounds.top).roundToInt()
+                    val relBottom = (request.anchorBounds.bottom - activeHostBounds.top).roundToInt()
+
+                    val desiredX = if (request.preferRightAlign) {
+                        relRight - placeable.width
+                    } else {
+                        relLeft
+                    }
+                    val maxX = (constraints.maxWidth - placeable.width - marginPx).coerceAtLeast(marginPx)
+                    val x = desiredX.coerceIn(marginPx, maxX)
+
+                    val fitsBelow = relBottom + gapPx + placeable.height <= constraints.maxHeight - marginPx
+                    val fitsAbove = relTop - gapPx - placeable.height >= marginPx
+                    val desiredY = when {
+                        fitsBelow -> relBottom + gapPx
+                        fitsAbove -> relTop - gapPx - placeable.height
+                        else -> constraints.maxHeight - placeable.height - marginPx
+                    }
+                    val maxY = (constraints.maxHeight - placeable.height - marginPx).coerceAtLeast(marginPx)
+                    val y = desiredY.coerceIn(marginPx, maxY)
+
+                    layout(constraints.maxWidth, constraints.maxHeight) {
+                        placeable.placeRelative(x, y)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LightMenuPopup(
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    entries: List<LightMenuEntry>,
+    anchorWidthPx: Int = 0,
+    minWidth: Dp = 220.dp
+) {
+    if (!expanded) return
+    val menuColors = appLightMenuColors()
+    val density = LocalDensity.current
+    val wrappedEntries = remember(entries, onDismissRequest) {
+        entries.map { it.withAutoDismiss(onDismissRequest) }
+    }
+    val itemHeight = if (wrappedEntries.size > 7) 36.dp else 44.dp
+    val padPx = with(density) { 16.dp.roundToPx() }
+    val gapPx = with(density) { 4.dp.roundToPx() }
+    val effectiveMinWidth = remember(anchorWidthPx, minWidth, density) {
+        if (anchorWidthPx > 0) {
+            with(density) {
+                maxOf(minWidth, anchorWidthPx.toDp().coerceAtMost(320.dp))
+            }
+        } else {
+            minWidth
+        }
+    }
+    val effectiveMaxWidth = maxOf(304.dp, effectiveMinWidth + 24.dp).coerceAtMost(360.dp)
+
+    val positionProvider = remember(padPx, gapPx) {
+        object : PopupPositionProvider {
+            override fun calculatePosition(
+                anchorBounds: IntRect,
+                windowSize: IntSize,
+                layoutDirection: LayoutDirection,
+                popupContentSize: IntSize
+            ): IntOffset {
+                val desiredX = anchorBounds.left - padPx
+                val maxX = (windowSize.width - popupContentSize.width).coerceAtLeast(0)
+                val x = desiredX.coerceIn(0, maxX)
+
+                val fitsBelow = anchorBounds.bottom + gapPx + (popupContentSize.height - padPx) <= windowSize.height
+                val fitsAbove = anchorBounds.top - gapPx - (popupContentSize.height - padPx) >= 0
+                val desiredY = when {
+                    fitsBelow -> anchorBounds.bottom + gapPx - padPx
+                    fitsAbove -> anchorBounds.top - gapPx - popupContentSize.height + padPx
+                    else -> windowSize.height - popupContentSize.height
+                }
+                val maxY = (windowSize.height - popupContentSize.height).coerceAtLeast(0)
+                val y = desiredY.coerceIn(0, maxY)
+                return IntOffset(x, y)
+            }
+        }
+    }
+
+    Popup(
+        popupPositionProvider = positionProvider,
+        onDismissRequest = onDismissRequest,
+        properties = PopupProperties(focusable = true)
+    ) {
+        Box(modifier = Modifier.padding(16.dp)) {
+            LightMenu(
+                entries = wrappedEntries,
+                colors = menuColors,
+                itemHeight = itemHeight,
+                modifier = Modifier.widthIn(min = effectiveMinWidth, max = effectiveMaxWidth)
+            )
+        }
+    }
+}
+
+@Composable
+fun Modifier.lightMenuHandOffTrigger(
+    handOff: LightMenuHandOff,
+    onDownReset: () -> Unit,
+    onTriggerHold: () -> Unit
+): Modifier {
+    val latestReset by rememberUpdatedState(onDownReset)
+    val latestTriggerHold by rememberUpdatedState(onTriggerHold)
+    return this
+        .lightMenuHandOff(handOff)
+        .pointerInput(handOff) {
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                latestReset()
+                val startPos = down.position
+                val slop = viewConfiguration.touchSlop
+                val fired = withTimeoutOrNull(180L) {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        val change = event.changes.firstOrNull { it.id == down.id } ?: continue
+                        if (!change.pressed) {
+                            return@withTimeoutOrNull false
+                        }
+                        if ((change.position - startPos).getDistance() > slop) {
+                            return@withTimeoutOrNull true
+                        }
+                    }
+                }
+                if (fired != false) {
+                    latestTriggerHold()
+                }
+            }
+        }
+}
+
+@Composable
+fun LightMenuIconButton(
+    entries: List<LightMenuEntry>,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    icon: ImageVector = Icons.Default.MoreVert,
+    iconSize: Dp = 20.dp,
+    preferRightAlign: Boolean = true
+) {
+    val menuHost = LocalLightMenuHostState.current
+    val handOff = rememberLightMenuHandOff()
+    var anchorBounds by remember { mutableStateOf<Rect?>(null) }
+    var openedByHold by remember { mutableStateOf(false) }
+
+    fun openMenu() {
+        val bounds = anchorBounds ?: return
+        menuHost?.show(
+            anchorBoundsInWindow = bounds,
+            entries = entries,
+            handOff = handOff,
+            preferRightAlign = preferRightAlign
+        )
+    }
+
+    IconButton(
+        onClick = {
+            if (openedByHold) {
+                openedByHold = false
+            } else {
+                openMenu()
+            }
+        },
+        modifier = modifier
+            .onGloballyPositioned { anchorBounds = it.boundsInWindow() }
+            .lightMenuHandOffTrigger(
+                handOff = handOff,
+                onDownReset = { openedByHold = false },
+                onTriggerHold = {
+                    openedByHold = true
+                    openMenu()
+                }
+            )
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(iconSize)
+        )
+    }
 }
 
 /**

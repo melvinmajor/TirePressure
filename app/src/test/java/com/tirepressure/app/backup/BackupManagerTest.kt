@@ -154,13 +154,19 @@ class BackupManagerTest {
         override val favoriteModeFlow = MutableStateFlow(com.tirepressure.app.core.model.FavoriteMode.GLOBAL)
         override val accentColorFlow = MutableStateFlow(com.tirepressure.app.core.model.AppAccentColor.ELECTRIC_LIME)
         override val twoPaneSplitRatioFlow = MutableStateFlow(TwoPaneSplitRatio.FORTY_SIXTY)
+        override val lastSeenVersionCodeFlow = MutableStateFlow(com.tirepressure.app.core.AppVersion.VERSION_CODE)
 
         override suspend fun setTheme(theme: AppTheme) { themeFlow.value = theme }
         override suspend fun setAppLanguage(language: com.tirepressure.app.core.model.AppLanguage) { appLanguageFlow.value = language }
         override suspend fun setMassUnit(unit: MassUnit) { massUnitFlow.value = unit }
         override suspend fun setPressureUnit(unit: PressureUnit) { pressureUnitFlow.value = unit }
         override suspend fun setRiderWeight(weightKg: Double) { riderWeightFlow.value = weightKg }
-        override suspend fun setOnboardingCompleted(completed: Boolean) { isOnboardingCompletedFlow.value = completed }
+        override suspend fun setOnboardingCompleted(completed: Boolean) {
+            isOnboardingCompletedFlow.value = completed
+            if (completed) {
+                lastSeenVersionCodeFlow.value = com.tirepressure.app.core.AppVersion.VERSION_CODE
+            }
+        }
         override suspend fun setSelectedBikeId(id: String?) { selectedBikeIdFlow.value = id }
         override suspend fun setShowWetSurface(show: Boolean) { showWetSurfaceFlow.value = show }
         override suspend fun setShowSnowSurface(show: Boolean) { showSnowSurfaceFlow.value = show }
@@ -168,6 +174,7 @@ class BackupManagerTest {
         override suspend fun setFavoriteMode(mode: com.tirepressure.app.core.model.FavoriteMode) { favoriteModeFlow.value = mode }
         override suspend fun setAccentColor(accentColor: com.tirepressure.app.core.model.AppAccentColor) { accentColorFlow.value = accentColor }
         override suspend fun setTwoPaneSplitRatio(ratio: TwoPaneSplitRatio) { twoPaneSplitRatioFlow.value = ratio }
+        override suspend fun setLastSeenVersionCode(versionCode: Int) { lastSeenVersionCodeFlow.value = versionCode }
         override suspend fun clear() {
             themeFlow.value = AppTheme.SYSTEM
             appLanguageFlow.value = AppLanguage.SYSTEM
@@ -182,6 +189,7 @@ class BackupManagerTest {
             favoriteModeFlow.value = FavoriteMode.GLOBAL
             accentColorFlow.value = AppAccentColor.ELECTRIC_LIME
             twoPaneSplitRatioFlow.value = TwoPaneSplitRatio.FORTY_SIXTY
+            lastSeenVersionCodeFlow.value = 0
         }
     }
 }

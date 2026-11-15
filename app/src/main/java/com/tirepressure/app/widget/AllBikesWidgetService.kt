@@ -56,7 +56,13 @@ class AllBikesRemoteViewsFactory(
         runBlocking {
             val database = AppDatabase.getInstance(context)
             val entities = database.bikeDao().getAllBikesList()
-            bikes = entities.map { it.toDomain() }
+            val allBikes = entities.map { it.toDomain() }
+            val favoritesOnly = WidgetPreferencesHelper.isAllBikesFavoritesOnly(context, appWidgetId)
+            bikes = if (favoritesOnly) {
+                allBikes.filter { it.isDefault }.ifEmpty { allBikes }
+            } else {
+                allBikes
+            }
 
             val prefs = PreferencesRepositoryImpl(context)
             riderWeight = prefs.riderWeightFlow.first()
@@ -220,13 +226,13 @@ class AllBikesRemoteViewsFactory(
                 val wetLabel = locContext.getString(R.string.overview_wet)
                 val frontWet = SingleBikeWidgetReceiver.formatPressure(wetRes.front, pressureUnit)
                 val rearWet = SingleBikeWidgetReceiver.formatPressure(wetRes.rear, pressureUnit)
-                add("🌧️ $wetLabel : $frontWet • $rearWet")
+                add("💧 $wetLabel : $frontWet • $rearWet")
             }
             if (showSnowSurface) {
                 val snowLabel = locContext.getString(R.string.overview_snow)
                 val frontSnow = SingleBikeWidgetReceiver.formatPressure(snowRes.front, pressureUnit)
                 val rearSnow = SingleBikeWidgetReceiver.formatPressure(snowRes.rear, pressureUnit)
-                add("❄️ $snowLabel : $frontSnow • $rearSnow")
+                add("🟤 $snowLabel : $frontSnow • $rearSnow")
             }
         }
 

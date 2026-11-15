@@ -10,6 +10,7 @@ object WidgetPreferencesHelper {
     private const val KEY_THEME_PREFIX = "widget_theme_"
     private const val KEY_DEFAULT_THEME = "default_widget_theme"
     private const val KEY_BIKE_PREFIX = "widget_bike_id_"
+    private const val KEY_FAVORITES_ONLY_PREFIX = "widget_favorites_only_"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -49,10 +50,21 @@ object WidgetPreferencesHelper {
             .apply()
     }
 
+    fun isAllBikesFavoritesOnly(context: Context, appWidgetId: Int): Boolean {
+        return getPrefs(context).getBoolean("$KEY_FAVORITES_ONLY_PREFIX$appWidgetId", false)
+    }
+
+    fun setAllBikesFavoritesOnly(context: Context, appWidgetId: Int, favoritesOnly: Boolean) {
+        getPrefs(context).edit()
+            .putBoolean("$KEY_FAVORITES_ONLY_PREFIX$appWidgetId", favoritesOnly)
+            .apply()
+    }
+
     fun deleteWidgetPrefs(context: Context, appWidgetId: Int) {
         getPrefs(context).edit()
             .remove("$KEY_THEME_PREFIX$appWidgetId")
             .remove("$KEY_BIKE_PREFIX$appWidgetId")
+            .remove("$KEY_FAVORITES_ONLY_PREFIX$appWidgetId")
             .apply()
     }
 

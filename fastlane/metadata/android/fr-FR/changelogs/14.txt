@@ -1,0 +1,5 @@
+- Conditions de surface clarifiées : Sec, Humide et Boue avec icônes adaptées
+- Choix du profil par défaut depuis le menu 3 points avec badge étoile et affichage en tête
+- Intégration de Compose-Lumen LightMenu avec maintien-glisser sur les menus et sélecteurs
+- Conservation du profil choisi et de l'unité de largeur de pneu (mm/pouce) à l'édition
+- Libellés simplifiés dans Paramètres et Aperçu (« Auto », « Pressions en : »)

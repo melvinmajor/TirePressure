@@ -53,7 +53,13 @@ class AllBikesWidgetReceiver : AppWidgetProvider() {
             remoteViews.setTextColor(R.id.widget_title_pressure, accentColorInt)
             remoteViews.setContentDescription(R.id.widget_bike_icon, locContext.getString(R.string.app_name))
             remoteViews.setContentDescription(R.id.widget_btn_settings, locContext.getString(R.string.widget_config_title))
-            remoteViews.setTextViewText(R.id.widget_all_bikes_subtitle, locContext.getString(R.string.widget_all_bikes_name))
+            val favoritesOnly = WidgetPreferencesHelper.isAllBikesFavoritesOnly(context, appWidgetId)
+            val subtitleText = if (favoritesOnly) {
+                "★ ${locContext.getString(R.string.widget_filter_favorites_only)}"
+            } else {
+                locContext.getString(R.string.widget_all_bikes_name)
+            }
+            remoteViews.setTextViewText(R.id.widget_all_bikes_subtitle, subtitleText)
             remoteViews.setTextViewText(R.id.widget_empty_title, locContext.getString(R.string.widget_no_bikes))
             remoteViews.setTextViewText(R.id.widget_empty_desc, locContext.getString(R.string.widget_tap_to_open))
 

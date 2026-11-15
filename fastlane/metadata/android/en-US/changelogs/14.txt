@@ -1,0 +1,5 @@
+- Refined surface conditions to Dry, Wet, and Mud with updated icons
+- Set a default setup profile via the 3-dot menu with a star badge and pinned position
+- Integrated Compose-Lumen LightMenu with hold-and-slide gestures across menus and selectors
+- Preserved selected setup and tire width units (mm/in) in Edit Setup & Add Setup
+- Streamlined Settings & Overview labels ("Auto", "Pressures in:", compact pressure units)

@@ -33,21 +33,24 @@ Every cyclist knows the feeling: you are gearing up for a ride, pumping your tir
 
 #### 1. Zero-Friction Pre-Ride Dashboard (Overview Screen)
 - **All your bikes in one glance:** No tedious menus or recalculations. Open the app and instantly see your registered bikes (Road racer, Gravel explorer, Trail MTB, etc.).
-- **Live Multi-Surface Pressure Matrix (Customizable 1, 2, or 3 Conditions):** For every bike and wheelset profile, customize whether you want to calculate and display Dry, Wet, and/or Snow conditions. At minimum Dry is always calculated, and users can selectively enable 1, 2, or all 3 surfaces (e.g. Dry only for pure summer road bikes, or all 3 for winter gravel rigs):
-  - ☀️ **Dry** tarmac and trails (optimal baseline speed and rolling resistance).
-  - 🌧️ **Wet** roads and slippery roots (calibrated at 90% pressure for enhanced mechanical tire grip).
-  - ❄️ **Snow, Sand, or Extreme Mud** (calibrated at 55% pressure for maximum tire contact patch).
+- **Live Multi-Surface Pressure Matrix (Customizable 1, 2, or 3 Conditions):** For every bike and wheelset profile, customize whether you want to calculate and display **Dry**, **Wet**, and/or **Mud** surface conditions. At minimum Dry is always calculated, and users can selectively enable 1, 2, or all 3 surfaces (e.g. Dry only for pure summer road bikes, or all 3 for winter gravel and trail rigs):
+  - ☀️ **Dry** tarmac and trails (100% baseline speed and rolling resistance).
+  - 💧 **Wet** roads and slippery roots (calibrated at 90% pressure for enhanced mechanical tire grip).
+  - 🟤 **Mud** & soft/loose terrain (calibrated at 50% pressure for maximum tire contact patch).
+- **Favorite Bikes (`★`) & Tactile Filter:** Mark bikes as favorites (with configurable single-favorite or multi-favorite mode in Settings) to pin them at the top of your garage and filter the Overview dashboard between **All** and **★ Favorites** using a tactile Compose Lumen `LightTabs` selector.
 - **One-Tap Unit Switching:** Toggle between **bar**, **PSI**, and **kPa** on the fly with a single tap.
-- **Instant Clipboard Copy:** Tap the copy icon next to any setup to instantly copy formatted pressure specs to share with riding buddies or paste into your Strava/training notes.
+- **Instant Clipboard Copy:** Long-press a setup card or open its `⋮` menu to copy formatted pressure specs to share with riding buddies or paste into your Strava/training notes.
+- **What's New Update Summary:** After an app update, a non-intrusive dismissible banner on the Overview screen (and accessible anytime from the App Info screen) opens a frosted-glass **What's New** dialog summarizing the latest additions.
 
 #### 2. Multi-Wheelset Management, Mullet / MX & 32" Support
 Modern cyclists swap wheels, ride mixed wheel sizes, or ride different disciplines with the same bike:
 - **Full Mullet / MX Support (Front ≠ Rear):** Seamlessly configure bikes with mixed wheel diameters—such as **29" Front / 27.5" Rear** (the gold standard in modern Enduro, E-MTB, and DH) or **32" Front / 29" Rear** prototypes. Front and rear wheels feature completely independent diameter selectors, rim widths, tire widths, and casing structures.
 - **Emerging 32" Wheel Standard (686 mm ISO):** Full compatibility with the emerging **32-inch** wheel format (`686 mm BSD`), pioneered in prototype Downhill / XC race rigs and tall-rider geometries.
+- **Default Setup Profile (`★`):** Choose which wheel/tire setup is the default profile for each bike via its `⋮` menu (*Set as default*). The default setup is marked with a `★` leading icon, pinned first on the bike card, and pre-selected when opening that setup from the editor.
 - **Rich Bike Specifications & Safe Bike Management:** Record and display detailed metadata for every bike, including **Brand**, **Model**, **Year**, and **Frame Size** (in inches or letter sizing like S/M/L). When creating or editing a bike, select a primary bike category (**Road**, **Gravel**, **MTB**, or **Commute / Urban**). Bike weight and metadata can be edited anytime—changes automatically propagate to recalculate pressures across all profiles of that bike. Bikes and wheelset profiles can be safely removed with explicit warning confirmation popups to prevent accidental data loss.
 - **Detailed Disciplines on Profiles:** While bikes belong to general categories, each profile / wheelset allows choosing specific riding practices (**Enduro MTB**, **Trail MTB**, **XC MTB**, **Downhill MTB**, **Road**, **Gravel**, **Cyclocross**, **Fat Bike**, **Urban**). This allows the exact same bike or wheelset to have tailored pressures depending on intended terrain and riding style.
-- **Tire Width in Millimeters or Inches:** Configure tire widths in either **mm** or **inches (po / ")** with an instant toggle chip, letting you enter standard mountain bike dimensions like `2.4"` or road widths like `28mm`.
-- **Profile Template Cloning:** When creating a new profile/setup for an existing bike, you can choose any existing setup as a starting template.
+- **Tire Width in Millimeters or Inches (Persisted per Setup):** Configure tire widths in either **mm** or **inches (in / ")** with an instant toggle. Each setup remembers its preferred unit and formats values cleanly up to 2 decimal places (e.g., `2.4"` or `28 mm`), while the Edit Bike screen provides a tactile `LightMenu` dropdown selector to switch between setups cleanly.
+- **Profile Template Cloning:** When creating a new profile/setup for an existing bike, you can choose any existing setup as a starting template (formatted in its saved unit).
 - **Inherited Bike Specs:** The bike's weight and configuration are automatically populated, allowing you to quickly modify just tire width, rim width, or riding discipline.
 - *Real-World Scenarios Supported:*
   - **Mullet Enduro Bike:** A 29" front wheel (63.5 mm / 2.5" tire, EXO+ casing) paired with a 27.5" rear wheel (60.9 mm / 2.4" tire, DoubleDown casing).
@@ -61,7 +64,7 @@ Modern cyclists swap wheels, ride mixed wheel sizes, or ride different disciplin
 </p>
 
 - **Widget 1 (Single Bike + Multi-Profile):** Displays your chosen bike with its primary and secondary wheelset setups, showing front and rear dry/wet pressures directly on your home screen. Includes a gear button to reconfigure and a bike icon to jump straight into the bike details.
-- **Widget 2 (All Bikes List):** A scrollable list overview displaying all bikes in your garage, their weights, disciplines, and baseline tire pressures.
+- **Widget 2 (All Bikes List):** A scrollable list overview displaying bikes in your garage, their weights, disciplines, and baseline tire pressures — configurable to display **All bikes** or **Favorites only (`★`)**.
 - **Personalized Theme Support:** Each widget can be configured to:
   - 🌓 **Follow System Theme** (automatically matches your OS dark/light mode)
   - ☀️ **Always Light Mode**
@@ -96,6 +99,7 @@ Inspired by modern smartphone UI innovations:
 - **Dual Typeface Typography System (Hubot Sans & Inter)**:
   - **Hubot Sans** (by GitHub, SIL OFL-1.1): Expressive, industrial geometric grotesque used for brand identity, screen headers, section titles, and high-visibility numeric pressure readings.
   - **Inter** (by Rasmus Andersson, SIL OFL-1.1): Ultra-legible, tall x-height grotesque designed for crisp readability across form fields, labels, explanatory documentation, and dense data layouts.
+- **Tactile 3D Surfaces, Interactive Light Menus & Frosted Glass:** Powered by **Compose Lumen** (`GlossCard`, `LightTabs`, `LightActions`, and `LightMenu` with single-gesture press, hold, slide, and release `LightMenuHandOff`), **Compose Glass** frosted AGSL shaders (`GlassAlertDialog` with background blur), and **Compose Flight** shared-element transitions.
 - **Frosted Glass Cards & Pill Gauges**: High-contrast, beautifully rounded cards and pill buttons that feel right at home on modern Android launchers.
 - **Clean Material 3 Typography**: Legible typography with spacious touch targets designed for gloved fingers and quick glanceability.
 - **Adaptive System Themes**: Seamless automatic switching between Dark and Light themes following your device preferences.
@@ -104,7 +108,7 @@ Inspired by modern smartphone UI innovations:
 
 TirePressure is fully bilingual:
 - **Automatic System Detection:** Defaults to French if your device system language is French; otherwise defaults to English.
-- **In-App Language Selector:** Change the app language anytime in the Settings screen (*System Default*, *Français*, *English*).
+- **In-App Language Selector:** Change the app language anytime in the Settings screen (*Auto*, *Français*, *English*).
 - **Android 13+ Per-App Language:** Integrates natively with the Android OS system settings (*App Languages*) via `locales_config.xml`.
 
 ## 📐 The Frank Berto 15% Tire Drop Open-Source Physics Engine
@@ -116,7 +120,7 @@ Because Berto's original formula only accounts for static load and nominal tire 
 - **Discipline-Specific Axle Load Distribution:** Automatically splits total system mass ($\text{Rider} + \text{Bike} + \text{Luggage}$) between front and rear wheels according to riding posture—ranging from **42% / 58%** (Road) and **44% / 56%** (Gravel & Cyclocross) to **45% / 55%** (MTB) and **48% / 52%** (Fat Bike).
 - **Modern Rim-to-Tire Volume Calibration (ETRTO / ISO 5775):** Computes the *effective* inflated tire width ($W_{eff}$) based on your actual inner rim width ($0.4\text{ mm}$ effective tire width change per $1\text{ mm}$ difference from discipline reference rims), fully supporting wide modern rims, mixed **Mullet / MX** setups, and **32"** wheels.
 - **Dynamic Discipline Adaptation:** In a purely static formula, wider gravity tires compute lower pressures—which in real-world riding would cause rim strikes and tire squirm under 2.5–3.5G cornering and high-speed square-edge impacts. TirePressure applies calibrated dynamic multipliers across all 9 disciplines (**Road, Gravel, Cyclocross, XC, Trail, Enduro, Downhill, Fat Bike, Urban**) to balance low-pressure trail compliance against high-speed rim protection.
-- **Casing, Rim Bed & Weather Modifiers:** Fine-tunes recommendations for tire casing construction (*Supple/Race, Standard, Reinforced, DoubleDown*), rim bed architecture (*Clincher Tubes, Tubular, Hooked Tubeless, Hookless, Wide Aero Hookless*), and surface grip (*Dry 100%, Wet 90%, Snow/Mud 55%*).
+- **Casing, Rim Bed & Surface Modifiers:** Fine-tunes recommendations for tire casing construction (*Supple/Race, Standard, Reinforced, DoubleDown*), rim bed architecture (*Clincher Tubes, Tubular, Hooked Tubeless, Hookless, Wide Aero Hookless*), and surface grip (*Dry 100%, Wet 90%, Mud 50%*).
 - **ETRTO Hookless Safety Guard:** Enforces the strict **5.0 bar (72.5 psi)** safety ceiling on hookless straight-side rims for tires $\le 29\text{ mm}$ and displays immediate visual warnings if system weight pushes pressures above safe limits.
 
 > [!NOTE]
@@ -132,7 +136,7 @@ TirePressure is engineered with cutting-edge Android development best practices:
 | **UI Toolkit** | Jetpack Compose (BOM 2026.09.00) & Activity Compose 1.13.0 | [![Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202026.09.00-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose) |
 | **Lifecycle & Core** | Lifecycle Runtime Compose 2.11.0 & Core KTX 1.19.1 | [![Lifecycle](https://img.shields.io/badge/Lifecycle-2.11.0-4285F4?style=flat-square)](https://developer.android.com/topic/libraries/architecture/lifecycle) |
 | **Design System** | Material Design 3 | [![Material 3](https://img.shields.io/badge/Material%20Design-3-757575?style=flat-square&logo=materialdesign&logoColor=white)](https://m3.material.io/) |
-| **Tactile Components** | Compose Lumen (1.1.1) | [![Lumen](https://img.shields.io/badge/Lumen-1.1.1-E040FB?style=flat-square)](https://github.com/angelomarzocchi/compose-lumen) |
+| **Tactile Components** | Compose Lumen (1.2.1) | [![Lumen](https://img.shields.io/badge/Lumen-1.2.1-E040FB?style=flat-square)](https://github.com/angelomarzocchi/compose-lumen) |
 | **AGSL Shaders** | Compose Glass (1.1.1) | [![Glass](https://img.shields.io/badge/Glass-1.1.1-00E5FF?style=flat-square)](https://github.com/angelomarzocchi/compose-glass) |
 | **Hero Flights** | Compose Flight (1.1.1) | [![Flight](https://img.shields.io/badge/Flight-1.1.1-FF4081?style=flat-square)](https://github.com/angelomarzocchi/compose-flight) |
 | **Home Widgets** | Android AppWidgets & RemoteViews | [![Widgets](https://img.shields.io/badge/AppWidgets-RemoteViews%20%2B%20Service-00E5FF?style=flat-square)](https://developer.android.com/guide/topics/appwidgets) |
@@ -172,7 +176,7 @@ app/src/main/java/com/tirepressure/app/
 │   └── WidgetUpdateHelper.kt          # Automatic broadcast & dataset refresh helper
 └── ui/
     ├── theme/          # Material 3 palette (Electric Lime, Titanium, Dark/Light modes)
-    ├── components/     # Reusable components (SectionCard, NumberInputField, PillSelector...)
+    ├── components/     # Reusable components (SectionCard, LightMenuPopup, WhatsNewComponents, PillSelector...)
     ├── navigation/     # AppNavigation, Navigation 3 & Material 3 Adaptive ListDetailPaneScaffold
     ├── onboarding/     # First-run weight prompt & swipeable tutorial (HorizontalPager)
     ├── overview/       # Main dashboard: bikes with multi-setup & multi-surface pressures

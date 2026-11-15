@@ -46,11 +46,22 @@ data class OverviewUiState(
     val showWetSurface: Boolean = true,
     val showSnowSurface: Boolean = false,
     val defaultOverviewCompact: Boolean = false,
+    val filterFavoritesOnly: Boolean = false,
+    val showUpdateBanner: Boolean = false,
+    val showWhatsNewDialog: Boolean = false,
     val isLoading: Boolean = false,
     val bikeToDelete: BikeProfile? = null,
     val setupToDelete: Pair<BikeProfile, WheelSetup>? = null,
     val editingBikeDraft: EditBikeDraft? = null,
     val addSetupDraft: AddSetupDraft? = null
+)
+
+private data class OverviewDisplayOptions(
+    val showWet: Boolean,
+    val showSnow: Boolean,
+    val defaultCompact: Boolean,
+    val filterFavoritesOnly: Boolean,
+    val showUpdateBanner: Boolean
 )
 
 class OverviewViewModel(
@@ -59,6 +70,7 @@ class OverviewViewModel(
     private val calculator: TirePressureCalculator = BertoTirePressureCalculator()
 ) : ViewModel() {
 
+    private val _filterFavoritesOnly = MutableStateFlow(false)
     private val _uiState = MutableStateFlow(OverviewUiState())
     val uiState: StateFlow<OverviewUiState> = _uiState.asStateFlow()
 
@@ -72,12 +84,28 @@ class OverviewViewModel(
                 combine(
                     preferencesRepository.showWetSurfaceFlow,
                     preferencesRepository.showSnowSurfaceFlow,
-                    preferencesRepository.defaultOverviewCompactFlow
-                ) { wet, snow, defaultCompact -> Triple(wet, snow, defaultCompact) }
-            ) { bikes, riderWeight, massUnit, pressureUnit, surfacesAndCompact ->
-                val (showWet, showSnow, defaultCompact) = surfacesAndCompact
+                    preferencesRepository.defaultOverviewCompactFlow,
+                    _filterFavoritesOnly,
+                    combine(
+                        preferencesRepository.isOnboardingCompletedFlow,
+                        preferencesRepository.lastSeenVersionCodeFlow
+                    ) { onboardingDone, lastSeenCode ->
+                        onboardingDone && lastSeenCode < com.tirepressure.app.core.AppVersion.VERSION_CODE
+                    }
+                ) { wet, snow, defaultCompact, favOnly, showUpdateBanner ->
+                    OverviewDisplayOptions(wet, snow, defaultCompact, favOnly, showUpdateBanner)
+                }
+            ) { bikes, riderWeight, massUnit, pressureUnit, options ->
+                val showWet = options.showWet
+                val showSnow = options.showSnow
+                val defaultCompact = options.defaultCompact
+                val hasFavorites = bikes.any { it.isDefault }
+                val effectiveFavoritesOnly = options.filterFavoritesOnly && hasFavorites
+                if (options.filterFavoritesOnly && !hasFavorites) {
+                    _filterFavoritesOnly.value = false
+                }
                 val list = bikes.map { bike ->
-                    val setupsWithPressures = bike.setups.map { setup ->
+                    val setupsWithPressures = bike.sortedSetups.map { setup ->
                         val effectiveStyle = setup.getEffectiveRideStyle(bike.category)
                         val baseInput = PressureCalculationInput(
                             riderWeightKg = riderWeight,
@@ -117,6 +145,8 @@ class OverviewViewModel(
                         showWetSurface = showWet,
                         showSnowSurface = showSnow,
                         defaultOverviewCompact = defaultCompact,
+                        filterFavoritesOnly = effectiveFavoritesOnly,
+                        showUpdateBanner = options.showUpdateBanner,
                         isLoading = false
                     )
                 }
@@ -256,11 +286,13 @@ class OverviewViewModel(
                     rideStyle = targetStyle,
                     frontTire = TireConfig(
                         widthMm = targetStyle.defaultTireWidthMm,
-                        casing = targetStyle.defaultTireCasing
+                        casing = targetStyle.defaultTireCasing,
+                        isWidthInInches = targetStyle.isMtbInches
                     ),
                     rearTire = TireConfig(
                         widthMm = targetStyle.defaultTireWidthMm,
-                        casing = targetStyle.defaultTireCasing
+                        casing = targetStyle.defaultTireCasing,
+                        isWidthInInches = targetStyle.isMtbInches
                     ),
                     frontWheel = WheelConfig(
                         diameter = validDiameters.first(),
@@ -316,7 +348,7 @@ class OverviewViewModel(
         }
         viewModelScope.launch {
             val updated = bike.copy(
-                setups = bike.setups.filterNot { it.id == setup.id },
+                setups = bike.setups.filterNot { it.id == setup.id }.withSingleDefault(),
                 updatedAt = System.currentTimeMillis()
             )
             bikeRepository.updateBike(updated)
@@ -324,11 +356,50 @@ class OverviewViewModel(
         }
     }
 
+    fun setDefaultSetup(bike: BikeProfile, setupId: String) {
+        viewModelScope.launch {
+            val updated = bike.copy(
+                setups = bike.setups.withSingleDefault(setupId),
+                updatedAt = System.currentTimeMillis()
+            )
+            bikeRepository.updateBike(updated)
+        }
+    }
+
+    fun toggleFavoritesFilter() {
+        _filterFavoritesOnly.update { !it }
+    }
+
+    fun setFavoritesFilter(onlyFavorites: Boolean) {
+        _filterFavoritesOnly.value = onlyFavorites
+    }
+
+    fun openWhatsNewDialog() {
+        _uiState.update { it.copy(showWhatsNewDialog = true, showUpdateBanner = false) }
+        viewModelScope.launch {
+            preferencesRepository.setLastSeenVersionCode(com.tirepressure.app.core.AppVersion.VERSION_CODE)
+        }
+    }
+
+    fun dismissWhatsNewDialog() {
+        _uiState.update { it.copy(showWhatsNewDialog = false, showUpdateBanner = false) }
+        viewModelScope.launch {
+            preferencesRepository.setLastSeenVersionCode(com.tirepressure.app.core.AppVersion.VERSION_CODE)
+        }
+    }
+
+    fun dismissUpdateBanner() {
+        _uiState.update { it.copy(showUpdateBanner = false) }
+        viewModelScope.launch {
+            preferencesRepository.setLastSeenVersionCode(com.tirepressure.app.core.AppVersion.VERSION_CODE)
+        }
+    }
+
     fun deleteSetup(bike: BikeProfile, setupId: String) {
         if (bike.setups.size <= 1) return // Conserver au moins une configuration
         viewModelScope.launch {
             val updated = bike.copy(
-                setups = bike.setups.filterNot { it.id == setupId },
+                setups = bike.setups.filterNot { it.id == setupId }.withSingleDefault(),
                 updatedAt = System.currentTimeMillis()
             )
             bikeRepository.updateBike(updated)

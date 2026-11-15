@@ -80,6 +80,8 @@ $RECYCLE.BIN/
 # ==============================================================================
 scratch/
 node_modules/
+.venv/
+.models/
 *.pyc
 __pycache__/
 *.log

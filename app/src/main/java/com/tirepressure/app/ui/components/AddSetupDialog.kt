@@ -15,9 +15,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import io.github.angelomarzocchi.lumen.LightMenuEntry
+import io.github.angelomarzocchi.lumen.LightMenuHeader
+import io.github.angelomarzocchi.lumen.LightMenuItem
 import com.tirepressure.app.R
 import com.tirepressure.app.core.model.MassUnit
 import com.tirepressure.app.core.util.UnitConverter
@@ -96,83 +100,80 @@ fun AddSetupDialog(
 
                 // Sélecteur de discipline / usage pour ce profil
                 Column {
+                    val styleHeaderTitle = stringResource(id = R.string.add_setup_discipline_title)
+                    val defaultCategoryBadge = "${stringResource(R.string.overview_badge_default)} ${stringResource(bikeCategory.labelRes)}"
+                    val styleMenuEntries: List<LightMenuEntry> = listOf(LightMenuHeader(title = styleHeaderTitle)) +
+                        RideStyle.entries.map { style ->
+                            LightMenuItem(
+                                label = stringResource(id = style.labelRes),
+                                trailing = if (style == bikeCategory.defaultRideStyle) defaultCategoryBadge else null,
+                                checked = style == setupRideStyle,
+                                onClick = { onDraftChange(draft.copy(setupRideStyle = style)) }
+                            )
+                        }
+                    var styleCardWidthPx by remember { mutableIntStateOf(0) }
+
                     Text(
-                        text = stringResource(id = R.string.add_setup_discipline_title),
+                        text = styleHeaderTitle,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    OutlinedCard(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { styleMenuExpanded = true },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.outlinedCardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-                        )
+                            .onGloballyPositioned { styleCardWidthPx = it.size.width }
                     ) {
-                        Row(
+                        OutlinedCard(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 10.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = stringResource(id = setupRideStyle.labelRes),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = if (setupRideStyle == bikeCategory.defaultRideStyle) {
-                                        stringResource(
-                                            id = R.string.bike_setup_style_default,
-                                            stringResource(id = bikeCategory.labelRes),
-                                            stringResource(id = bikeCategory.defaultRideStyle.labelRes)
-                                        )
-                                    } else {
-                                        stringResource(
-                                            id = R.string.bike_setup_style_custom,
-                                            stringResource(id = setupRideStyle.labelRes)
-                                        )
-                                    },
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-                        }
-                    }
-
-                    DropdownMenu(
-                        expanded = styleMenuExpanded,
-                        onDismissRequest = { styleMenuExpanded = false }
-                    ) {
-                        RideStyle.entries.forEach { style ->
-                            DropdownMenuItem(
-                                text = {
-                                    Column {
-                                        Text(
-                                            text = stringResource(id = style.labelRes),
-                                            fontWeight = if (style == setupRideStyle) FontWeight.Bold else FontWeight.Normal
-                                        )
-                                        if (style == bikeCategory.defaultRideStyle) {
-                                            Text(
-                                                text = "(${stringResource(R.string.overview_badge_default)} ${stringResource(bikeCategory.labelRes)})",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
-                                        }
-                                    }
-                                },
-                                onClick = {
-                                    onDraftChange(draft.copy(setupRideStyle = style))
-                                    styleMenuExpanded = false
-                                }
+                                .clickable { styleMenuExpanded = true },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.outlinedCardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
                             )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = stringResource(id = setupRideStyle.labelRes),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = if (setupRideStyle == bikeCategory.defaultRideStyle) {
+                                            stringResource(
+                                                id = R.string.bike_setup_style_default,
+                                                stringResource(id = bikeCategory.labelRes),
+                                                stringResource(id = bikeCategory.defaultRideStyle.labelRes)
+                                            )
+                                        } else {
+                                            stringResource(
+                                                id = R.string.bike_setup_style_custom,
+                                                stringResource(id = setupRideStyle.labelRes)
+                                            )
+                                        },
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                            }
                         }
+
+                        LightMenuPopup(
+                            expanded = styleMenuExpanded,
+                            onDismissRequest = { styleMenuExpanded = false },
+                            entries = styleMenuEntries,
+                            anchorWidthPx = styleCardWidthPx
+                        )
                     }
                 }
 
@@ -370,9 +371,21 @@ fun AddSetupDialog(
                                                     val effStyle = setup.getEffectiveRideStyle(bikeCategory)
                                                     val frontLabel = stringResource(id = R.string.overview_front)
                                                     val rearLabel = stringResource(id = R.string.overview_rear)
+                                                    val unitInchAbbr = stringResource(id = R.string.unit_inch_abbr)
+                                                    val unitMmAbbr = stringResource(id = R.string.unit_mm)
+                                                    val frontWidthText = setup.frontTire.formatWidthWithUnit(
+                                                        effectiveRideStyle = effStyle,
+                                                        inchUnitLabel = " $unitInchAbbr",
+                                                        mmUnitLabel = unitMmAbbr
+                                                    )
+                                                    val rearWidthText = setup.rearTire.formatWidthWithUnit(
+                                                        effectiveRideStyle = effStyle,
+                                                        inchUnitLabel = " $unitInchAbbr",
+                                                        mmUnitLabel = unitMmAbbr
+                                                    )
                                                     val rimLabel = stringResource(id = setup.frontWheel.rimType.labelRes).split(" ").first()
                                                     Text(
-                                                        text = "${stringResource(id = effStyle.labelRes)} • $frontLabel ${setup.frontTire.widthMm}mm / $rearLabel ${setup.rearTire.widthMm}mm • $rimLabel",
+                                                        text = "${stringResource(id = effStyle.labelRes)} • $frontLabel $frontWidthText / $rearLabel $rearWidthText • $rimLabel",
                                                         style = MaterialTheme.typography.labelSmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                                     )

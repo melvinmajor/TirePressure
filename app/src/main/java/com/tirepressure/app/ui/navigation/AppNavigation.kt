@@ -154,7 +154,7 @@ internal fun computeAdaptivePaneDirective(windowAdaptiveInfo: WindowAdaptiveInfo
  */
 internal fun Screen?.detailStateKey(): String = when (this) {
     null -> "overview_detail_placeholder"
-    is Screen.BikeEdit -> "bike_edit_$bikeId"
+    is Screen.BikeEdit -> "bike_edit_${bikeId}_${initialSetupId ?: "default"}"
     is Screen.Settings -> "settings"
     is Screen.AppInfo -> "app_info"
     is Screen.Overview -> "overview"
@@ -258,10 +258,13 @@ fun AppNavigation(
             )
         }
 
+        var isAppInfoPopupActive by remember { mutableStateOf(false) }
         val isAnyTwoPaneDialogActive = overviewState.bikeToDelete != null ||
             overviewState.setupToDelete != null ||
             overviewState.editingBikeDraft != null ||
             overviewState.addSetupDraft != null ||
+            overviewState.showWhatsNewDialog ||
+            isAppInfoPopupActive ||
             settingsState.showResetConfirmation ||
             settingsState.pendingImportPayload != null ||
             bikeEditState.showDeleteBikeConfirmation ||
@@ -295,8 +298,8 @@ fun AppNavigation(
                                 onNavigateToAddBike = {
                                     navigateToDetail(Screen.BikeEdit("new"))
                                 },
-                                onNavigateToEditBike = { bikeId ->
-                                    navigateToDetail(Screen.BikeEdit(bikeId))
+                                onNavigateToEditBike = { bikeId, setupId ->
+                                    navigateToDetail(Screen.BikeEdit(bikeId, setupId))
                                 },
                                 onNavigateToSettings = {
                                     navigateToDetail(Screen.Settings)
@@ -387,9 +390,10 @@ fun AppNavigation(
                                             onOpenSettings = { navigateToDetail(Screen.Settings) },
                                             onOpenAppInfo = { navigateToDetail(Screen.AppInfo) }
                                         )
-                                        is Screen.BikeEdit -> key(targetDetail.bikeId) {
+                                        is Screen.BikeEdit -> key(targetDetail.bikeId, targetDetail.initialSetupId) {
                                             BikeEditScreen(
                                                 bikeId = targetDetail.bikeId,
+                                                initialSetupId = targetDetail.initialSetupId,
                                                 viewModel = bikeEditViewModel,
                                                 preferencesRepository = preferencesRepository,
                                                 isDualPane = true,
@@ -411,6 +415,7 @@ fun AppNavigation(
                                         )
                                         is Screen.AppInfo -> AppInfoScreen(
                                             isDualPane = true,
+                                            onPopupActiveChanged = { isAppInfoPopupActive = it },
                                             onNavigateBack = {
                                                 popDetail()
                                             }
@@ -461,8 +466,8 @@ fun AppNavigation(
                             onNavigateToAddBike = {
                                 navigateToDetail(Screen.BikeEdit("new"))
                             },
-                            onNavigateToEditBike = { bikeId ->
-                                navigateToDetail(Screen.BikeEdit(bikeId))
+                            onNavigateToEditBike = { bikeId, setupId ->
+                                navigateToDetail(Screen.BikeEdit(bikeId, setupId))
                             },
                             onNavigateToSettings = {
                                 navigateToDetail(Screen.Settings)
@@ -475,6 +480,7 @@ fun AppNavigation(
                     entry<Screen.BikeEdit> { key ->
                         BikeEditScreen(
                             bikeId = key.bikeId,
+                            initialSetupId = key.initialSetupId,
                             viewModel = bikeEditViewModel,
                             preferencesRepository = preferencesRepository,
                             isDualPane = false,

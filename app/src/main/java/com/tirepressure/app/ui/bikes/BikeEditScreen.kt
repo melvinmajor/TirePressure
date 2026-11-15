@@ -26,6 +26,9 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,6 +66,12 @@ import com.tirepressure.app.ui.components.getIcon
 import androidx.compose.foundation.BorderStroke
 import com.tirepressure.app.ui.components.SectionCard
 import com.tirepressure.app.ui.components.YearInputField
+import com.tirepressure.app.ui.components.LightMenuOverlayHost
+import com.tirepressure.app.ui.components.LocalLightMenuHostState
+import io.github.angelomarzocchi.lumen.LightMenuDivider
+import io.github.angelomarzocchi.lumen.LightMenuEntry
+import io.github.angelomarzocchi.lumen.LightMenuHeader
+import io.github.angelomarzocchi.lumen.LightMenuItem
 import com.tirepressure.app.ui.components.keepVisibleAboveKeyboard
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.ui.draw.blur
@@ -95,6 +104,7 @@ private fun <T> vmState(getter: () -> T, setter: (T) -> Unit): MutableState<T> =
 @Composable
 fun BikeEditScreen(
     bikeId: String,
+    initialSetupId: String? = null,
     viewModel: BikeEditViewModel,
     preferencesRepository: PreferencesRepository,
     isDualPane: Boolean = false,
@@ -110,8 +120,8 @@ fun BikeEditScreen(
     val riderWeightKg by preferencesRepository.riderWeightFlow.collectAsStateWithLifecycle(initialValue = 75.0)
     val pressureUnit by preferencesRepository.pressureUnitFlow.collectAsStateWithLifecycle(initialValue = PressureUnit.BAR)
 
-    LaunchedEffect(bikeId, massUnit) {
-        viewModel.loadBikeIfNeeded(bikeId, massUnit, defaultSetupName)
+    LaunchedEffect(bikeId, initialSetupId, massUnit) {
+        viewModel.loadBikeIfNeeded(bikeId, massUnit, defaultSetupName, initialSetupId)
     }
 
     val isLoaded = state.isLoaded
@@ -194,7 +204,8 @@ fun BikeEditScreen(
     }
 
     CompositionLocalProvider(LocalGlassBackdrop provides effectiveGlassBackdrop) {
-        Box(
+        LightMenuOverlayHost {
+            Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
@@ -573,8 +584,14 @@ fun BikeEditScreen(
                                         val defStyle = newCat.defaultRideStyle
                                         val validDiameters = WheelDiameter.getOptionsForStyle(defStyle)
                                         s.copy(
-                                            frontTire = s.frontTire.copy(widthMm = defStyle.defaultTireWidthMm),
-                                            rearTire = s.rearTire.copy(widthMm = defStyle.defaultTireWidthMm),
+                                            frontTire = s.frontTire.copy(
+                                                widthMm = defStyle.defaultTireWidthMm,
+                                                isWidthInInches = defStyle.isMtbInches
+                                            ),
+                                            rearTire = s.rearTire.copy(
+                                                widthMm = defStyle.defaultTireWidthMm,
+                                                isWidthInInches = defStyle.isMtbInches
+                                            ),
                                             frontWheel = s.frontWheel.copy(
                                                 diameter = validDiameters.first(),
                                                 innerRimWidthMm = defStyle.defaultInnerRimWidthMm,
@@ -693,14 +710,93 @@ fun BikeEditScreen(
                         )
                     }
                 ) {
-                    // Onglets de sélection de configuration en LightTabs (Option 2A)
-                    PillSelector(
-                        items = setups.indices.toList(),
-                        selectedItem = selectedSetupIndex,
-                        onItemSelected = { selectedSetupIndex = it },
-                        labelProvider = { setups.getOrNull(it)?.name ?: "" },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    // Sélecteur déroulant de configuration (lisible même avec de nombreux profils ou des noms longs)
+                    val menuHost = LocalLightMenuHostState.current
+                    var setupAnchorBounds by remember { mutableStateOf<Rect?>(null) }
+                    val selectorUnitInch = stringResource(id = R.string.unit_inch_abbr)
+                    val selectorUnitMm = stringResource(id = R.string.unit_mm)
+                    val setupSelectorTitle = stringResource(id = R.string.bike_setup_selector_label)
+                    val setupMenuEntries = listOf(LightMenuHeader(title = setupSelectorTitle)) +
+                        setups.mapIndexed { idx, setupItem ->
+                            val itemStyle = setupItem.getEffectiveRideStyle(bikeCategory)
+                            val frontWidthText = setupItem.frontTire.formatWidthWithUnit(
+                                effectiveRideStyle = itemStyle,
+                                inchUnitLabel = " $selectorUnitInch",
+                                mmUnitLabel = selectorUnitMm
+                            )
+                            val rearWidthText = setupItem.rearTire.formatWidthWithUnit(
+                                effectiveRideStyle = itemStyle,
+                                inchUnitLabel = " $selectorUnitInch",
+                                mmUnitLabel = selectorUnitMm
+                            )
+                            val itemLabel = if (setupItem.isDefault) "★ ${setupItem.name}" else setupItem.name
+                            LightMenuItem(
+                                label = itemLabel,
+                                trailing = "$frontWidthText / $rearWidthText",
+                                checked = idx == selectedSetupIndex,
+                                onClick = { selectedSetupIndex = idx }
+                            )
+                        }
+                    Column {
+                        Text(
+                            text = setupSelectorTitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onGloballyPositioned { setupAnchorBounds = it.boundsInWindow() }
+                                .clickable {
+                                    setupAnchorBounds?.let { bounds ->
+                                        menuHost?.show(
+                                            anchorBoundsInWindow = bounds,
+                                            entries = setupMenuEntries,
+                                            matchAnchorMinWidth = true
+                                        )
+                                    }
+                                },
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val activeEffStyle = activeSetup.getEffectiveRideStyle(bikeCategory)
+                                val activeStyleColor = getRideStyleColor(activeEffStyle, bikeCategory)
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = if (activeSetup.isDefault) "★ ${activeSetup.name}" else activeSetup.name,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    val frontLabel = activeSetup.frontTire.formatWidthWithUnit(
+                                        effectiveRideStyle = activeEffStyle,
+                                        inchUnitLabel = " $selectorUnitInch",
+                                        mmUnitLabel = selectorUnitMm
+                                    )
+                                    val rearLabel = activeSetup.rearTire.formatWidthWithUnit(
+                                        effectiveRideStyle = activeEffStyle,
+                                        inchUnitLabel = " $selectorUnitInch",
+                                        mmUnitLabel = selectorUnitMm
+                                    )
+                                    Text(
+                                        text = "${stringResource(id = activeEffStyle.labelRes)} • $frontLabel / $rearLabel",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = activeStyleColor
+                                    )
+                                }
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                            }
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(10.dp))
 
@@ -752,11 +848,45 @@ fun BikeEditScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     // Discipline / Usage spécifique à ce profil
-                    var setupStyleMenuExpanded by remember { mutableStateOf(false) }
+                    var styleAnchorBounds by remember { mutableStateOf<Rect?>(null) }
                     val currentSetupStyle = activeSetup.getEffectiveRideStyle(bikeCategory)
+                    val styleHeaderTitle = stringResource(id = R.string.bike_setup_style_label)
+                    val defaultCategoryName = stringResource(id = bikeCategory.labelRes)
+                    val defaultStyleName = stringResource(id = bikeCategory.defaultRideStyle.labelRes)
+                    val defaultOptionLabel = stringResource(id = R.string.bike_setup_style_default, defaultCategoryName, defaultStyleName)
+                    val isDefaultStyleSelected = activeSetup.rideStyle == null
+                    val styleMenuEntries = buildList<LightMenuEntry> {
+                        add(LightMenuHeader(title = styleHeaderTitle))
+                        add(
+                            LightMenuItem(
+                                label = defaultOptionLabel,
+                                checked = isDefaultStyleSelected,
+                                onClick = {
+                                    setups = setups.mapIndexed { idx, s ->
+                                        if (idx == selectedSetupIndex) s.copy(rideStyle = null) else s
+                                    }
+                                }
+                            )
+                        )
+                        add(LightMenuDivider)
+                        RideStyle.entries.forEach { st ->
+                            val stLabel = stringResource(id = st.labelRes)
+                            add(
+                                LightMenuItem(
+                                    label = stLabel,
+                                    checked = !isDefaultStyleSelected && activeSetup.rideStyle == st,
+                                    onClick = {
+                                        setups = setups.mapIndexed { idx, s ->
+                                            if (idx == selectedSetupIndex) s.copy(rideStyle = st) else s
+                                        }
+                                    }
+                                )
+                            )
+                        }
+                    }
                     Column {
                         Text(
-                            text = stringResource(id = R.string.bike_setup_style_label),
+                            text = styleHeaderTitle,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -764,7 +894,16 @@ fun BikeEditScreen(
                         OutlinedCard(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { setupStyleMenuExpanded = true },
+                                .onGloballyPositioned { styleAnchorBounds = it.boundsInWindow() }
+                                .clickable {
+                                    styleAnchorBounds?.let { bounds ->
+                                        menuHost?.show(
+                                            anchorBoundsInWindow = bounds,
+                                            entries = styleMenuEntries,
+                                            matchAnchorMinWidth = true
+                                        )
+                                    }
+                                },
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Row(
@@ -792,12 +931,10 @@ fun BikeEditScreen(
                                         }
                                     }
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    val defaultCategoryName = stringResource(id = bikeCategory.labelRes)
-                                    val defaultStyleName = stringResource(id = bikeCategory.defaultRideStyle.labelRes)
                                     val isDefaultStyle = activeSetup.rideStyle == null || activeSetup.rideStyle == bikeCategory.defaultRideStyle
                                     Text(
                                         text = if (isDefaultStyle) {
-                                            stringResource(id = R.string.bike_setup_style_default, defaultCategoryName, defaultStyleName)
+                                            defaultOptionLabel
                                         } else {
                                             stringResource(id = R.string.bike_setup_style_custom, stringResource(id = currentSetupStyle.labelRes))
                                         },
@@ -806,50 +943,6 @@ fun BikeEditScreen(
                                     )
                                 }
                                 Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-                            }
-                        }
-
-                        DropdownMenu(
-                            expanded = setupStyleMenuExpanded,
-                            onDismissRequest = { setupStyleMenuExpanded = false }
-                        ) {
-                            val defaultCategoryName = stringResource(id = bikeCategory.labelRes)
-                            val defaultStyleName = stringResource(id = bikeCategory.defaultRideStyle.labelRes)
-                            DropdownMenuItem(
-                                text = { Text(stringResource(id = R.string.bike_setup_style_default, defaultCategoryName, defaultStyleName)) },
-                                onClick = {
-                                    setups = setups.mapIndexed { idx, s ->
-                                        if (idx == selectedSetupIndex) s.copy(rideStyle = null) else s
-                                    }
-                                    setupStyleMenuExpanded = false
-                                }
-                            )
-                            HorizontalDivider()
-                            RideStyle.entries.forEach { st ->
-                                val stColor = getRideStyleColor(st, bikeCategory)
-                                DropdownMenuItem(
-                                    text = {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(8.dp)
-                                                    .clip(androidx.compose.foundation.shape.CircleShape)
-                                                    .background(stColor)
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = stringResource(id = st.labelRes),
-                                                fontWeight = if (st == currentSetupStyle) FontWeight.Bold else FontWeight.Normal
-                                            )
-                                        }
-                                    },
-                                    onClick = {
-                                        setups = setups.mapIndexed { idx, s ->
-                                            if (idx == selectedSetupIndex) s.copy(rideStyle = st) else s
-                                        }
-                                        setupStyleMenuExpanded = false
-                                    }
-                                )
                             }
                         }
                     }
@@ -1053,8 +1146,13 @@ fun BikeEditScreen(
                     collapsedSummary = {
                         val cStr = stringResource(id = activeSetup.frontTire.casing.labelRes)
                         val rStr = stringResource(id = activeSetup.frontWheel.rimType.labelRes)
+                        val widthText = activeSetup.frontTire.formatWidthWithUnit(
+                            effectiveRideStyle = activeSetup.getEffectiveRideStyle(bikeCategory),
+                            inchUnitLabel = " ${stringResource(id = R.string.unit_inch_abbr)}",
+                            mmUnitLabel = stringResource(id = R.string.unit_mm)
+                        )
                         Text(
-                            text = "${formatDecimal(activeSetup.frontTire.widthMm)}mm • $rStr • $cStr",
+                            text = "$widthText • $rStr • $cStr",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -1063,6 +1161,17 @@ fun BikeEditScreen(
                     WheelTireFormBlock(
                         wheelKey = "${activeSetup.id}_front",
                         tireWidthMm = activeSetup.frontTire.widthMm,
+                        isInchUnit = activeSetup.frontTire.resolveUseInches(activeSetup.getEffectiveRideStyle(bikeCategory)),
+                        onIsInchUnitChange = { useInch ->
+                            setups = setups.mapIndexed { idx, s ->
+                                if (idx == selectedSetupIndex) {
+                                    s.copy(
+                                        frontTire = s.frontTire.copy(isWidthInInches = useInch),
+                                        rearTire = if (isSameWheels) s.rearTire.copy(isWidthInInches = useInch) else s.rearTire
+                                    )
+                                } else s
+                            }
+                        },
                         onTireWidthChangeMm = { w ->
                             setups = setups.mapIndexed { idx, s ->
                                 if (idx == selectedSetupIndex) {
@@ -1198,8 +1307,13 @@ fun BikeEditScreen(
                             collapsedSummary = {
                                 val cStr = stringResource(id = activeSetup.rearTire.casing.labelRes)
                                 val rStr = stringResource(id = activeSetup.rearWheel.rimType.labelRes)
+                                val widthText = activeSetup.rearTire.formatWidthWithUnit(
+                                    effectiveRideStyle = activeSetup.getEffectiveRideStyle(bikeCategory),
+                                    inchUnitLabel = " ${stringResource(id = R.string.unit_inch_abbr)}",
+                                    mmUnitLabel = stringResource(id = R.string.unit_mm)
+                                )
                                 Text(
-                                    text = "${formatDecimal(activeSetup.rearTire.widthMm)}mm • $rStr • $cStr",
+                                    text = "$widthText • $rStr • $cStr",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -1208,6 +1322,14 @@ fun BikeEditScreen(
                             WheelTireFormBlock(
                                 wheelKey = "${activeSetup.id}_rear",
                                 tireWidthMm = activeSetup.rearTire.widthMm,
+                                isInchUnit = activeSetup.rearTire.resolveUseInches(activeSetup.getEffectiveRideStyle(bikeCategory)),
+                                onIsInchUnitChange = { useInch ->
+                                    setups = setups.mapIndexed { idx, s ->
+                                        if (idx == selectedSetupIndex) {
+                                            s.copy(rearTire = s.rearTire.copy(isWidthInInches = useInch))
+                                        } else s
+                                    }
+                                },
                                 onTireWidthChangeMm = { w ->
                                     setups = setups.mapIndexed { idx, s ->
                                         if (idx == selectedSetupIndex) s.copy(rearTire = s.rearTire.copy(widthMm = w)) else s
@@ -1391,6 +1513,7 @@ fun BikeEditScreen(
         )
     }
         }
+        }
     }
 }
 
@@ -1422,6 +1545,8 @@ fun BikeEditScreen(
 private fun WheelTireFormBlock(
     wheelKey: String,
     tireWidthMm: Double,
+    isInchUnit: Boolean,
+    onIsInchUnitChange: (Boolean) -> Unit,
     onTireWidthChangeMm: (Double) -> Unit,
     innerRimWidthMm: Double,
     onInnerRimWidthChangeMm: (Double) -> Unit,
@@ -1430,32 +1555,20 @@ private fun WheelTireFormBlock(
     casing: TireCasing,
     onCasingChange: (TireCasing) -> Unit
 ) {
-    // Mode d'unité : mm ou pouces
-    // Initialise une seule fois par configuration de roue la préférence d'unité sans bascule automatique lors de la saisie
-    val defaultToInches = remember(wheelKey) {
-        val inInches = tireWidthMm / 25.4
-        val nearestTenth = Math.round(inInches * 10.0) / 10.0
-        tireWidthMm >= 50.0 && Math.abs(inInches - nearestTenth) < 0.08
-    }
-
-    var isInchUnit by rememberSaveable(wheelKey) {
-        mutableStateOf(defaultToInches)
-    }
-
     var tireTextInput by rememberSaveable(wheelKey) {
         val str = if (isInchUnit) {
-            formatDecimal(tireWidthMm / 25.4, 2)
+            UnitConverter.formatDecimal(tireWidthMm / 25.4, 2)
         } else {
-            formatDecimal(tireWidthMm, 2)
+            UnitConverter.formatDecimal(tireWidthMm, 2)
         }
         mutableStateOf(str)
     }
 
     var innerRimTextInput by rememberSaveable(wheelKey) {
-        mutableStateOf(formatDecimal(innerRimWidthMm, 2))
+        mutableStateOf(UnitConverter.formatDecimal(innerRimWidthMm, 2))
     }
 
-    // Synchronisation de la valeur de pneu externe uniquement lors d'un vrai changement externe (ex: preset, copie)
+    // Synchronisation de la valeur de pneu externe uniquement lors d'un vrai changement externe (ex: preset, copie, changement d'unité)
     LaunchedEffect(tireWidthMm, isInchUnit) {
         val typedNum = tireTextInput.toDoubleOrNull()
         val typedMm = if (typedNum != null) {
@@ -1464,9 +1577,9 @@ private fun WheelTireFormBlock(
 
         if (typedMm == null || Math.abs(typedMm - tireWidthMm) > 0.02) {
             tireTextInput = if (isInchUnit) {
-                formatDecimal(tireWidthMm / 25.4, 2)
+                UnitConverter.formatDecimal(tireWidthMm / 25.4, 2)
             } else {
-                formatDecimal(tireWidthMm, 2)
+                UnitConverter.formatDecimal(tireWidthMm, 2)
             }
         }
     }
@@ -1475,12 +1588,12 @@ private fun WheelTireFormBlock(
     LaunchedEffect(innerRimWidthMm) {
         val typedNum = innerRimTextInput.toDoubleOrNull()
         if (typedNum == null || Math.abs(typedNum - innerRimWidthMm) > 0.02) {
-            innerRimTextInput = formatDecimal(innerRimWidthMm, 2)
+            innerRimTextInput = UnitConverter.formatDecimal(innerRimWidthMm, 2)
         }
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // En-tête avec sélecteur d'unité de largeur (mm ou pouces) - Bascule manuelle stricte
+        // En-tête avec sélecteur d'unité de largeur (mm ou pouces) - Persiste dans TireConfig.isWidthInInches
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1496,8 +1609,8 @@ private fun WheelTireFormBlock(
                     selected = !isInchUnit,
                     onClick = {
                         if (isInchUnit) {
-                            isInchUnit = false
-                            tireTextInput = formatDecimal(tireWidthMm, 2)
+                            onIsInchUnitChange(false)
+                            tireTextInput = UnitConverter.formatDecimal(tireWidthMm, 2)
                         }
                     },
                     label = { Text(stringResource(id = R.string.unit_mm), style = MaterialTheme.typography.labelSmall) },
@@ -1507,8 +1620,8 @@ private fun WheelTireFormBlock(
                     selected = isInchUnit,
                     onClick = {
                         if (!isInchUnit) {
-                            isInchUnit = true
-                            tireTextInput = formatDecimal(tireWidthMm / 25.4, 2)
+                            onIsInchUnitChange(true)
+                            tireTextInput = UnitConverter.formatDecimal(tireWidthMm / 25.4, 2)
                         }
                     },
                     label = { Text(stringResource(id = R.string.unit_inch), style = MaterialTheme.typography.labelSmall) },
@@ -1527,7 +1640,7 @@ private fun WheelTireFormBlock(
                     tireTextInput = newVal
                     val num = newVal.toDoubleOrNull()
                     if (num != null && num > 0.0) {
-                        val mm = if (isInchUnit) num * 25.4 else num
+                        val mm = if (isInchUnit) UnitConverter.round(num * 25.4, 4) else num
                         onTireWidthChangeMm(mm)
                     }
                 },
@@ -1550,19 +1663,39 @@ private fun WheelTireFormBlock(
             )
         }
 
+        val menuHost = LocalLightMenuHostState.current
+
         // Type de jante
         Column {
+            val rimHeaderTitle = stringResource(id = R.string.rim_type)
+            val rimMenuEntries = listOf(LightMenuHeader(title = rimHeaderTitle)) +
+                RimType.entries.map { type ->
+                    LightMenuItem(
+                        label = stringResource(id = type.labelRes),
+                        checked = type == rimType,
+                        onClick = { onRimTypeChange(type) }
+                    )
+                }
+            var rimAnchorBounds by remember { mutableStateOf<Rect?>(null) }
             Text(
-                text = stringResource(id = R.string.rim_type),
+                text = rimHeaderTitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(4.dp))
-            var rimMenuExpanded by remember { mutableStateOf(false) }
             OutlinedCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { rimMenuExpanded = true },
+                    .onGloballyPositioned { rimAnchorBounds = it.boundsInWindow() }
+                    .clickable {
+                        rimAnchorBounds?.let { bounds ->
+                            menuHost?.show(
+                                anchorBoundsInWindow = bounds,
+                                entries = rimMenuEntries,
+                                matchAnchorMinWidth = true
+                            )
+                        }
+                    },
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
@@ -1579,36 +1712,40 @@ private fun WheelTireFormBlock(
                     )
                     Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                 }
-                DropdownMenu(
-                    expanded = rimMenuExpanded,
-                    onDismissRequest = { rimMenuExpanded = false }
-                ) {
-                    RimType.entries.forEach { type ->
-                        DropdownMenuItem(
-                            text = { Text(stringResource(id = type.labelRes)) },
-                            onClick = {
-                                onRimTypeChange(type)
-                                rimMenuExpanded = false
-                            }
-                        )
-                    }
-                }
             }
         }
 
         // Carcasse du pneu
         Column {
+            val casingHeaderTitle = stringResource(id = R.string.tire_casing)
+            val casingMenuEntries = listOf(LightMenuHeader(title = casingHeaderTitle)) +
+                TireCasing.entries.map { c ->
+                    LightMenuItem(
+                        label = stringResource(id = c.labelRes),
+                        checked = c == casing,
+                        onClick = { onCasingChange(c) }
+                    )
+                }
+            var casingAnchorBounds by remember { mutableStateOf<Rect?>(null) }
             Text(
-                text = stringResource(id = R.string.tire_casing),
+                text = casingHeaderTitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(4.dp))
-            var casingMenuExpanded by remember { mutableStateOf(false) }
             OutlinedCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { casingMenuExpanded = true },
+                    .onGloballyPositioned { casingAnchorBounds = it.boundsInWindow() }
+                    .clickable {
+                        casingAnchorBounds?.let { bounds ->
+                            menuHost?.show(
+                                anchorBoundsInWindow = bounds,
+                                entries = casingMenuEntries,
+                                matchAnchorMinWidth = true
+                            )
+                        }
+                    },
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
@@ -1624,20 +1761,6 @@ private fun WheelTireFormBlock(
                         fontWeight = FontWeight.Medium
                     )
                     Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-                }
-                DropdownMenu(
-                    expanded = casingMenuExpanded,
-                    onDismissRequest = { casingMenuExpanded = false }
-                ) {
-                    TireCasing.entries.forEach { c ->
-                        DropdownMenuItem(
-                            text = { Text(stringResource(id = c.labelRes)) },
-                            onClick = {
-                                onCasingChange(c)
-                                casingMenuExpanded = false
-                            }
-                        )
-                    }
                 }
             }
         }

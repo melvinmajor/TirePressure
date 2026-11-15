@@ -23,6 +23,7 @@ interface PreferencesRepository {
     val favoriteModeFlow: Flow<FavoriteMode>
     val accentColorFlow: Flow<AppAccentColor>
     val twoPaneSplitRatioFlow: Flow<TwoPaneSplitRatio>
+    val lastSeenVersionCodeFlow: Flow<Int>
 
     suspend fun setTheme(theme: AppTheme)
     suspend fun setAppLanguage(language: AppLanguage)
@@ -37,5 +38,6 @@ interface PreferencesRepository {
     suspend fun setFavoriteMode(mode: FavoriteMode)
     suspend fun setAccentColor(color: AppAccentColor)
     suspend fun setTwoPaneSplitRatio(ratio: TwoPaneSplitRatio)
+    suspend fun setLastSeenVersionCode(versionCode: Int)
     suspend fun clear()
 }

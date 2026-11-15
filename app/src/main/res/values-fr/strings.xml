@@ -15,7 +15,7 @@
     <string name="onboarding_step1_title">Gérez plusieurs configurations</string>
     <string name="onboarding_step1_desc">Chaque vélo peut posséder plusieurs configurations de roues et pneus (pneus été, hiver, chemins boueux...).</string>
     <string name="onboarding_step2_title">Pressions pour toutes surfaces</string>
-    <string name="onboarding_step2_desc">Visualisez instantanément vos pressions recommandées pour chaque condition : route sèche, sol mouillé ou conditions glissantes/neige.</string>
+    <string name="onboarding_step2_desc">Visualisez instantanément vos pressions recommandées pour chaque condition : route sèche, sol humide ou chemins boueux.</string>
     <string name="onboarding_step3_title">Sécurité &amp; Normes ETRTO</string>
     <string name="onboarding_step3_desc">L\'application vous alerte immédiatement si une pression dépasse la limite de sécurité pour les jantes Hookless sans crochets (max 5.0 bar).</string>
     <string name="onboarding_step4_title">Apparence personnalisée</string>
@@ -27,11 +27,11 @@
     <string name="overview_add_bike">Ajouter un vélo</string>
     <string name="overview_add_config">Ajouter une configuration</string>
     <string name="overview_no_bikes">Aucun vélo pour le moment</string>
-    <string name="overview_no_bikes_desc">Ajoutez votre premier vélo pour générer instantanément vos pressions optimales selon la météo.</string>
+    <string name="overview_no_bikes_desc">Ajoutez votre premier vélo pour générer instantanément vos pressions optimales selon les conditions de surface.</string>
     <string name="onboarding_weight_error">Veuillez entrer un poids valide (30 à 200 kg)</string>
     <string name="overview_dry">Sec</string>
-    <string name="overview_wet">Pluie</string>
-    <string name="overview_snow">Neige</string>
+    <string name="overview_wet">Humide</string>
+    <string name="overview_snow">Boue</string>
     
     <!-- Vélo & Config -->
     <string name="bike_name_label">Nom du vélo</string>
@@ -125,7 +125,7 @@
     <string name="settings_theme_light">Clair</string>
     <string name="settings_theme_dark">Sombre</string>
     <string name="settings_language">Langue de l\'application</string>
-    <string name="settings_lang_system">Système (auto)</string>
+    <string name="settings_lang_system">Auto</string>
     <string name="settings_lang_fr">Français</string>
     <string name="settings_lang_en">English</string>
     <string name="settings_units">Unités de mesure</string>
@@ -183,17 +183,17 @@
     <string name="unit_kpa">kPa</string>
     <string name="tire_width_unit">Unité de largeur</string>
 
-    <!-- Affichage des conditions météo / surfaces -->
+    <!-- Affichage des conditions de surface -->
     <string name="settings_surfaces_title">Conditions de surface calculées</string>
-    <string name="settings_surfaces_desc">Choisissez les conditions météo à calculer et afficher. Le sec est toujours inclus.</string>
+    <string name="settings_surfaces_desc">Choisissez les conditions de surface à calculer et afficher. Le sec est toujours inclus.</string>
     <string name="setup_surfaces_title">Conditions de surface calculées</string>
-    <string name="setup_surfaces_desc">Choisissez les conditions météo à afficher pour ce profil (à minima le sec).</string>
+    <string name="setup_surfaces_desc">Choisissez les conditions de surface à afficher pour ce profil (à minima le sec).</string>
     <string name="surface_dry_mandatory">Sec (Obligatoire)</string>
-    <string name="surface_wet_label">Pluie</string>
-    <string name="surface_snow_label">Neige</string>
-    <string name="surfaces_count_3">3 conditions : Sec, Pluie et Neige</string>
-    <string name="surfaces_count_2_wet">2 conditions : Sec et Pluie</string>
-    <string name="surfaces_count_2_snow">2 conditions : Sec et Neige</string>
+    <string name="surface_wet_label">Humide</string>
+    <string name="surface_snow_label">Boue</string>
+    <string name="surfaces_count_3">3 conditions : Sec, Humide et Boue</string>
+    <string name="surfaces_count_2_wet">2 conditions : Sec et Humide</string>
+    <string name="surfaces_count_2_snow">2 conditions : Sec et Boue</string>
     <string name="surfaces_count_1">1 condition : Sec uniquement</string>
 
     <!-- Confirmations de suppression -->
@@ -208,7 +208,7 @@
 
     <!-- Chaînes supplémentaires Overview -->
     <string name="overview_rider_label">Cycliste :</string>
-    <string name="overview_pressures_display_in">Afficher les pressions en :</string>
+    <string name="overview_pressures_display_in">Pressions en :</string>
     <string name="overview_bike_weight">%1$s %2$s</string>
     <string name="overview_config_count_one">1 config</string>
     <string name="overview_config_count_many">%1$d configs</string>
@@ -254,7 +254,7 @@
 
     <!-- Sections regroupées Paramètres & Traductions -->
     <string name="settings_units_surfaces_title">Unités &amp; Calculs</string>
-    <string name="settings_units_surfaces_desc">Unités de mesure et conditions météo calculées</string>
+    <string name="settings_units_surfaces_desc">Unités de mesure et conditions de surface calculées</string>
     <string name="settings_display_language_title">Affichage &amp; Langue</string>
     <string name="settings_display_language_desc">Thème visuel et langue de l\'application</string>
     <string name="settings_language_desc">Basculez entre le Français et l\'Anglais, ou suivez la langue de votre système Android.</string>
@@ -345,4 +345,31 @@
     <string name="settings_two_pane_split_desc">Choisissez la répartition de l\'écran entre la liste des vélos et le volet de détail sur les grands écrans et appareils pliables.</string>
     <string name="two_pane_split_forty_sixty" formatted="false">40 % – 60 %</string>
     <string name="two_pane_split_half">1/2 – 1/2</string>
+
+    <!-- v1.3.4.0 Menu déroulant config, Filtre favoris & Filtre widget -->
+    <string name="bike_setup_selector_label">Configuration sélectionnée</string>
+    <string name="overview_filter_all">Tous</string>
+    <string name="overview_filter_favorites">Favoris</string>
+    <string name="widget_config_filter_title">Vélos à afficher</string>
+    <string name="widget_filter_all_bikes">Tous les vélos</string>
+    <string name="widget_filter_all_bikes_desc">Afficher tous les vélos enregistrés</string>
+    <string name="widget_filter_favorites_only">Favoris uniquement</string>
+    <string name="widget_filter_favorites_only_desc">Afficher uniquement les vélos marqués ★ favoris</string>
+    <string name="overview_set_default_setup">Définir par défaut</string>
+    <string name="setup_default_badge">Par défaut</string>
+    <string name="whats_new_banner_title">Mis à jour vers %1$s</string>
+    <string name="whats_new_banner_subtitle">Appuyez pour voir les nouveautés</string>
+    <string name="whats_new_dialog_title">Nouveautés</string>
+    <string name="whats_new_button_open">Nouveautés de %1$s</string>
+    <string name="whats_new_got_it">Compris</string>
+    <string name="whats_new_item_surfaces_title">Conditions de surface</string>
+    <string name="whats_new_item_surfaces_desc">Clarifiées en Sec, Humide et Boue avec des icônes adaptées.</string>
+    <string name="whats_new_item_default_setup_title">Profil par défaut</string>
+    <string name="whats_new_item_default_setup_desc">Définissez n\'importe quel profil par défaut (★) depuis le menu 3 points.</string>
+    <string name="whats_new_item_favorites_title">Vélos favoris</string>
+    <string name="whats_new_item_favorites_desc">Filtrez l\'Aperçu et les widgets par favoris, en mode unique ou multiple.</string>
+    <string name="whats_new_item_lightmenu_title">Menus interactifs LightMenu</string>
+    <string name="whats_new_item_lightmenu_desc">Nouveaux menus tactiles avec sélection par maintien et glissement.</string>
+    <string name="whats_new_item_setup_edit_title">Sélecteur &amp; unités conservés</string>
+    <string name="whats_new_item_setup_edit_desc">Menu déroulant des profils à l\'édition et mémorisation de l\'unité mm/pouce.</string>
 </resources>

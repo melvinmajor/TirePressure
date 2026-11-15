@@ -47,5 +47,17 @@ object UnitConverter {
             .setScale(decimals, RoundingMode.HALF_UP)
             .toDouble()
     }
+
+    /**
+     * Formate un nombre décimal avec au maximum [maxDecimals] chiffres après la virgule,
+     * sans zéros inutiles en fin de chaîne (ex: 2.30 -> "2.3", 28.00 -> "28").
+     */
+    fun formatDecimal(value: Double, maxDecimals: Int = 2): String {
+        if (!value.isFinite()) return "0"
+        val bd = BigDecimal.valueOf(value)
+            .setScale(maxDecimals, RoundingMode.HALF_UP)
+            .stripTrailingZeros()
+        return bd.toPlainString()
+    }
 }
 

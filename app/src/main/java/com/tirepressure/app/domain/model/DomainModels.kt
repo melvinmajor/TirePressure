@@ -1,13 +1,48 @@
 package com.tirepressure.app.domain.model
 
+import com.tirepressure.app.core.util.UnitConverter
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
 @Serializable
 data class TireConfig(
     val widthMm: Double,
-    val casing: TireCasing = TireCasing.STANDARD
-)
+    val casing: TireCasing = TireCasing.STANDARD,
+    val isWidthInInches: Boolean? = null
+) {
+    /**
+     * Résout l'unité d'affichage de largeur de pneu pour ce pneu :
+     * utilise le choix explicitement enregistré (`isWidthInInches`) s'il est défini,
+     * sinon déduit selon le style de pratique effectif ou le seuil historique (>= 50 mm).
+     */
+    fun resolveUseInches(effectiveRideStyle: RideStyle? = null): Boolean {
+        isWidthInInches?.let { return it }
+        if (effectiveRideStyle != null) {
+            return effectiveRideStyle.isMtbInches
+        }
+        val inInches = widthMm / 25.4
+        val nearestTenth = Math.round(inInches * 10.0) / 10.0
+        return widthMm >= 50.0 && Math.abs(inInches - nearestTenth) < 0.08
+    }
+
+    /**
+     * Retourne la largeur numérique convertie dans l'unité résolue (pouces ou mm)
+     * et formatée avec au maximum 2 chiffres après la virgule.
+     */
+    fun formatWidthNumber(effectiveRideStyle: RideStyle? = null): String {
+        val raw = if (resolveUseInches(effectiveRideStyle)) widthMm / 25.4 else widthMm
+        return UnitConverter.formatDecimal(raw, 2)
+    }
+
+    /**
+     * Formate la largeur avec son suffixe d'unité (ex: `2.35"`, `28mm`).
+     */
+    fun formatWidthWithUnit(effectiveRideStyle: RideStyle? = null, inchUnitLabel: String = "in", mmUnitLabel: String = "mm"): String {
+        val useInches = resolveUseInches(effectiveRideStyle)
+        val number = formatWidthNumber(effectiveRideStyle)
+        return if (useInches) "$number$inchUnitLabel" else "$number$mmUnitLabel"
+    }
+}
 
 @Serializable
 data class WheelConfig(
@@ -36,6 +71,20 @@ data class WheelSetup(
 
     fun getEffectiveRideStyle(bikeStyle: RideStyle): RideStyle =
         rideStyle ?: bikeStyle
+
+    fun isEffectiveDefault(allSetups: List<WheelSetup>): Boolean {
+        val explicitDefault = allSetups.firstOrNull { it.isDefault }
+        return explicitDefault?.id == id || (explicitDefault == null && allSetups.firstOrNull()?.id == id)
+    }
+}
+
+fun List<WheelSetup>.withSingleDefault(setupId: String? = null): List<WheelSetup> {
+    if (isEmpty()) return this
+    val targetId = when {
+        setupId != null && any { it.id == setupId } -> setupId
+        else -> firstOrNull { it.isDefault }?.id ?: first().id
+    }
+    return map { it.copy(isDefault = it.id == targetId) }
 }
 
 @Serializable
@@ -63,6 +112,12 @@ data class BikeProfile(
 
     val primarySetup: WheelSetup
         get() = setups.find { it.isDefault } ?: setups.firstOrNull() ?: WheelSetup(name = "Par défaut")
+
+    val sortedSetups: List<WheelSetup>
+        get() {
+            val defaultSetup = setups.firstOrNull { it.isDefault } ?: return setups
+            return listOf(defaultSetup) + setups.filter { it.id != defaultSetup.id }
+        }
 }
 
 @Serializable

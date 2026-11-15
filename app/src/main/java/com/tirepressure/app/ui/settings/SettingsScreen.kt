@@ -341,14 +341,7 @@ fun SettingsScreen(
                     items = PressureUnit.entries,
                     selectedItem = state.pressureUnit,
                     onItemSelected = { viewModel.setPressureUnit(it) },
-                    labelProvider = { context.getString(it.labelRes) },
-                    captionProvider = {
-                        when (it) {
-                            PressureUnit.BAR -> "1.00 bar"
-                            PressureUnit.PSI -> "14.5 psi"
-                            PressureUnit.KPA -> "100 kPa"
-                        }
-                    }
+                    labelProvider = { context.getString(it.labelRes) }
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -420,7 +413,7 @@ fun SettingsScreen(
                             .padding(vertical = 10.dp, horizontal = 4.dp)
                     ) {
                         Text(
-                            text = "🌧️ " + stringResource(R.string.overview_wet),
+                            text = "💧 " + stringResource(R.string.overview_wet),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = if (isWetSelected) FontWeight.Bold else FontWeight.Normal,
                             color = wetTextColor,
@@ -459,7 +452,7 @@ fun SettingsScreen(
                             .padding(vertical = 10.dp, horizontal = 4.dp)
                     ) {
                         Text(
-                            text = "❄️ " + stringResource(R.string.overview_snow),
+                            text = "🟤 " + stringResource(R.string.overview_snow),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = if (isSnowSelected) FontWeight.Bold else FontWeight.Normal,
                             color = snowTextColor,

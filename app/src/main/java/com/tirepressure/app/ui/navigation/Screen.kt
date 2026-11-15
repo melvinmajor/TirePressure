@@ -12,7 +12,10 @@ sealed interface Screen : NavKey {
     data object Overview : Screen
 
     @Serializable
-    data class BikeEdit(val bikeId: String = "new") : Screen
+    data class BikeEdit(
+        val bikeId: String = "new",
+        val initialSetupId: String? = null
+    ) : Screen
 
     @Serializable
     data object Settings : Screen

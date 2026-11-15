@@ -32,6 +32,7 @@ class PreferencesRepositoryImpl(
         val KEY_FAVORITE_MODE = stringPreferencesKey("favorite_mode")
         val KEY_ACCENT_COLOR = stringPreferencesKey("accent_color")
         val KEY_TWO_PANE_SPLIT_RATIO = stringPreferencesKey("two_pane_split_ratio")
+        val KEY_LAST_SEEN_VERSION_CODE = intPreferencesKey("last_seen_version_code")
     }
 
     override val favoriteModeFlow: Flow<com.tirepressure.app.core.model.FavoriteMode> = context.dataStore.data.map { prefs ->
@@ -93,6 +94,10 @@ class PreferencesRepositoryImpl(
         runCatching { TwoPaneSplitRatio.valueOf(raw) }.getOrDefault(TwoPaneSplitRatio.FORTY_SIXTY)
     }
 
+    override val lastSeenVersionCodeFlow: Flow<Int> = context.dataStore.data.map { prefs ->
+        prefs[KEY_LAST_SEEN_VERSION_CODE] ?: 0
+    }
+
     override suspend fun setTheme(theme: AppTheme) {
         context.dataStore.edit { prefs ->
             prefs[KEY_THEME] = theme.name
@@ -132,6 +137,15 @@ class PreferencesRepositoryImpl(
     override suspend fun setOnboardingCompleted(completed: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[KEY_ONBOARDING_DONE] = completed
+            if (completed) {
+                prefs[KEY_LAST_SEEN_VERSION_CODE] = com.tirepressure.app.core.AppVersion.VERSION_CODE
+            }
+        }
+    }
+
+    override suspend fun setLastSeenVersionCode(versionCode: Int) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_LAST_SEEN_VERSION_CODE] = versionCode
         }
     }
 

@@ -80,6 +80,7 @@ class AllBikesWidgetConfigureActivity : ComponentActivity() {
         }
 
         val initialTheme = WidgetPreferencesHelper.getWidgetTheme(this, appWidgetId)
+        val initialFavoritesOnly = WidgetPreferencesHelper.isAllBikesFavoritesOnly(this, appWidgetId)
         val prefs = PreferencesRepositoryImpl(this)
 
         setContent {
@@ -96,8 +97,9 @@ class AllBikesWidgetConfigureActivity : ComponentActivity() {
                 ) {
                     AllBikesConfigContent(
                         initialTheme = initialTheme,
-                        onSave = { selectedTheme ->
-                            saveAndFinish(selectedTheme)
+                        initialFavoritesOnly = initialFavoritesOnly,
+                        onSave = { selectedTheme, favoritesOnly ->
+                            saveAndFinish(selectedTheme, favoritesOnly)
                         },
                         onCancel = { finish() }
                     )
@@ -106,9 +108,10 @@ class AllBikesWidgetConfigureActivity : ComponentActivity() {
         }
     }
 
-    private fun saveAndFinish(theme: WidgetTheme) {
+    private fun saveAndFinish(theme: WidgetTheme, favoritesOnly: Boolean) {
         lifecycleScope.launch(Dispatchers.IO) {
             WidgetPreferencesHelper.setWidgetTheme(this@AllBikesWidgetConfigureActivity, appWidgetId, theme)
+            WidgetPreferencesHelper.setAllBikesFavoritesOnly(this@AllBikesWidgetConfigureActivity, appWidgetId, favoritesOnly)
 
             val appWidgetManager = AppWidgetManager.getInstance(this@AllBikesWidgetConfigureActivity)
             AllBikesWidgetReceiver.updateWidget(this@AllBikesWidgetConfigureActivity, appWidgetManager, appWidgetId)
@@ -128,10 +131,12 @@ class AllBikesWidgetConfigureActivity : ComponentActivity() {
 @Composable
 private fun AllBikesConfigContent(
     initialTheme: WidgetTheme,
-    onSave: (theme: WidgetTheme) -> Unit,
+    initialFavoritesOnly: Boolean,
+    onSave: (theme: WidgetTheme, favoritesOnly: Boolean) -> Unit,
     onCancel: () -> Unit
 ) {
     var selectedTheme by remember { mutableStateOf(initialTheme) }
+    var favoritesOnly by remember { mutableStateOf(initialFavoritesOnly) }
     val haptics = rememberBounceHaptics()
     val listState = rememberLazyListState()
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -175,7 +180,7 @@ private fun AllBikesConfigContent(
                         Button(
                             onClick = {
                                 haptics.press()
-                                onSave(selectedTheme)
+                                onSave(selectedTheme, favoritesOnly)
                             },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(14.dp),
@@ -224,6 +229,41 @@ private fun AllBikesConfigContent(
                 item {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
+                        text = stringResource(R.string.widget_config_filter_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SelectableWidgetOptionCard(
+                            title = stringResource(R.string.widget_filter_all_bikes),
+                            subtitle = stringResource(R.string.widget_filter_all_bikes_desc),
+                            isSelected = !favoritesOnly,
+                            isDark = isDark,
+                            onClick = {
+                                haptics.press()
+                                favoritesOnly = false
+                            }
+                        )
+                        SelectableWidgetOptionCard(
+                            title = "★ ${stringResource(R.string.widget_filter_favorites_only)}",
+                            subtitle = stringResource(R.string.widget_filter_favorites_only_desc),
+                            isSelected = favoritesOnly,
+                            isDark = isDark,
+                            onClick = {
+                                haptics.press()
+                                favoritesOnly = true
+                            }
+                        )
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
                         text = stringResource(R.string.widget_config_theme),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
@@ -234,61 +274,21 @@ private fun AllBikesConfigContent(
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         WidgetTheme.values().forEach { theme ->
-                            val isSelected = theme == selectedTheme
-                            val baseCardColor = if (isSelected) {
-                                androidx.compose.ui.graphics.lerp(
-                                    MaterialTheme.colorScheme.surface,
-                                    MaterialTheme.colorScheme.primary,
-                                    if (isDark) 0.14f else 0.08f
-                                )
-                            } else {
-                                MaterialTheme.colorScheme.surface
+                            val label = when (theme) {
+                                WidgetTheme.SYSTEM -> stringResource(R.string.widget_theme_system)
+                                WidgetTheme.LIGHT -> stringResource(R.string.widget_theme_light)
+                                WidgetTheme.DARK -> stringResource(R.string.widget_theme_dark)
                             }
-                            GlossCard(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 2.dp)
-                                    .border(
-                                        width = if (isSelected) 2.dp else 1.dp,
-                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
-                                        shape = RoundedCornerShape(14.dp)
-                                    )
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .clickable {
-                                        haptics.press()
-                                        selectedTheme = theme
-                                    },
-                                shape = RoundedCornerShape(14.dp),
-                                colors = appGlossCardColors(base = baseCardColor, isDark = isDark),
-                                tiltOnTouch = true
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(14.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        val label = when (theme) {
-                                            WidgetTheme.SYSTEM -> stringResource(R.string.widget_theme_system)
-                                            WidgetTheme.LIGHT -> stringResource(R.string.widget_theme_light)
-                                            WidgetTheme.DARK -> stringResource(R.string.widget_theme_dark)
-                                        }
-                                        Text(
-                                            text = label,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                    if (isSelected) {
-                                        Icon(
-                                            imageVector = Icons.Default.Check,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
+                            SelectableWidgetOptionCard(
+                                title = label,
+                                subtitle = null,
+                                isSelected = theme == selectedTheme,
+                                isDark = isDark,
+                                onClick = {
+                                    haptics.press()
+                                    selectedTheme = theme
                                 }
-                            }
+                            )
                         }
                     }
                 }
@@ -296,6 +296,70 @@ private fun AllBikesConfigContent(
 
             ScrollTopFade(visible = listState.canScrollBackward)
             ScrollBottomFade(visible = listState.canScrollForward)
+        }
+    }
+}
+
+@Composable
+private fun SelectableWidgetOptionCard(
+    title: String,
+    subtitle: String?,
+    isSelected: Boolean,
+    isDark: Boolean,
+    onClick: () -> Unit
+) {
+    val baseCardColor = if (isSelected) {
+        androidx.compose.ui.graphics.lerp(
+            MaterialTheme.colorScheme.surface,
+            MaterialTheme.colorScheme.primary,
+            if (isDark) 0.14f else 0.08f
+        )
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    GlossCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp)
+            .border(
+                width = if (isSelected) 2.dp else 1.dp,
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                shape = RoundedCornerShape(14.dp)
+            )
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        colors = appGlossCardColors(base = baseCardColor, isDark = isDark),
+        tiltOnTouch = true
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (!subtitle.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }

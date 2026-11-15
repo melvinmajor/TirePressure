@@ -349,6 +349,104 @@ class SettingsAndOverviewPreferencesTest {
         assertEquals(TwoPaneSplitRatio.FORTY_SIXTY, state.twoPaneSplitRatio)
     }
 
+    @Test
+    fun `overview favorites filter toggles and resets automatically when no favorite bike remains`() = runTest {
+        val favBike = BikeProfile(
+            id = "bike-fav",
+            name = "Favorite Gravel",
+            category = BikeCategory.GRAVEL,
+            isDefault = true,
+            setups = listOf(WheelSetup(name = "Main"))
+        )
+        val regularBike = BikeProfile(
+            id = "bike-reg",
+            name = "Commuter",
+            category = BikeCategory.COMMUTE,
+            isDefault = false,
+            setups = listOf(WheelSetup(name = "Main"))
+        )
+        fakeBikeRepo.insertBike(favBike)
+        fakeBikeRepo.insertBike(regularBike)
+
+        assertFalse(overviewViewModel.uiState.value.filterFavoritesOnly)
+        overviewViewModel.setFavoritesFilter(true)
+        assertTrue(overviewViewModel.uiState.value.filterFavoritesOnly)
+
+        // Removing the favorite flag on the last favorite bike resets the filter automatically
+        fakeBikeRepo.updateBike(favBike.copy(isDefault = false))
+        assertFalse(overviewViewModel.uiState.value.filterFavoritesOnly)
+    }
+
+    @Test
+    fun `setDefaultSetup marks target setup as default and pins it first in overview`() = runTest {
+        val setupA = WheelSetup(id = "setup-a", name = "Road Wheels", isDefault = true)
+        val setupB = WheelSetup(id = "setup-b", name = "Gravel Wheels", isDefault = false)
+        val bike = BikeProfile(
+            id = "bike-multi",
+            name = "Allroad",
+            category = BikeCategory.GRAVEL,
+            setups = listOf(setupA, setupB)
+        )
+        fakeBikeRepo.insertBike(bike)
+
+        val initialSetups = overviewViewModel.uiState.value.bikesWithPressures.first().setupsWithPressures.map { it.setup }
+        assertEquals(listOf("setup-a", "setup-b"), initialSetups.map { it.id })
+        assertTrue(setupA.isEffectiveDefault(bike.setups))
+        assertFalse(setupB.isEffectiveDefault(bike.setups))
+
+        overviewViewModel.setDefaultSetup(bike, "setup-b")
+
+        val updatedBike = fakeBikeRepo.getBikeById("bike-multi")!!
+        val reordered = overviewViewModel.uiState.value.bikesWithPressures.first().setupsWithPressures.map { it.setup }
+        assertEquals("setup-b", updatedBike.primarySetup.id)
+        assertEquals(listOf("setup-b", "setup-a"), reordered.map { it.id })
+        assertTrue(reordered.first().isDefault)
+        assertFalse(reordered.last().isDefault)
+
+        // Deleting the default setup promotes the remaining setup to default automatically
+        overviewViewModel.deleteSetup(updatedBike, "setup-b")
+        val afterDeleteBike = fakeBikeRepo.getBikeById("bike-multi")!!
+        assertEquals(1, afterDeleteBike.setups.size)
+        assertEquals("setup-a", afterDeleteBike.setups.first().id)
+        assertTrue(afterDeleteBike.setups.first().isDefault)
+    }
+
+    @Test
+    fun `update banner appears when lastSeenVersionCode is older and dismisses on open or close`() = runTest {
+        val currentCode = com.tirepressure.app.core.AppVersion.VERSION_CODE
+        assertTrue(currentCode > 0)
+        assertFalse(overviewViewModel.uiState.value.showUpdateBanner)
+        assertFalse(overviewViewModel.uiState.value.showWhatsNewDialog)
+
+        // Simulate upgrading user whose last seen version is older than current build
+        fakePrefsRepo.lastSeenVersionCodeFlow.value = (currentCode - 1).coerceAtLeast(0)
+        assertTrue(overviewViewModel.uiState.value.showUpdateBanner)
+
+        // Opening What's New shows dialog, hides banner, and marks current version as seen
+        overviewViewModel.openWhatsNewDialog()
+        assertTrue(overviewViewModel.uiState.value.showWhatsNewDialog)
+        assertFalse(overviewViewModel.uiState.value.showUpdateBanner)
+        assertEquals(currentCode, fakePrefsRepo.lastSeenVersionCodeFlow.value)
+
+        overviewViewModel.dismissWhatsNewDialog()
+        assertFalse(overviewViewModel.uiState.value.showWhatsNewDialog)
+
+        // Dismissing the banner directly also persists lastSeenVersionCode
+        fakePrefsRepo.lastSeenVersionCodeFlow.value = (currentCode - 1).coerceAtLeast(0)
+        assertTrue(overviewViewModel.uiState.value.showUpdateBanner)
+
+        overviewViewModel.dismissUpdateBanner()
+        assertFalse(overviewViewModel.uiState.value.showUpdateBanner)
+        assertEquals(currentCode, fakePrefsRepo.lastSeenVersionCodeFlow.value)
+
+        // Brand-new users completing onboarding should not see the update banner afterward
+        fakePrefsRepo.setOnboardingCompleted(false)
+        fakePrefsRepo.setLastSeenVersionCode(0)
+        fakePrefsRepo.setOnboardingCompleted(true)
+        assertEquals(currentCode, fakePrefsRepo.lastSeenVersionCodeFlow.value)
+        assertFalse(overviewViewModel.uiState.value.showUpdateBanner)
+    }
+
     private class FakeBikeRepository : BikeRepository {
         private val bikes = mutableListOf<BikeProfile>()
         private val flow = MutableStateFlow<List<BikeProfile>>(emptyList())
@@ -398,13 +496,19 @@ class SettingsAndOverviewPreferencesTest {
         override val favoriteModeFlow = MutableStateFlow(FavoriteMode.GLOBAL)
         override val accentColorFlow = MutableStateFlow(AppAccentColor.ELECTRIC_LIME)
         override val twoPaneSplitRatioFlow = MutableStateFlow(TwoPaneSplitRatio.FORTY_SIXTY)
+        override val lastSeenVersionCodeFlow = MutableStateFlow(com.tirepressure.app.core.AppVersion.VERSION_CODE)
 
         override suspend fun setTheme(theme: AppTheme) { themeFlow.value = theme }
         override suspend fun setAppLanguage(language: AppLanguage) { appLanguageFlow.value = language }
         override suspend fun setMassUnit(unit: MassUnit) { massUnitFlow.value = unit }
         override suspend fun setPressureUnit(unit: PressureUnit) { pressureUnitFlow.value = unit }
         override suspend fun setRiderWeight(weightKg: Double) { riderWeightFlow.value = weightKg }
-        override suspend fun setOnboardingCompleted(completed: Boolean) { isOnboardingCompletedFlow.value = completed }
+        override suspend fun setOnboardingCompleted(completed: Boolean) {
+            isOnboardingCompletedFlow.value = completed
+            if (completed) {
+                lastSeenVersionCodeFlow.value = com.tirepressure.app.core.AppVersion.VERSION_CODE
+            }
+        }
         override suspend fun setSelectedBikeId(id: String?) { selectedBikeIdFlow.value = id }
         override suspend fun setShowWetSurface(show: Boolean) { showWetSurfaceFlow.value = show }
         override suspend fun setShowSnowSurface(show: Boolean) { showSnowSurfaceFlow.value = show }
@@ -412,6 +516,7 @@ class SettingsAndOverviewPreferencesTest {
         override suspend fun setFavoriteMode(mode: FavoriteMode) { favoriteModeFlow.value = mode }
         override suspend fun setAccentColor(color: AppAccentColor) { accentColorFlow.value = color }
         override suspend fun setTwoPaneSplitRatio(ratio: TwoPaneSplitRatio) { twoPaneSplitRatioFlow.value = ratio }
+        override suspend fun setLastSeenVersionCode(versionCode: Int) { lastSeenVersionCodeFlow.value = versionCode }
         override suspend fun clear() {
             themeFlow.value = AppTheme.SYSTEM
             appLanguageFlow.value = AppLanguage.SYSTEM
@@ -426,6 +531,7 @@ class SettingsAndOverviewPreferencesTest {
             favoriteModeFlow.value = FavoriteMode.GLOBAL
             accentColorFlow.value = AppAccentColor.ELECTRIC_LIME
             twoPaneSplitRatioFlow.value = TwoPaneSplitRatio.FORTY_SIXTY
+            lastSeenVersionCodeFlow.value = 0
         }
     }
 }

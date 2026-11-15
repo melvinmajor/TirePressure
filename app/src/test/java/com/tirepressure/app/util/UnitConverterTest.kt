@@ -65,6 +65,9 @@ class UnitConverterTest {
         assertEquals("60", com.tirepressure.app.ui.components.formatDecimal(60.0, 2))
         assertEquals("25.4", com.tirepressure.app.ui.components.formatDecimal(25.4, 2))
         assertEquals("", com.tirepressure.app.ui.components.formatDecimal(0.0, 2))
+        assertEquals("59.69", UnitConverter.formatDecimal(59.689999, 2))
+        assertEquals("2.3", UnitConverter.formatDecimal(2.30, 2))
+        assertEquals("28", UnitConverter.formatDecimal(28.0, 2))
     }
 }
 
