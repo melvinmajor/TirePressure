@@ -47,6 +47,7 @@ data class SettingsUiState(
     val showSnowSurface: Boolean = true,
     val defaultOverviewCompact: Boolean = false,
     val twoPaneSplitRatio: TwoPaneSplitRatio = TwoPaneSplitRatio.FORTY_SIXTY,
+    val isTwoPaneSplitRatioUserOverridden: Boolean = false,
     val isUnitsExpanded: Boolean = true,
     val isDisplayExpanded: Boolean = false,
     val isWidgetsExpanded: Boolean = false,
@@ -88,7 +89,12 @@ class SettingsViewModel(
                 SettingsExtras(wet, snow, defaultCompact, favMode, accent)
             }
 
-            combine(flowA, flowB, preferencesRepository.twoPaneSplitRatioFlow) { base, extras, splitRatio ->
+            combine(
+                flowA,
+                flowB,
+                preferencesRepository.twoPaneSplitRatioFlow,
+                preferencesRepository.isTwoPaneSplitRatioOverriddenFlow
+            ) { base, extras, splitRatio, isOverridden ->
                 _uiState.update { current ->
                     current.copy(
                         theme = base.theme,
@@ -101,7 +107,8 @@ class SettingsViewModel(
                         defaultOverviewCompact = extras.defaultCompact,
                         favoriteMode = extras.favMode,
                         accentColor = extras.accent,
-                        twoPaneSplitRatio = splitRatio
+                        twoPaneSplitRatio = splitRatio,
+                        isTwoPaneSplitRatioUserOverridden = isOverridden
                     )
                 }
             }.collect()

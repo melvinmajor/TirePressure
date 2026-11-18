@@ -343,8 +343,8 @@
     <!-- Répartition de la disposition à 2 volets -->
     <string name="settings_two_pane_split_title">Disposition à 2 volets par défaut</string>
     <string name="settings_two_pane_split_desc">Choisissez la répartition de l\'écran entre la liste des vélos et le volet de détail sur les grands écrans et appareils pliables.</string>
-    <string name="two_pane_split_forty_sixty" formatted="false">40 % – 60 %</string>
-    <string name="two_pane_split_half">1/2 – 1/2</string>
+    <string name="two_pane_split_forty_sixty" formatted="false">40% - 60%</string>
+    <string name="two_pane_split_half" formatted="false">50% - 50%</string>
 
     <!-- v1.3.4.0 Menu déroulant config, Filtre favoris & Filtre widget -->
     <string name="bike_setup_selector_label">Configuration sélectionnée</string>
@@ -372,4 +372,6 @@
     <string name="whats_new_item_lightmenu_desc">Nouveaux menus tactiles avec sélection par maintien et glissement.</string>
     <string name="whats_new_item_setup_edit_title">Sélecteur &amp; unités conservés</string>
     <string name="whats_new_item_setup_edit_desc">Menu déroulant des profils à l\'édition et mémorisation de l\'unité mm/pouce.</string>
+    <string name="whats_new_item_adaptive_title">Affichage adaptatif Pliables &amp; Tablettes</string>
+    <string name="whats_new_item_adaptive_desc" formatted="false">Partage 50% - 50% sur pliables, écran Aperçu en pleine largeur au repos et mode portrait 1 volet conservant les saisies.</string>
 </resources>

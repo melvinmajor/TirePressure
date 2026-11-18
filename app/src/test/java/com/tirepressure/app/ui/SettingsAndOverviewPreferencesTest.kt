@@ -1,6 +1,7 @@
 package com.tirepressure.app.ui
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.HingeInfo
 import androidx.compose.material3.adaptive.Posture
 import androidx.compose.material3.adaptive.WindowAdaptiveInfo
 import androidx.compose.ui.geometry.Rect
@@ -22,6 +23,7 @@ import com.tirepressure.app.domain.model.WheelSetup
 import com.tirepressure.app.domain.repository.BikeRepository
 import com.tirepressure.app.domain.repository.PreferencesRepository
 import com.tirepressure.app.ui.navigation.computeAdaptivePaneDirective
+import com.tirepressure.app.ui.navigation.resolveEffectiveTwoPaneSplitRatio
 import com.tirepressure.app.ui.overview.OverviewViewModel
 import com.tirepressure.app.ui.settings.SettingsViewModel
 import kotlinx.coroutines.Dispatchers
@@ -276,7 +278,7 @@ class SettingsAndOverviewPreferencesTest {
             windowSizeClass = WindowSizeClass.compute(390f, 844f),
             windowPosture = Posture()
         )
-        val phonePortraitDirective = computeAdaptivePaneDirective(phonePortraitInfo)
+        val phonePortraitDirective = computeAdaptivePaneDirective(phonePortraitInfo, isPortrait = true)
         assertEquals(1, phonePortraitDirective.maxHorizontalPartitions)
 
         // 2. Phone in landscape (844x390dp -> Expanded width, Compact height < 480dp -> 1 partition)
@@ -284,41 +286,156 @@ class SettingsAndOverviewPreferencesTest {
             windowSizeClass = WindowSizeClass.compute(844f, 390f),
             windowPosture = Posture()
         )
-        val phoneLandscapeDirective = computeAdaptivePaneDirective(phoneLandscapeInfo)
+        val phoneLandscapeDirective = computeAdaptivePaneDirective(phoneLandscapeInfo, isPortrait = false)
         assertEquals(1, phoneLandscapeDirective.maxHorizontalPartitions)
 
-        // 3. Unfolded foldable (e.g. Galaxy Z Fold8 unfolded: 720x840dp -> Medium width, Medium height -> 2 partitions)
-        val unfoldedFoldableInfo = WindowAdaptiveInfo(
+        // 3. Unfolded foldable or tablet in Portrait -> must stay 1 partition
+        val foldablePortraitInfo = WindowAdaptiveInfo(
             windowSizeClass = WindowSizeClass.compute(720f, 840f),
+            windowPosture = Posture(
+                hingeList = listOf(
+                    HingeInfo(
+                        bounds = Rect(358f, 0f, 362f, 840f),
+                        isFlat = true,
+                        isVertical = true,
+                        isSeparating = false,
+                        isOccluding = false
+                    )
+                )
+            )
+        )
+        val foldablePortraitDirective = computeAdaptivePaneDirective(foldablePortraitInfo, isPortrait = true)
+        assertEquals(1, foldablePortraitDirective.maxHorizontalPartitions)
+
+        val tabletPortraitInfo = WindowAdaptiveInfo(
+            windowSizeClass = WindowSizeClass.compute(800f, 1280f),
             windowPosture = Posture()
         )
-        val unfoldedFoldableDirective = computeAdaptivePaneDirective(unfoldedFoldableInfo)
-        assertEquals(2, unfoldedFoldableDirective.maxHorizontalPartitions)
-        assertEquals(1, unfoldedFoldableDirective.maxVerticalPartitions)
+        val tabletPortraitDirective = computeAdaptivePaneDirective(tabletPortraitInfo, isPortrait = true)
+        assertEquals(1, tabletPortraitDirective.maxHorizontalPartitions)
 
-        // 4. Tablet in landscape (1280x800dp -> Expanded width, Medium height -> 2 partitions)
+        // 4. Unfolded foldable in landscape with vertical HingeInfo (840x720dp -> 2 partitions)
+        val foldableLandscapeInfo = WindowAdaptiveInfo(
+            windowSizeClass = WindowSizeClass.compute(840f, 720f),
+            windowPosture = Posture(
+                hingeList = listOf(
+                    HingeInfo(
+                        bounds = Rect(418f, 0f, 422f, 720f),
+                        isFlat = true,
+                        isVertical = true,
+                        isSeparating = false,
+                        isOccluding = false
+                    )
+                )
+            )
+        )
+        val foldableLandscapeDirective = computeAdaptivePaneDirective(foldableLandscapeInfo, isPortrait = false)
+        assertEquals(2, foldableLandscapeDirective.maxHorizontalPartitions)
+        assertEquals(1, foldableLandscapeDirective.maxVerticalPartitions)
+
+        // 5. Tablet in landscape (1280x800dp -> Expanded width, Medium height -> 2 partitions)
         val tabletLandscapeInfo = WindowAdaptiveInfo(
             windowSizeClass = WindowSizeClass.compute(1280f, 800f),
             windowPosture = Posture()
         )
-        val tabletLandscapeDirective = computeAdaptivePaneDirective(tabletLandscapeInfo)
+        val tabletLandscapeDirective = computeAdaptivePaneDirective(tabletLandscapeInfo, isPortrait = false)
         assertEquals(2, tabletLandscapeDirective.maxHorizontalPartitions)
 
-        // 5. Extra-large desktop / tablet window (1700x1000dp -> clamped to 2 partitions)
+        // 6. Extra-large desktop / tablet window (1700x1000dp -> clamped to 2 partitions)
         val extraLargeInfo = WindowAdaptiveInfo(
             windowSizeClass = WindowSizeClass.compute(1700f, 1000f),
             windowPosture = Posture()
         )
-        val extraLargeDirective = computeAdaptivePaneDirective(extraLargeInfo)
+        val extraLargeDirective = computeAdaptivePaneDirective(extraLargeInfo, isPortrait = false)
         assertEquals(2, extraLargeDirective.maxHorizontalPartitions)
 
-        // 6. Half-folded tabletop posture -> 1 horizontal partition
+        // 7. Half-folded tabletop posture or horizontal separating hinge -> 1 horizontal partition
         val tabletopInfo = WindowAdaptiveInfo(
-            windowSizeClass = WindowSizeClass.compute(720f, 840f),
+            windowSizeClass = WindowSizeClass.compute(840f, 720f),
             windowPosture = Posture(isTabletop = true)
         )
-        val tabletopDirective = computeAdaptivePaneDirective(tabletopInfo)
+        val tabletopDirective = computeAdaptivePaneDirective(tabletopInfo, isPortrait = false)
         assertEquals(1, tabletopDirective.maxHorizontalPartitions)
+
+        val horizontalHingeInfo = WindowAdaptiveInfo(
+            windowSizeClass = WindowSizeClass.compute(840f, 720f),
+            windowPosture = Posture(
+                hingeList = listOf(
+                    HingeInfo(
+                        bounds = Rect(0f, 358f, 840f, 362f),
+                        isFlat = false,
+                        isVertical = false,
+                        isSeparating = true,
+                        isOccluding = false
+                    )
+                )
+            )
+        )
+        val horizontalHingeDirective = computeAdaptivePaneDirective(horizontalHingeInfo, isPortrait = false)
+        assertEquals(1, horizontalHingeDirective.maxHorizontalPartitions)
+    }
+
+    @Test
+    fun `resolveEffectiveTwoPaneSplitRatio defaults to 50 - 50 on foldables with HingeInfo and 40 - 60 on tablets unless overridden by user`() = runTest {
+        val foldableWithHinge = WindowAdaptiveInfo(
+            windowSizeClass = WindowSizeClass.compute(840f, 720f),
+            windowPosture = Posture(
+                hingeList = listOf(
+                    HingeInfo(
+                        bounds = Rect(418f, 0f, 422f, 720f),
+                        isFlat = true,
+                        isVertical = true,
+                        isSeparating = false,
+                        isOccluding = false
+                    )
+                )
+            )
+        )
+        val tabletWithoutHinge = WindowAdaptiveInfo(
+            windowSizeClass = WindowSizeClass.compute(1280f, 800f),
+            windowPosture = Posture()
+        )
+
+        // Foldable detected via HingeInfo defaults to 50% - 50%
+        val foldableDefault = resolveEffectiveTwoPaneSplitRatio(
+            windowAdaptiveInfo = foldableWithHinge,
+            isFoldableDevice = false,
+            userConfiguredRatio = TwoPaneSplitRatio.FORTY_SIXTY,
+            isUserOverridden = false
+        )
+        assertEquals(TwoPaneSplitRatio.HALF_HALF, foldableDefault)
+        assertEquals(0.5f, foldableDefault.listWeight, 0.0001f)
+        assertEquals("50% - 50%", foldableDefault.displayName)
+
+        // Tablet/desktop without HingeInfo defaults to 40% - 60%
+        val tabletDefault = resolveEffectiveTwoPaneSplitRatio(
+            windowAdaptiveInfo = tabletWithoutHinge,
+            isFoldableDevice = false,
+            userConfiguredRatio = TwoPaneSplitRatio.FORTY_SIXTY,
+            isUserOverridden = false
+        )
+        assertEquals(TwoPaneSplitRatio.FORTY_SIXTY, tabletDefault)
+        assertEquals(0.4f, tabletDefault.listWeight, 0.0001f)
+
+        // User override on foldable (choosing 40% - 60%) takes precedence over default 50% - 50%
+        val foldableOverride = resolveEffectiveTwoPaneSplitRatio(
+            windowAdaptiveInfo = foldableWithHinge,
+            isFoldableDevice = true,
+            userConfiguredRatio = TwoPaneSplitRatio.FORTY_SIXTY,
+            isUserOverridden = true
+        )
+        assertEquals(TwoPaneSplitRatio.FORTY_SIXTY, foldableOverride)
+
+        // User override on tablet (choosing 50% - 50%) takes precedence over default 40% - 60%
+        settingsViewModel.setTwoPaneSplitRatio(TwoPaneSplitRatio.HALF_HALF)
+        assertTrue(settingsViewModel.uiState.value.isTwoPaneSplitRatioUserOverridden)
+        val tabletOverride = resolveEffectiveTwoPaneSplitRatio(
+            windowAdaptiveInfo = tabletWithoutHinge,
+            isFoldableDevice = false,
+            userConfiguredRatio = settingsViewModel.uiState.value.twoPaneSplitRatio,
+            isUserOverridden = settingsViewModel.uiState.value.isTwoPaneSplitRatioUserOverridden
+        )
+        assertEquals(TwoPaneSplitRatio.HALF_HALF, tabletOverride)
     }
 
     @Test
@@ -496,6 +613,7 @@ class SettingsAndOverviewPreferencesTest {
         override val favoriteModeFlow = MutableStateFlow(FavoriteMode.GLOBAL)
         override val accentColorFlow = MutableStateFlow(AppAccentColor.ELECTRIC_LIME)
         override val twoPaneSplitRatioFlow = MutableStateFlow(TwoPaneSplitRatio.FORTY_SIXTY)
+        override val isTwoPaneSplitRatioOverriddenFlow = MutableStateFlow(false)
         override val lastSeenVersionCodeFlow = MutableStateFlow(com.tirepressure.app.core.AppVersion.VERSION_CODE)
 
         override suspend fun setTheme(theme: AppTheme) { themeFlow.value = theme }
@@ -515,7 +633,10 @@ class SettingsAndOverviewPreferencesTest {
         override suspend fun setDefaultOverviewCompact(compact: Boolean) { defaultOverviewCompactFlow.value = compact }
         override suspend fun setFavoriteMode(mode: FavoriteMode) { favoriteModeFlow.value = mode }
         override suspend fun setAccentColor(color: AppAccentColor) { accentColorFlow.value = color }
-        override suspend fun setTwoPaneSplitRatio(ratio: TwoPaneSplitRatio) { twoPaneSplitRatioFlow.value = ratio }
+        override suspend fun setTwoPaneSplitRatio(ratio: TwoPaneSplitRatio) {
+            twoPaneSplitRatioFlow.value = ratio
+            isTwoPaneSplitRatioOverriddenFlow.value = true
+        }
         override suspend fun setLastSeenVersionCode(versionCode: Int) { lastSeenVersionCodeFlow.value = versionCode }
         override suspend fun clear() {
             themeFlow.value = AppTheme.SYSTEM
@@ -531,6 +652,7 @@ class SettingsAndOverviewPreferencesTest {
             favoriteModeFlow.value = FavoriteMode.GLOBAL
             accentColorFlow.value = AppAccentColor.ELECTRIC_LIME
             twoPaneSplitRatioFlow.value = TwoPaneSplitRatio.FORTY_SIXTY
+            isTwoPaneSplitRatioOverriddenFlow.value = false
             lastSeenVersionCodeFlow.value = 0
         }
     }

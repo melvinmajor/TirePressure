@@ -50,9 +50,6 @@ import com.tirepressure.app.ui.components.ScrollTopFade
 import com.tirepressure.app.ui.components.ScrollBottomFade
 import com.tirepressure.app.ui.components.TirePressurePulseLogo
 import com.tirepressure.app.ui.components.WhatsNewDialog
-import io.github.angelomarzocchi.flight.RecordedPaint
-import io.github.angelomarzocchi.flight.recordedFlightAnchor
-import io.github.angelomarzocchi.flight.rememberFlightAnchor
 import io.github.angelomarzocchi.glass.glassBackdrop
 import io.github.angelomarzocchi.glass.rememberGlassBackdrop
 
@@ -82,26 +79,6 @@ fun AppInfoScreen(
         animationSpec = tween(250),
         label = "AppInfoDialogBlur"
     )
-
-    val logoAnchorModifier = if (!isDualPane) {
-        val appLogoAnchor = rememberFlightAnchor(
-            key = "app_logo",
-            paint = remember { RecordedPaint(single = false, overflow = true) }
-        )
-        Modifier.recordedFlightAnchor(appLogoAnchor, spill = 4.dp)
-    } else {
-        Modifier
-    }
-
-    val titleAnchorModifier = if (!isDualPane) {
-        val appTitleAnchor = rememberFlightAnchor(
-            key = "app_title",
-            paint = remember { RecordedPaint(single = false, overflow = true) }
-        )
-        Modifier.recordedFlightAnchor(appTitleAnchor, spill = 4.dp)
-    } else {
-        Modifier
-    }
 
     // Unified single-piece screen background so the logo's sonic pressure waves radiate
     // freely behind the transparent header all the way to the top of the display without clipping.
@@ -144,7 +121,6 @@ fun AppInfoScreen(
                     TirePressurePulseLogo(
                         size = 96.dp,
                         shape = RoundedCornerShape(22.dp),
-                        imageModifier = logoAnchorModifier,
                         contentDescription = stringResource(id = R.string.app_info_title)
                     )
 
@@ -162,8 +138,7 @@ fun AppInfoScreen(
                                 }
                             },
                             style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            modifier = titleAnchorModifier
+                            fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(

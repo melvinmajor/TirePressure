@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.VerticalSplit
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -47,6 +48,11 @@ private data class WhatsNewHighlight(
 )
 
 private val LATEST_HIGHLIGHTS = listOf(
+    WhatsNewHighlight(
+        icon = Icons.Default.VerticalSplit,
+        titleRes = R.string.whats_new_item_adaptive_title,
+        descRes = R.string.whats_new_item_adaptive_desc
+    ),
     WhatsNewHighlight(
         icon = Icons.Default.WbSunny,
         titleRes = R.string.whats_new_item_surfaces_title,

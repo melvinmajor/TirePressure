@@ -343,8 +343,8 @@
     <!-- 2-Partition Layout Split Ratio Setting -->
     <string name="settings_two_pane_split_title">Default 2-Partition Layout</string>
     <string name="settings_two_pane_split_desc">Choose the screen split ratio between the bike list and the detail pane on large screens and foldables.</string>
-    <string name="two_pane_split_forty_sixty" formatted="false">40% – 60%</string>
-    <string name="two_pane_split_half">1/2 – 1/2</string>
+    <string name="two_pane_split_forty_sixty" formatted="false">40% - 60%</string>
+    <string name="two_pane_split_half" formatted="false">50% - 50%</string>
 
     <!-- v1.3.4.0 Setup Dropdown, Favorites Filter & Widget Filter -->
     <string name="bike_setup_selector_label">Selected setup</string>
@@ -372,4 +372,6 @@
     <string name="whats_new_item_lightmenu_desc">Tactile menus supporting press, hold, and slide selection in one gesture.</string>
     <string name="whats_new_item_setup_edit_title">Setup &amp; Tire Width Persistence</string>
     <string name="whats_new_item_setup_edit_desc">Dropdown setup selector in Edit Bike and per-setup mm/inch tire width memory.</string>
+    <string name="whats_new_item_adaptive_title">Foldable &amp; Tablet Adaptive Layout</string>
+    <string name="whats_new_item_adaptive_desc" formatted="false">Hinge-aware 50% - 50% split on foldables, full-width Overview when idle, and 1-pane portrait mode with preserved edits.</string>
 </resources>

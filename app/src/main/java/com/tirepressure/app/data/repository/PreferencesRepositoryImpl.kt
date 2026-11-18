@@ -94,6 +94,10 @@ class PreferencesRepositoryImpl(
         runCatching { TwoPaneSplitRatio.valueOf(raw) }.getOrDefault(TwoPaneSplitRatio.FORTY_SIXTY)
     }
 
+    override val isTwoPaneSplitRatioOverriddenFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs.contains(KEY_TWO_PANE_SPLIT_RATIO)
+    }
+
     override val lastSeenVersionCodeFlow: Flow<Int> = context.dataStore.data.map { prefs ->
         prefs[KEY_LAST_SEEN_VERSION_CODE] ?: 0
     }

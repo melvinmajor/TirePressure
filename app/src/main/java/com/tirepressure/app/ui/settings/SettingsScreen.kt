@@ -83,6 +83,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit,
     supportsTwoPaneLayout: Boolean = false,
+    effectiveTwoPaneSplitRatio: TwoPaneSplitRatio? = null,
     onNavigateToOnboarding: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -174,10 +175,12 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .consumeWindowInsets(paddingValues)
-                .imePadding()
+                .imePadding(),
+            contentAlignment = Alignment.TopCenter
         ) {
             Column(
                 modifier = Modifier
+                    .widthIn(max = 760.dp)
                     .fillMaxSize()
                     .verticalScroll(scrollState, enabled = !isCardTiltActive)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -595,7 +598,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                     PillSelector(
                         items = TwoPaneSplitRatio.entries,
-                        selectedItem = state.twoPaneSplitRatio,
+                        selectedItem = effectiveTwoPaneSplitRatio ?: state.twoPaneSplitRatio,
                         iconProvider = {
                             when (it) {
                                 TwoPaneSplitRatio.FORTY_SIXTY -> Icons.AutoMirrored.Filled.ViewSidebar

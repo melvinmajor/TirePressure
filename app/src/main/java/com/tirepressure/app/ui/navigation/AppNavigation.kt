@@ -1,6 +1,7 @@
 package com.tirepressure.app.ui.navigation
 
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -18,36 +19,12 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.HingeInfo
 import androidx.compose.material3.adaptive.WindowAdaptiveInfo
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.AnimatedPane
@@ -66,68 +43,58 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.window.core.layout.WindowSizeClass
-import com.tirepressure.app.R
+import com.tirepressure.app.core.model.TwoPaneSplitRatio
 import com.tirepressure.app.domain.repository.BikeRepository
 import com.tirepressure.app.domain.repository.PreferencesRepository
 import com.tirepressure.app.ui.bikes.BikeEditScreen
 import com.tirepressure.app.ui.bikes.BikeEditViewModel
 import com.tirepressure.app.ui.components.LocalGlassBackdrop
-import com.tirepressure.app.ui.components.TirePressurePulseLogo
-import com.tirepressure.app.ui.components.appGlossCardColors
-import com.tirepressure.app.ui.components.appLumenActionColors
-import com.tirepressure.app.ui.components.lockScrollOnActiveCardTilt
 import com.tirepressure.app.ui.info.AppInfoScreen
 import com.tirepressure.app.ui.onboarding.OnboardingScreen
 import com.tirepressure.app.ui.overview.OverviewScreen
 import com.tirepressure.app.ui.overview.OverviewViewModel
 import com.tirepressure.app.ui.settings.SettingsScreen
 import com.tirepressure.app.ui.settings.SettingsViewModel
-import io.github.angelomarzocchi.glass.glassBackdrop
-import io.github.angelomarzocchi.glass.rememberGlassBackdrop
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import io.github.angelomarzocchi.flight.FlightHost
 import io.github.angelomarzocchi.flight.FlightNavDisplay
-import io.github.angelomarzocchi.lumen.GlossCard
-import io.github.angelomarzocchi.lumen.LightAction
-import io.github.angelomarzocchi.lumen.LightActions
+import io.github.angelomarzocchi.glass.glassBackdrop
+import io.github.angelomarzocchi.glass.rememberGlassBackdrop
 
 /**
- * Computes the Material 3 Adaptive [PaneScaffoldDirective] tailored to the device form factor:
- * - Phones in portrait or landscape (Compact width < 600dp or Compact height < 480dp) and folded
- *   foldables on the outer cover display use a 1-partition layout (`maxHorizontalPartitions = 1`).
- * - Unfolded foldables, tablets, and large screens (width >= 600dp AND height >= 480dp, not in
- *   half-folded tabletop posture) use a 2-partition List-Detail layout (`maxHorizontalPartitions = 2`),
- *   clamping extra-large 3-partition defaults to 2 partitions and using [HingePolicy.AvoidOccluding]
- *   so non-occluding flexible foldable creases support both 40% - 60% and 1/2 - 1/2 split ratios.
+ * Computes the Material 3 Adaptive [PaneScaffoldDirective] tailored to the device form factor,
+ * orientation, and physical [HingeInfo]:
+ * - Portrait orientation (`isPortrait`), phones (Compact width < 600dp or Compact height < 480dp),
+ *   folded outer displays, half-folded tabletop postures, and horizontal separating/occluding hinges
+ *   always use a 1-partition layout (`maxHorizontalPartitions = 1`).
+ * - Landscape unfolded foldables, tablets, and desktop windows (width >= 600dp AND height >= 480dp,
+ *   without horizontal hinge occlusion or tabletop posture) use a 2-partition List-Detail layout
+ *   (`maxHorizontalPartitions = 2`, clamping extra-large 3-partition defaults to 2 partitions).
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
-internal fun computeAdaptivePaneDirective(windowAdaptiveInfo: WindowAdaptiveInfo): PaneScaffoldDirective {
+internal fun computeAdaptivePaneDirective(
+    windowAdaptiveInfo: WindowAdaptiveInfo,
+    isPortrait: Boolean = false
+): PaneScaffoldDirective {
     val isCompactHeight = !windowAdaptiveInfo.windowSizeClass.isHeightAtLeastBreakpoint(
         WindowSizeClass.HEIGHT_DP_MEDIUM_LOWER_BOUND
     )
     val isTabletop = windowAdaptiveInfo.windowPosture.isTabletop
-    return if (isCompactHeight || isTabletop) {
+    val hinges: List<HingeInfo> = windowAdaptiveInfo.windowPosture.hingeList
+    val hasHorizontalSeparatingHinge = hinges.any { !it.isVertical && (it.isSeparating || it.isOccluding) }
+
+    return if (isPortrait || isCompactHeight || isTabletop || hasHorizontalSeparatingHinge) {
         calculatePaneScaffoldDirective(
             windowAdaptiveInfo = windowAdaptiveInfo,
             verticalHingePolicy = HingePolicy.AvoidOccluding
@@ -144,6 +111,29 @@ internal fun computeAdaptivePaneDirective(windowAdaptiveInfo: WindowAdaptiveInfo
             maxHorizontalPartitions = baseDirective.maxHorizontalPartitions.coerceAtMost(2),
             maxVerticalPartitions = 1
         )
+    }
+}
+
+/**
+ * Resolves the active 2-partition split ratio using [HingeInfo] and device foldable capability:
+ * - If the user explicitly selected a ratio in Settings (`isUserOverridden == true`), honor their choice.
+ * - Otherwise, if running on a foldable device (detected via `windowPosture.hingeList` [HingeInfo] or
+ *   hinge sensor capability), default to `50% – 50%` ([TwoPaneSplitRatio.HALF_HALF]).
+ * - Otherwise, on tablets and desktops, default to `40% – 60%` ([TwoPaneSplitRatio.FORTY_SIXTY]).
+ */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+internal fun resolveEffectiveTwoPaneSplitRatio(
+    windowAdaptiveInfo: WindowAdaptiveInfo,
+    isFoldableDevice: Boolean = false,
+    userConfiguredRatio: TwoPaneSplitRatio = TwoPaneSplitRatio.FORTY_SIXTY,
+    isUserOverridden: Boolean = false
+): TwoPaneSplitRatio {
+    if (isUserOverridden) return userConfiguredRatio
+    val hasHingeInfo = windowAdaptiveInfo.windowPosture.hingeList.isNotEmpty()
+    return if (hasHingeInfo || isFoldableDevice) {
+        TwoPaneSplitRatio.HALF_HALF
+    } else {
+        TwoPaneSplitRatio.FORTY_SIXTY
     }
 }
 
@@ -175,21 +165,17 @@ fun AppNavigation(
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
-    val directive = remember(windowAdaptiveInfo) {
-        computeAdaptivePaneDirective(windowAdaptiveInfo)
+    val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+    val directive = remember(windowAdaptiveInfo, isPortrait) {
+        computeAdaptivePaneDirective(
+            windowAdaptiveInfo = windowAdaptiveInfo,
+            isPortrait = isPortrait
+        )
     }
 
     val overviewState by overviewViewModel.uiState.collectAsStateWithLifecycle()
     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val bikeEditState by bikeEditViewModel.uiState.collectAsStateWithLifecycle()
-    val animatedListProportion by animateFloatAsState(
-        targetValue = settingsState.twoPaneSplitRatio.listWeight,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessMediumLow
-        ),
-        label = "TwoPaneSplitProportion"
-    )
 
     val backStack = rememberNavBackStack(
         if (isOnboardingCompleted) Screen.Overview else Screen.Onboarding(1)
@@ -206,13 +192,41 @@ fun AppNavigation(
     val hasHingeSensor = remember(context) {
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_HINGE_ANGLE)
     }
+    var seenHingeInfo by rememberSaveable { mutableStateOf(false) }
+    if (windowAdaptiveInfo.windowPosture.hingeList.isNotEmpty()) {
+        seenHingeInfo = true
+    }
+    val isFoldableDevice = seenHingeInfo ||
+        windowAdaptiveInfo.windowPosture.hingeList.isNotEmpty() ||
+        hasHingeSensor
     val supportsTwoPaneLayout = isScaffoldDualPane ||
         configuration.smallestScreenWidthDp >= WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND ||
         windowAdaptiveInfo.windowPosture.isTabletop ||
-        hasHingeSensor
+        isFoldableDevice
+
+    val effectiveTwoPaneSplitRatio = remember(
+        windowAdaptiveInfo,
+        isFoldableDevice,
+        settingsState.twoPaneSplitRatio,
+        settingsState.isTwoPaneSplitRatioUserOverridden
+    ) {
+        resolveEffectiveTwoPaneSplitRatio(
+            windowAdaptiveInfo = windowAdaptiveInfo,
+            isFoldableDevice = isFoldableDevice,
+            userConfiguredRatio = settingsState.twoPaneSplitRatio,
+            isUserOverridden = settingsState.isTwoPaneSplitRatioUserOverridden
+        )
+    }
+    val animatedListProportion by animateFloatAsState(
+        targetValue = effectiveTwoPaneSplitRatio.listWeight,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "TwoPaneSplitProportion"
+    )
 
     val isOnOnboarding = backStack.lastOrNull() is Screen.Onboarding
-    val useTwoPaneLayout = isScaffoldDualPane && !isOnOnboarding
 
     fun navigateToDetail(target: Screen) {
         val currentTop = backStack.lastOrNull() as? Screen
@@ -221,16 +235,7 @@ fun AppNavigation(
         if (target is Screen.BikeEdit) {
             bikeEditViewModel.reset()
         }
-
-        if (isScaffoldDualPane) {
-            // In dual-pane mode, replace the active detail pane above Overview rather than stacking infinitely
-            while (backStack.size > 1 && backStack.lastOrNull() !is Screen.Overview) {
-                backStack.removeAt(backStack.size - 1)
-            }
-            backStack.add(target)
-        } else {
-            backStack.add(target)
-        }
+        backStack.add(target)
     }
 
     fun popDetail() {
@@ -239,9 +244,44 @@ fun AppNavigation(
         }
     }
 
-    if (useTwoPaneLayout) {
+    if (isOnOnboarding) {
+        FlightHost(modifier = modifier.fillMaxSize()) {
+            FlightNavDisplay(
+                backStack = backStack,
+                modifier = Modifier.fillMaxSize(),
+                entryProvider = entryProvider {
+                    entry<Screen.Onboarding> { key ->
+                        OnboardingScreen(
+                            step = key.step,
+                            preferencesRepository = preferencesRepository,
+                            onNavigateToStep2 = {
+                                if (backStack.lastOrNull() != Screen.Onboarding(2)) {
+                                    backStack.add(Screen.Onboarding(2))
+                                }
+                            },
+                            onNavigateBack = {
+                                if (backStack.size > 1) backStack.removeAt(backStack.size - 1)
+                            },
+                            onOnboardingFinished = {
+                                backStack.clear()
+                                backStack.add(Screen.Overview)
+                            }
+                        )
+                    }
+                    entry<Screen.Overview> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.background)
+                        )
+                    }
+                }
+            )
+        }
+    } else {
         val currentDetailScreen = (backStack.lastOrNull() as? Screen)
             ?.takeIf { it !is Screen.Overview && it !is Screen.Onboarding }
+        val isDualPaneActive = isScaffoldDualPane && currentDetailScreen != null
 
         BackHandler(enabled = currentDetailScreen != null) {
             popDetail()
@@ -250,12 +290,24 @@ fun AppNavigation(
         val paneExpansionState = rememberPaneExpansionState()
         paneExpansionState.setFirstPaneProportion(animatedListProportion)
 
-        val scaffoldValue = remember {
-            ThreePaneScaffoldValue(
-                primary = PaneAdaptedValue.Expanded,
-                secondary = PaneAdaptedValue.Expanded,
-                tertiary = PaneAdaptedValue.Hidden
-            )
+        val scaffoldValue = remember(isScaffoldDualPane, currentDetailScreen != null) {
+            when {
+                currentDetailScreen == null -> ThreePaneScaffoldValue(
+                    primary = PaneAdaptedValue.Hidden,
+                    secondary = PaneAdaptedValue.Expanded,
+                    tertiary = PaneAdaptedValue.Hidden
+                )
+                isScaffoldDualPane -> ThreePaneScaffoldValue(
+                    primary = PaneAdaptedValue.Expanded,
+                    secondary = PaneAdaptedValue.Expanded,
+                    tertiary = PaneAdaptedValue.Hidden
+                )
+                else -> ThreePaneScaffoldValue(
+                    primary = PaneAdaptedValue.Expanded,
+                    secondary = PaneAdaptedValue.Hidden,
+                    tertiary = PaneAdaptedValue.Hidden
+                )
+            }
         }
 
         var isAppInfoPopupActive by remember { mutableStateOf(false) }
@@ -278,23 +330,22 @@ fun AppNavigation(
         val rootGlassBackdrop = rememberGlassBackdrop()
 
         CompositionLocalProvider(LocalGlassBackdrop provides rootGlassBackdrop) {
-            FlightHost(
-                modifier = modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-            ) {
-                ListDetailPaneScaffold(
-                    directive = directive,
-                    value = scaffoldValue,
+            ListDetailPaneScaffold(
+                directive = directive,
+                value = scaffoldValue,
                     listPane = {
                         AnimatedPane(
-                            modifier = Modifier
-                                .preferredWidth(animatedListProportion)
-                                .fillMaxHeight()
+                            modifier = if (isDualPaneActive) {
+                                Modifier
+                                    .preferredWidth(animatedListProportion)
+                                    .fillMaxHeight()
+                            } else {
+                                Modifier.fillMaxSize()
+                            }
                         ) {
                             OverviewScreen(
                                 viewModel = overviewViewModel,
-                                isDualPane = true,
+                                isDualPane = isDualPaneActive,
                                 onNavigateToAddBike = {
                                     navigateToDetail(Screen.BikeEdit("new"))
                                 },
@@ -312,9 +363,13 @@ fun AppNavigation(
                     },
                     detailPane = {
                         AnimatedPane(
-                            modifier = Modifier
-                                .preferredWidth(1f - animatedListProportion)
-                                .fillMaxHeight()
+                            modifier = if (isDualPaneActive) {
+                                Modifier
+                                    .preferredWidth(1f - animatedListProportion)
+                                    .fillMaxHeight()
+                            } else {
+                                Modifier.fillMaxSize()
+                            }
                         ) {
                             val detailSaveableStateHolder = rememberSaveableStateHolder()
                             AnimatedContent(
@@ -386,9 +441,10 @@ fun AppNavigation(
                                     key = targetDetail.detailStateKey()
                                 ) {
                                     when (targetDetail) {
-                                        null -> OverviewDetailPlaceholder(
-                                            onOpenSettings = { navigateToDetail(Screen.Settings) },
-                                            onOpenAppInfo = { navigateToDetail(Screen.AppInfo) }
+                                        null -> Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(MaterialTheme.colorScheme.background)
                                         )
                                         is Screen.BikeEdit -> key(targetDetail.bikeId, targetDetail.initialSetupId) {
                                             BikeEditScreen(
@@ -396,7 +452,7 @@ fun AppNavigation(
                                                 initialSetupId = targetDetail.initialSetupId,
                                                 viewModel = bikeEditViewModel,
                                                 preferencesRepository = preferencesRepository,
-                                                isDualPane = true,
+                                                isDualPane = isDualPaneActive,
                                                 onNavigateBack = {
                                                     popDetail()
                                                 }
@@ -405,6 +461,7 @@ fun AppNavigation(
                                         is Screen.Settings -> SettingsScreen(
                                             viewModel = settingsViewModel,
                                             supportsTwoPaneLayout = supportsTwoPaneLayout,
+                                            effectiveTwoPaneSplitRatio = effectiveTwoPaneSplitRatio,
                                             onNavigateBack = {
                                                 popDetail()
                                             },
@@ -414,7 +471,7 @@ fun AppNavigation(
                                             }
                                         )
                                         is Screen.AppInfo -> AppInfoScreen(
-                                            isDualPane = true,
+                                            isDualPane = isDualPaneActive,
                                             onPopupActiveChanged = { isAppInfoPopupActive = it },
                                             onNavigateBack = {
                                                 popDetail()
@@ -426,197 +483,13 @@ fun AppNavigation(
                             }
                         }
                     },
-                    paneExpansionState = paneExpansionState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .glassBackdrop(rootGlassBackdrop)
-                        .background(MaterialTheme.colorScheme.background)
-                        .blur(twoPaneBlurRadius)
-                )
-            }
-        }
-    } else {
-        FlightHost(modifier = modifier.fillMaxSize()) {
-            FlightNavDisplay(
-                backStack = backStack,
-                modifier = Modifier.fillMaxSize(),
-                entryProvider = entryProvider {
-                    entry<Screen.Onboarding> { key ->
-                        OnboardingScreen(
-                            step = key.step,
-                            preferencesRepository = preferencesRepository,
-                            onNavigateToStep2 = {
-                                if (backStack.lastOrNull() != Screen.Onboarding(2)) {
-                                    backStack.add(Screen.Onboarding(2))
-                                }
-                            },
-                            onNavigateBack = {
-                                if (backStack.size > 1) backStack.removeAt(backStack.size - 1)
-                            },
-                            onOnboardingFinished = {
-                                backStack.clear()
-                                backStack.add(Screen.Overview)
-                            }
-                        )
-                    }
-                    entry<Screen.Overview> {
-                        OverviewScreen(
-                            viewModel = overviewViewModel,
-                            isDualPane = false,
-                            onNavigateToAddBike = {
-                                navigateToDetail(Screen.BikeEdit("new"))
-                            },
-                            onNavigateToEditBike = { bikeId, setupId ->
-                                navigateToDetail(Screen.BikeEdit(bikeId, setupId))
-                            },
-                            onNavigateToSettings = {
-                                navigateToDetail(Screen.Settings)
-                            },
-                            onNavigateToAppInfo = {
-                                navigateToDetail(Screen.AppInfo)
-                            }
-                        )
-                    }
-                    entry<Screen.BikeEdit> { key ->
-                        BikeEditScreen(
-                            bikeId = key.bikeId,
-                            initialSetupId = key.initialSetupId,
-                            viewModel = bikeEditViewModel,
-                            preferencesRepository = preferencesRepository,
-                            isDualPane = false,
-                            onNavigateBack = {
-                                popDetail()
-                            }
-                        )
-                    }
-                    entry<Screen.Settings> {
-                        SettingsScreen(
-                            viewModel = settingsViewModel,
-                            supportsTwoPaneLayout = supportsTwoPaneLayout,
-                            onNavigateBack = {
-                                popDetail()
-                            },
-                            onNavigateToOnboarding = {
-                                backStack.clear()
-                                backStack.add(Screen.Onboarding(1))
-                            }
-                        )
-                    }
-                    entry<Screen.AppInfo> {
-                        AppInfoScreen(
-                            isDualPane = false,
-                            onNavigateBack = {
-                                popDetail()
-                            }
-                        )
-                    }
-                }
+                paneExpansionState = paneExpansionState,
+                modifier = modifier
+                    .fillMaxSize()
+                    .glassBackdrop(rootGlassBackdrop)
+                    .background(MaterialTheme.colorScheme.background)
+                    .blur(twoPaneBlurRadius)
             )
-        }
-    }
-}
-
-@Composable
-private fun OverviewDetailPlaceholder(
-    onOpenSettings: () -> Unit,
-    onOpenAppInfo: () -> Unit
-) {
-    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val tireColor = if (isDark) Color.White else MaterialTheme.colorScheme.onBackground
-    val cardColors = appGlossCardColors(
-        base = if (isDark) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
-        content = MaterialTheme.colorScheme.onSurface,
-        isDark = isDark
-    )
-    val scrollState = rememberScrollState()
-    var isCardTiltActive by remember { mutableStateOf(false) }
-
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .verticalScroll(scrollState, enabled = !isCardTiltActive)
-                .padding(24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            GlossCard(
-                modifier = Modifier
-                    .widthIn(max = 460.dp)
-                    .fillMaxWidth()
-                    .padding(4.dp)
-                    .lockScrollOnActiveCardTilt { isCardTiltActive = it },
-                shape = RoundedCornerShape(24.dp),
-                colors = cardColors,
-                tiltOnTouch = true
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(28.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    TirePressurePulseLogo(
-                        size = 84.dp,
-                        shape = RoundedCornerShape(20.dp),
-                        contentDescription = stringResource(id = R.string.app_info_title)
-                    )
-
-                    Text(
-                        text = buildAnnotatedString {
-                            withStyle(SpanStyle(color = tireColor)) {
-                                append("Tire")
-                            }
-                            withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-                                append("Pressure")
-                            }
-                        },
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Text(
-                        text = stringResource(id = R.string.onboarding_welcome_desc),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    val settingsPainter = rememberVectorPainter(Icons.Default.Settings)
-                    val infoPainter = rememberVectorPainter(Icons.Default.Info)
-                    val settingsLabel = stringResource(id = R.string.settings_title)
-                    val infoLabel = stringResource(id = R.string.app_info_title)
-                    val placeholderActions = remember(settingsPainter, infoPainter, settingsLabel, infoLabel, onOpenSettings, onOpenAppInfo) {
-                        listOf(
-                            LightAction(
-                                label = settingsLabel,
-                                icon = settingsPainter,
-                                onClick = onOpenSettings
-                            ),
-                            LightAction(
-                                label = infoLabel,
-                                icon = infoPainter,
-                                onClick = onOpenAppInfo
-                            )
-                        )
-                    }
-                    LightActions(
-                        actions = placeholderActions,
-                        colors = appLumenActionColors(),
-                        markSize = 20.dp,
-                        modifier = Modifier.fillMaxWidth(),
-                        haptics = true
-                    )
-                }
-            }
         }
     }
 }

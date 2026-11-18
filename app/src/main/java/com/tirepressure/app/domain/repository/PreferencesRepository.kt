@@ -23,6 +23,8 @@ interface PreferencesRepository {
     val favoriteModeFlow: Flow<FavoriteMode>
     val accentColorFlow: Flow<AppAccentColor>
     val twoPaneSplitRatioFlow: Flow<TwoPaneSplitRatio>
+    val isTwoPaneSplitRatioOverriddenFlow: Flow<Boolean>
+        get() = kotlinx.coroutines.flow.flowOf(false)
     val lastSeenVersionCodeFlow: Flow<Int>
 
     suspend fun setTheme(theme: AppTheme)

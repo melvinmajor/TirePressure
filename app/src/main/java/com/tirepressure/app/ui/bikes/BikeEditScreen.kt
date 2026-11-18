@@ -50,9 +50,6 @@ import io.github.angelomarzocchi.glass.glassBackdrop
 import io.github.angelomarzocchi.glass.rememberGlassBackdrop
 import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.Brush
-import io.github.angelomarzocchi.flight.rememberFlightAnchor
-import io.github.angelomarzocchi.flight.recordedFlightAnchor
-import io.github.angelomarzocchi.flight.RecordedPaint
 import io.github.angelomarzocchi.lumen.GlossCard
 import io.github.angelomarzocchi.lumen.GlossCardColors
 import io.github.angelomarzocchi.lumen.GlossCardDefaults
@@ -169,16 +166,6 @@ fun BikeEditScreen(
 
     val localGlassBackdrop = rememberGlassBackdrop()
     val effectiveGlassBackdrop = parentGlassBackdrop ?: localGlassBackdrop
-    val bikeHeroModifier = if (!isDualPane) {
-        val bikeHeroAnchor = rememberFlightAnchor(
-            key = "bike_hero_${bikeId}",
-            paint = remember { RecordedPaint(single = false, overflow = true) }
-        )
-        bikeHeroAnchor?.canLand = { isLoaded }
-        Modifier.recordedFlightAnchor(bikeHeroAnchor, spill = 4.dp)
-    } else {
-        Modifier
-    }
 
     val activeSetup = setups.getOrNull(selectedSetupIndex) ?: setups.firstOrNull() ?: WheelSetup(id = "default", name = "Default")
     val calculator = remember { BertoTirePressureCalculator() }
@@ -228,7 +215,7 @@ fun BikeEditScreen(
                             Text(
                                 text = stringResource(if (bikeId == "new") R.string.bike_edit_title_new else R.string.bike_edit_title_edit),
                                 fontWeight = FontWeight.Bold,
-                                modifier = bikeHeroModifier.semantics { heading() }
+                                modifier = Modifier.semantics { heading() }
                             )
                         },
                         navigationIcon = {
@@ -289,10 +276,12 @@ fun BikeEditScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .navigationBarsPadding()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
                     ) {
                         GlossCard(
                             modifier = Modifier
+                                .widthIn(max = 728.dp)
                                 .fillMaxWidth()
                                 .border(
                                     width = 1.dp,

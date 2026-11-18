@@ -1,0 +1,4 @@
+- Partage 50 % – 50 % par défaut sur appareils pliables (détection de charnière) et 40 % – 60 % sur tablettes
+- Aperçu en 1 volet pleine largeur lorsqu'aucun écran de détail n'est ouvert
+- Affichage 1 volet en orientation portrait sur pliables et tablettes
+- Transitions portrait/paysage fluides conservant les saisies en cours et la navigation

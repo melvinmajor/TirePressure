@@ -1,0 +1,4 @@
+- Hinge-aware 50% – 50% default 2-pane split on foldables and 40% – 60% on tablets/desktops
+- Full-width 1-pane Overview when no detail screen is open on large screens
+- 1-pane layout enforced in portrait orientation on foldables and tablets
+- Seamless portrait/landscape transitions preserving ongoing form edits and navigation steps

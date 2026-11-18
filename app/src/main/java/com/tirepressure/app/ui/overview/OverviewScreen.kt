@@ -79,9 +79,6 @@ import io.github.angelomarzocchi.lumen.LightTab
 import io.github.angelomarzocchi.lumen.LightTabIcons
 import io.github.angelomarzocchi.lumen.LightTabs
 import io.github.angelomarzocchi.lumen.rememberBounceHaptics
-import io.github.angelomarzocchi.flight.rememberFlightAnchor
-import io.github.angelomarzocchi.flight.recordedFlightAnchor
-import io.github.angelomarzocchi.flight.RecordedPaint
 import com.tirepressure.app.ui.components.LocalGlassBackdrop
 import com.tirepressure.app.ui.components.AddSetupDialog
 import com.tirepressure.app.ui.components.BikeCardCategoryHeader
@@ -140,18 +137,6 @@ fun OverviewScreen(
 
     val localGlassBackdrop = rememberGlassBackdrop()
     val effectiveGlassBackdrop = parentGlassBackdrop ?: localGlassBackdrop
-    val addBikeHeroAnchor = rememberFlightAnchor(
-        key = "bike_hero_new",
-        paint = remember { RecordedPaint(single = false, overflow = true) }
-    )
-    val appLogoAnchor = rememberFlightAnchor(
-        key = "app_logo",
-        paint = remember { RecordedPaint(single = false, overflow = true) }
-    )
-    val appTitleAnchor = rememberFlightAnchor(
-        key = "app_title",
-        paint = remember { RecordedPaint(single = false, overflow = true) }
-    )
     val tilt = rememberTiltKeyLight()
     val haptics = rememberBounceHaptics()
 
@@ -186,7 +171,6 @@ fun OverviewScreen(
                                     contentDescription = stringResource(id = R.string.app_info_title),
                                     modifier = Modifier
                                         .size(34.dp)
-                                        .recordedFlightAnchor(appLogoAnchor, spill = 4.dp)
                                         .clip(RoundedCornerShape(8.dp))
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
@@ -203,9 +187,7 @@ fun OverviewScreen(
                                     },
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
-                                    modifier = Modifier
-                                        .recordedFlightAnchor(appTitleAnchor, spill = 4.dp)
-                                        .semantics { heading() }
+                                    modifier = Modifier.semantics { heading() }
                                 )
                             }
                         },
@@ -370,31 +352,41 @@ fun OverviewScreen(
                             )
                         }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = stringResource(id = R.string.overview_pressures_display_in),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        val favoritesFilterActive = state.bikesWithPressures.size >= 2 && hasAnyFavorite
 
-                            PillSelector(
-                                items = PressureUnit.entries,
-                                selectedItem = state.pressureUnit,
-                                onItemSelected = {
-                                    haptics.press()
-                                    viewModel.setPressureUnit(it)
-                                },
-                                labelProvider = { it.symbol },
-                                modifier = Modifier.width(140.dp)
-                            )
+                        @Composable
+                        fun PressuresUnitSelectorRow(spreadFullWidth: Boolean) {
+                            Row(
+                                modifier = if (spreadFullWidth) Modifier.fillMaxWidth() else Modifier,
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = if (spreadFullWidth) {
+                                    Arrangement.SpaceBetween
+                                } else {
+                                    Arrangement.spacedBy(8.dp)
+                                }
+                            ) {
+                                Text(
+                                    text = stringResource(id = R.string.overview_pressures_display_in),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                PillSelector(
+                                    items = PressureUnit.entries,
+                                    selectedItem = state.pressureUnit,
+                                    onItemSelected = {
+                                        haptics.press()
+                                        viewModel.setPressureUnit(it)
+                                    },
+                                    labelProvider = { it.symbol },
+                                    modifier = Modifier.width(140.dp)
+                                )
+                            }
                         }
 
-                        if (state.bikesWithPressures.size >= 2 && hasAnyFavorite) {
+                        @Composable
+                        fun FavoritesFilterTabs(tabsModifier: Modifier = Modifier) {
                             val allLabel = stringResource(id = R.string.overview_filter_all)
                             val favoritesLabel = "★ " + stringResource(id = R.string.overview_filter_favorites)
                             val filterTabs = remember(allLabel, favoritesLabel) {
@@ -423,9 +415,34 @@ fun OverviewScreen(
                                 fillWidth = true,
                                 height = 38.dp,
                                 colors = appLumenColors(),
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = tabsModifier,
                                 haptics = true
                             )
+                        }
+
+                        if (columnsCount > 1 && favoritesFilterActive) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier.weight(1f),
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    FavoritesFilterTabs(
+                                        tabsModifier = Modifier
+                                            .widthIn(max = 260.dp)
+                                            .fillMaxWidth()
+                                    )
+                                }
+                                PressuresUnitSelectorRow(spreadFullWidth = false)
+                            }
+                        } else {
+                            PressuresUnitSelectorRow(spreadFullWidth = true)
+                            if (favoritesFilterActive) {
+                                FavoritesFilterTabs(tabsModifier = Modifier.fillMaxWidth())
+                            }
                         }
                     }
                 }
@@ -465,8 +482,7 @@ fun OverviewScreen(
                                         haptics.press()
                                         onNavigateToAddBike()
                                     },
-                                    shape = RoundedCornerShape(12.dp),
-                                    modifier = Modifier.recordedFlightAnchor(addBikeHeroAnchor)
+                                    shape = RoundedCornerShape(12.dp)
                                 ) {
                                     Icon(Icons.Default.Add, contentDescription = null)
                                     Spacer(modifier = Modifier.width(6.dp))
@@ -497,8 +513,7 @@ fun OverviewScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(52.dp)
-                                .recordedFlightAnchor(addBikeHeroAnchor, spill = 4.dp),
+                                .height(52.dp),
                             shape = RoundedCornerShape(14.dp)
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null)
@@ -803,10 +818,6 @@ private fun BikeOverviewCard(
     val bike = bikeOverview.bike
     var isExpanded by remember(bike.id, bike.isDefault) { mutableStateOf(bike.isDefault) }
 
-    val bikeHeroAnchor = rememberFlightAnchor(
-        key = "bike_hero_${bike.id}",
-        paint = remember { RecordedPaint(single = false, overflow = true) }
-    )
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val categoryBaseColor = getCategoryColor(bike.category)
     val baseCardColor = if (isDark) {
@@ -870,7 +881,6 @@ private fun BikeOverviewCard(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
                             .weight(1f, fill = false)
-                            .recordedFlightAnchor(bikeHeroAnchor, spill = 4.dp)
                             .semantics { heading() }
                     )
                 }
@@ -1398,10 +1408,6 @@ private fun BikeOverviewCardSimplified(
 ) {
     val bike = bikeOverview.bike
 
-    val bikeHeroAnchor = rememberFlightAnchor(
-        key = "bike_hero_${bike.id}",
-        paint = remember { RecordedPaint(single = false, overflow = true) }
-    )
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val categoryBaseColor = getCategoryColor(bike.category)
     val baseCardColor = if (isDark) {
@@ -1464,7 +1470,6 @@ private fun BikeOverviewCardSimplified(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
                             .weight(1f, fill = false)
-                            .recordedFlightAnchor(bikeHeroAnchor, spill = 4.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     val catColor = getCategoryColor(bike.category)
